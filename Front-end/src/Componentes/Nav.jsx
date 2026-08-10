@@ -66,7 +66,7 @@ function Nav() {
           <div className="d-flex align-items-center gap-2">
 
             {/* Favoritos */}
-            <button className="btn text-white border-0 p-2 position-relative" onClick={() => navigate("/Favoritos")}>
+            <button className="btn text-white border-0 p-2 position-relative" onClick={() => navigate("/favoritos")}>
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
               </svg>
@@ -108,7 +108,7 @@ function Nav() {
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
                         Mis pedidos
                       </Link>
-                      <Link to="/Favoritos" onClick={() => setDropdownOpen(false)} style={{ display: "flex", alignItems: "center", gap: "10px", padding: "12px 16px", color: "#ccc", textDecoration: "none", fontSize: "14px" }}>
+                      <Link to="/favoritos" onClick={() => setDropdownOpen(false)} style={{ display: "flex", alignItems: "center", gap: "10px", padding: "12px 16px", color: "#ccc", textDecoration: "none", fontSize: "14px" }}>
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
                         Mis favoritos
                       </Link>
@@ -119,10 +119,10 @@ function Nav() {
                     </>
                   ) : (
                     <>
-                      <Link to="/InicioSesion" onClick={() => setDropdownOpen(false)} style={{ display: "flex", alignItems: "center", gap: "10px", padding: "12px 16px", color: "#ff8c42", textDecoration: "none", fontSize: "14px", fontWeight: 500 }}>
+                      <Link to="/login" onClick={() => setDropdownOpen(false)} style={{ display: "flex", alignItems: "center", gap: "10px", padding: "12px 16px", color: "#ff8c42", textDecoration: "none", fontSize: "14px", fontWeight: 500 }}>
                         🔑 Iniciar sesión
                       </Link>
-                      <Link to="/Registro" onClick={() => setDropdownOpen(false)} style={{ display: "flex", alignItems: "center", gap: "10px", padding: "12px 16px", color: "#ccc", textDecoration: "none", fontSize: "14px" }}>
+                      <Link to="/registro" onClick={() => setDropdownOpen(false)} style={{ display: "flex", alignItems: "center", gap: "10px", padding: "12px 16px", color: "#ccc", textDecoration: "none", fontSize: "14px" }}>
                         📝 Registrarse
                       </Link>
                     </>
@@ -140,8 +140,6 @@ function Nav() {
         <div className="container d-flex align-items-center gap-4">
           <Link to="/" style={{ color: "#ccc", textDecoration: "none", fontSize: "13px" }}>Inicio</Link>
           <Link to="/catalogo" style={{ color: "#ccc", textDecoration: "none", fontSize: "13px" }}>Catálogo</Link>
-          <Link to="/Favoritos" style={{ color: "#ccc", textDecoration: "none", fontSize: "13px" }}>Favoritos</Link>
-          <Link to="/carrito" style={{ color: "#ccc", textDecoration: "none", fontSize: "13px" }}>Carrito</Link>
           {usuario && (
             <Link to="/mis-pedidos" style={{ color: "#ccc", textDecoration: "none", fontSize: "13px" }}>Mis pedidos</Link>
           )}

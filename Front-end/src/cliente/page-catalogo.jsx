@@ -1,5 +1,4 @@
 import { Link } from "react-router-dom";
-import { useState } from "react";
 import "../styles/style.css";
 import img1 from "../assets/productos/producto1.jpg";
 import img2 from "../assets/productos/producto2.jpg";
@@ -25,81 +24,19 @@ const todos = [
   { id: 10, nombre: "Sudadera new york", precio: "$31.000", img: img10, categoria: "ninos" },
 ];
 
-const categorias = [
-  { id: "todos", nombre: "Todos" },
-  { id: "ninas", nombre: "Niñas" },
-  { id: "ninos", nombre: "Niños" },
-];
-
 function Catalogo() {
-  const [filtro, setFiltro] = useState("todos");
-  const [busqueda, setBusqueda] = useState("");
-
-  const productos = todos.filter((p) => {
-    const coincideCategoria = filtro === "todos" || p.categoria === filtro;
-    const coincideBusqueda = p.nombre.toLowerCase().includes(busqueda.toLowerCase());
-    return coincideCategoria && coincideBusqueda;
-  });
-
   return (
     <div className="home-page">
 
       <section className="home-section" style={{ paddingTop: "2rem" }}>
-        <h2 className="home-section-title">Catálogo</h2>
-        <p className="home-section-sub">Explora todos nuestros productos</p>
-      </section>
-
-      <section className="home-section">
-        <div className="home-search-wrap">
-          <span className="home-search-icon">🔍</span>
-          <input
-            type="text"
-            className="home-search-input"
-            placeholder="Buscar producto..."
-            value={busqueda}
-            onChange={(e) => setBusqueda(e.target.value)}
-          />
-          {busqueda && (
-            <button className="home-search-clear" onClick={() => setBusqueda("")}>✕</button>
-          )}
-        </div>
-      </section>
-
-      <section className="home-section">
-        <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
-          {categorias.map((cat) => (
-            <button
-              key={cat.id}
-              onClick={() => setFiltro(cat.id)}
-              style={{
-                padding: "8px 20px",
-                borderRadius: "20px",
-                border: filtro === cat.id ? "1px solid #ff8c42" : "1px solid #ddd",
-                background: filtro === cat.id ? "#ff8c42" : "#fff",
-                color: filtro === cat.id ? "#fff" : "#555",
-                fontSize: "14px",
-                fontWeight: 500,
-                cursor: "pointer",
-                transition: "all 0.15s",
-              }}
-            >
-              {cat.nombre}
-            </button>
-          ))}
-        </div>
-      </section>
-
-      <section className="home-section">
-        <p className="home-section-sub">{productos.length} producto(s) encontrado(s)</p>
-
-        {productos.length === 0 ? (
+        {todos.length === 0 ? (
           <div className="home-no-results">
             <span>😕</span>
             <p>No se encontraron productos.</p>
           </div>
         ) : (
           <div className="home-productos">
-            {productos.map((p) => (
+            {todos.map((p) => (
               <div key={p.id} className="home-producto-card">
                 <div className="home-producto-img">
                   <img src={p.img} alt={p.nombre} />

@@ -9,6 +9,7 @@ body {
   background: #f5f5f5;
 }
 
+
 /* ================================
    AUTH (login, registro, recuperar)
 ================================ */
@@ -792,4 +793,338 @@ body {
 
 }
 
+/* ===== Carrito / Confirmar compra ===== */
+.carrito-page {
+  min-height: 100vh;
+  background: #f5f5f5;
+  padding: 2rem 1rem;
+}
 
+.carrito-container {
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.carrito-titulo {
+  font-size: 22px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin-bottom: 1.5rem;
+}
+
+.carrito-layout {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+@media (max-width: 768px) {
+  .carrito-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.carrito-lista {
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid #eee;
+  padding: 1.5rem;
+}
+
+/* Formulario */
+.confirmar-subtitulo {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin-bottom: 1rem;
+}
+
+.confirmar-field {
+  margin-bottom: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.confirmar-field label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #555;
+}
+
+.confirmar-field input {
+  height: 42px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 0 14px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.confirmar-field input:focus {
+  border-color: #ff8c42;
+}
+
+.confirmar-metodos {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 1.5rem;
+}
+
+.confirmar-metodo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 12px 14px;
+  font-size: 14px;
+  color: #444;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.confirmar-metodo:hover {
+  border-color: #ff8c42;
+}
+
+.confirmar-metodo.activo {
+  border-color: #ff8c42;
+  background: #fff5ee;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.confirmar-metodo input[type="radio"] {
+  accent-color: #ff8c42;
+}
+
+.confirmar-botones {
+  display: flex;
+  gap: 10px;
+  margin-top: 1rem;
+}
+
+.confirmar-botones .btn-ingresar,
+.confirmar-botones .btn-registro {
+  flex: 1;
+}
+
+/* Resumen (compartido con carrito) */
+.carrito-resumen {
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid #eee;
+  padding: 1.5rem;
+  position: sticky;
+  top: 80px;
+}
+
+.carrito-resumen h3 {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin-bottom: 1rem;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #eee;
+}
+
+.carrito-resumen-linea {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+  color: #555;
+  margin-bottom: 8px;
+}
+
+.carrito-resumen-total {
+  display: flex;
+  justify-content: space-between;
+  font-size: 18px;
+  font-weight: 700;
+  color: #1a1a1a;
+  padding-top: 12px;
+  border-top: 1px solid #eee;
+  margin-top: 8px;
+}
+
+/* Modal de éxito */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-box {
+  background: #fff;
+  border-radius: 12px;
+  padding: 2rem;
+  max-width: 380px;
+  width: 90%;
+  text-align: center;
+}
+
+.modal-box h4 {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 0.75rem;
+}
+
+.modal-box p {
+  color: #666;
+  font-size: 14px;
+  margin-bottom: 1.5rem;
+}
+
+.modal-box .btn-ingresar {
+  width: 100%;
+}
+
+/* ===== HappyKids — Minimalista limpio ===== */
+:root {
+  --hk-texto: #1a1a1a;
+  --hk-gris: #8a8a8a;
+  --hk-borde: #eeeeee;
+  --hk-naranja: #ff8c42;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: #ffffff;
+  color: var(--hk-texto);
+}
+
+/* Banner / Hero */
+.home-banner {
+  background: #ffffff;
+  border: none;
+  border-radius: 0;
+  padding: 4rem 0 3rem;
+}
+
+.home-banner-content {
+  max-width: 520px;
+}
+
+.home-banner-title {
+  font-size: 40px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  color: var(--hk-texto);
+  margin-bottom: 8px;
+}
+
+.home-banner-sub {
+  font-size: 16px;
+  color: var(--hk-gris);
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+/* Sección de productos */
+.home-section-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--hk-texto);
+}
+
+.home-section-sub {
+  font-size: 14px;
+  color: var(--hk-gris);
+  font-weight: 400;
+  margin-bottom: 1.5rem;
+}
+
+/* Tarjetas de producto */
+.home-productos {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 20px;
+}
+
+.home-producto-card {
+  background: #fff;
+  border: 1px solid var(--hk-borde);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: none;
+  transition: border-color 0.2s ease;
+}
+
+.home-producto-card:hover {
+  border-color: #ddd;
+}
+
+.home-producto-img {
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+}
+
+.home-producto-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s ease;
+}
+
+.home-producto-card:hover .home-producto-img img {
+  transform: scale(1.03);
+}
+
+.home-producto-info {
+  padding: 14px 16px 18px;
+}
+
+.home-producto-nombre {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--hk-texto);
+  display: block;
+  margin-bottom: 4px;
+}
+
+.home-producto-precio {
+  display: block;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--hk-naranja);
+  margin-bottom: 14px;
+}
+
+.home-producto-btn {
+  display: block;
+  text-align: center;
+  border: 1px solid var(--hk-borde);
+  color: var(--hk-texto);
+  border-radius: 6px;
+  padding: 9px 0;
+  font-weight: 500;
+  font-size: 13px;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.home-producto-btn:hover {
+  border-color: var(--hk-naranja);
+  color: var(--hk-naranja);
+}
+
+/* Estado sin resultados */
+.home-no-results {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: var(--hk-gris);
+}
+
+.home-no-results span {
+  font-size: 40px;
+  display: block;
+  margin-bottom: 12px;
+}

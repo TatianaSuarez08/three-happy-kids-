@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useCarrito } from "../context/CarritoContext";
+import { useCarrito } from "../Context/CarritoContext";
 import "../styles/style.css";
 
 function ConfirmarCompra() {

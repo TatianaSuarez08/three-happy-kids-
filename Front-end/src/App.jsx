@@ -4,6 +4,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Index from './Index';
 import Catalogo from './cliente/page-catalogo';
 import Carrito from './cliente/page-Carrito';
+import ConfirmarCompra from './cliente/page-ConfirmarCompra';
 import DetalleProducto from './cliente/page-DetalleProducto';
 import Favoritos from './cliente/page-Favoritos';
 import MisPedidos from './cliente/page-MisPedidos';
@@ -31,6 +32,7 @@ function App() {
         <Route path="/catalogo" element={<Catalogo />} />
         <Route path="/producto/:id" element={<DetalleProducto />} />
         <Route path="/carrito" element={<Carrito />} />
+        <Route path="/confirmar-compra" element={<ConfirmarCompra />} />
         <Route path="/favoritos" element={<Favoritos />} />
         <Route path="/mis-pedidos" element={<MisPedidos />} />
         <Route path="/login" element={<Login />} />

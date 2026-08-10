@@ -1,5 +1,7 @@
 import { useParams, useNavigate } from "react-router-dom";
+import { useState } from "react";
 import { useFavoritos } from "../Context/FavoritosContext";
+import { useCarrito } from "../Context/CarritoContext";
 
 import "../styles/style.css";
 import img1 from "../assets/productos/producto1.jpg";
@@ -108,7 +110,12 @@ function DetalleProducto() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { agregarFavorito, quitarFavorito, esFavorito } = useFavoritos();
+  const { agregarAlCarrito } = useCarrito();
   const producto = productos.find((p) => p.id === parseInt(id));
+
+  const [tallaSeleccionada, setTallaSeleccionada] = useState(null);
+  const [colorSeleccionado, setColorSeleccionado] = useState(null);
+  const [agregado, setAgregado] = useState(false);
 
   if (!producto) {
     return (
@@ -116,13 +123,23 @@ function DetalleProducto() {
         <div className="detalle-notfound">
           <span>😕</span>
           <p>Producto no encontrado.</p>
-          <button className="btn-ingresar" onClick={() => navigate("/Home")}>Volver al inicio</button>
+          <button className="btn-ingresar" onClick={() => navigate("/")}>Volver al inicio</button>
         </div>
       </div>
     );
   }
 
   const favoritoActivo = esFavorito(producto.id);
+
+  const handleAgregarCarrito = () => {
+    agregarAlCarrito({
+      ...producto,
+      talla: tallaSeleccionada,
+      color: colorSeleccionado,
+    });
+    setAgregado(true);
+    setTimeout(() => setAgregado(false), 1500);
+  };
 
   return (
     <div className="detalle-page">
@@ -148,7 +165,20 @@ function DetalleProducto() {
               <span className="detalle-label">Tallas disponibles</span>
               <div className="detalle-tallas">
                 {producto.tallas.map((t) => (
-                  <span key={t} className="detalle-talla">{t}</span>
+                  <span
+                    key={t}
+                    className="detalle-talla"
+                    onClick={() => setTallaSeleccionada(t)}
+                    style={{
+                      cursor: "pointer",
+                      border: tallaSeleccionada === t ? "2px solid #ff8c42" : "1px solid #ccc",
+                      background: tallaSeleccionada === t ? "#ff8c42" : "#fff",
+                      color: tallaSeleccionada === t ? "#fff" : "#333",
+                      fontWeight: tallaSeleccionada === t ? 700 : 400,
+                    }}
+                  >
+                    {t}
+                  </span>
                 ))}
               </div>
             </div>
@@ -157,7 +187,20 @@ function DetalleProducto() {
               <span className="detalle-label">Colores</span>
               <div className="detalle-colores">
                 {producto.colores.map((c) => (
-                  <span key={c} className="detalle-color">{c}</span>
+                  <span
+                    key={c}
+                    className="detalle-color"
+                    onClick={() => setColorSeleccionado(c)}
+                    style={{
+                      cursor: "pointer",
+                      border: colorSeleccionado === c ? "2px solid #ff8c42" : "1px solid #ccc",
+                      background: colorSeleccionado === c ? "#ff8c42" : "#fff",
+                      color: colorSeleccionado === c ? "#fff" : "#333",
+                      fontWeight: colorSeleccionado === c ? 700 : 400,
+                    }}
+                  >
+                    {c}
+                  </span>
                 ))}
               </div>
             </div>
@@ -168,16 +211,17 @@ function DetalleProducto() {
             </div>
 
             <div className="detalle-botones">
-              <button className="btn-ingresar">🛍 Agregar al carrito</button>
+              <button className="btn-ingresar" onClick={handleAgregarCarrito}>
+                {agregado ? "✔ Agregado" : "🛍 Agregar al carrito"}
+              </button>
               <button
-  className={favoritoActivo ? "btn-favorito-activo" : "btn-registro"}
-  onClick={() => {
-    console.log("Clic en favorito", producto.id, favoritoActivo);
-    favoritoActivo ? quitarFavorito(producto.id) : agregarFavorito(producto);
-  }}
->
-  {favoritoActivo ? "❤️ En favoritos" : "♡ Agregar a favoritos"}
-</button>
+                className={favoritoActivo ? "btn-favorito-activo" : "btn-registro"}
+                onClick={() => {
+                  favoritoActivo ? quitarFavorito(producto.id) : agregarFavorito(producto);
+                }}
+              >
+                {favoritoActivo ? "❤️ En favoritos" : "♡ Agregar a favoritos"}
+              </button>
             </div>
 
           </div>

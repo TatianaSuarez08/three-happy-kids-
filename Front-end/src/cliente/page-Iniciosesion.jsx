@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import "../styles/style.css";
+import img1 from "../assets/productos/producto1.jpg";
 
 function InicioSesion() {
   const correoRef = useRef(null);
@@ -10,8 +11,8 @@ function InicioSesion() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const cancelar = () => navigate("/Registro");
-  const ingresar = () => navigate("/Home");
+  const cancelar = () => navigate("/registro");
+  const ingresar = () => navigate("/");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -37,6 +38,11 @@ function InicioSesion() {
 
         {/* Logo */}
         <div className="login-logo">
+          <img
+                    src={img1}
+                    alt="Logo"
+                    style={{ width: "50%", height: "50%", objectFit: "cover" }}
+                  />
         <p>Inicia sesión para continuar</p>
         </div>
 
@@ -77,7 +83,7 @@ function InicioSesion() {
           </div>
 
           <div className="login-forgot">
-            <Link to="/RecuperarPass">¿Olvidaste tu contraseña?</Link>
+            <Link to="/recuperar-pass">¿Olvidaste tu contraseña?</Link>
           </div>
 
           {/* Botones */}

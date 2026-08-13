@@ -49,6 +49,13 @@ body {
   margin: 0 auto 0.75rem;
 }
 
+.login-logo-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 14px;
+}
+
 .login-logo h1 {
   font-size: 22px;
   font-weight: 600;

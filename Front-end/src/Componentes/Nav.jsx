@@ -8,7 +8,7 @@ function Nav() {
   const dropdownRef = useRef(null);
   const navigate = useNavigate();
 
-  const usuario = JSON.parse(localStorage.getItem("usuario") || "null");
+  const usuario = JSON.parse(localStorage.getItem("user") || localStorage.getItem("usuario") || "null");
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -23,6 +23,9 @@ function Nav() {
   const cerrarSesion = () => {
     setDropdownOpen(false);
     localStorage.removeItem("usuario");
+    localStorage.removeItem("user");
+    localStorage.removeItem("userRoles");
+    localStorage.removeItem("token");
     navigate("/");
   };
 

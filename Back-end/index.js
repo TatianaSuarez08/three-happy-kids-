@@ -10,7 +10,15 @@ const app = express(); // Crea la instancia de la aplicación Express
 
 const PORT = process.env.PORT || 3000; // Define el puerto: usa la variable de entorno o 3000 por defecto
 
-app.use(cors()); // Activa CORS para permitir solicitudes desde otros orígenes
+// Configurar CORS para permitir credenciales desde localhost en desarrollo
+const corsOptions = {
+  origin: process.env.CORS_ORIGIN || 'http://localhost:5173', // Origen permitido (ajusta en producción)
+  credentials: true, // Permitir cookies y credenciales
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+};
+
+app.use(cors(corsOptions)); // Activa CORS con opciones configuradas
 app.use(express.json()); // Middleware para parsear bodies en formato JSON
 app.use(express.urlencoded({ extended: true })); // Middleware para parsear bodies URL-encoded (formularios)
 app.use(morgan('dev')); // Activa el logger en modo 'dev' para ver peticiones en consola

@@ -11,11 +11,12 @@ import MisPedidos from './cliente/page-MisPedidos';
 import RecuperarPass from './cliente/page-RecuperarPass';
 
 // Vistas de Autenticación (SIN .jsx al final)
-import Login from './Iniciosesion';
+import Login from './InicioSesion';
 import Registro from './Registro';
 
 
 // Vistas de Admin (SIN .jsx al final)
+import IndexAdmi from './admin/IndexAdmi';
 import Dashboard from './admin/page-Dashboard';
 import Inventario from './admin/page-Inventario';
 import Pedidos from './admin/page-Pedidos';
@@ -36,6 +37,7 @@ function App() {
 
         {/* Rutas Cliente */}
         <Route path="/" element={<Index />} />
+        <Route path="/cliente/catalogo" element={<Catalogo />} />
         <Route path="/catalogo" element={<Catalogo />} />
         <Route path="/producto/:id" element={<DetalleProducto />} />
         <Route path="/carrito" element={<Carrito />} />
@@ -51,10 +53,10 @@ function App() {
 
         {/* Rutas Admin protegidas por role 'administrador' */}
         <Route
-          path="/admin"
+          path="/admin/dashboard"
           element={
             <ProtectedRoute allowedRoles={["administrador"]}>
-              <Dashboard />
+              <IndexAdmi />
             </ProtectedRoute>
           }
         />

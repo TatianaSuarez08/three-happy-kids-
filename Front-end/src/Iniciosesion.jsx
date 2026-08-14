@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 
@@ -13,10 +13,46 @@ function InicioSesion() {
   const [loading, setLoading] = useState(false); // indicador de envío
   const navigate = useNavigate(); // hook de react-router para navegación programática
 
+  // Verificar si ya existe sesión activa
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    const user = localStorage.getItem('user');
+    if (token && user) {
+      // Si ya hay sesión, redirigir según el rol
+      const userData = JSON.parse(user);
+      redirigirPorRol(userData.roles);
+    }
+  }, []);
+
+  const normalizarRoles = (roles = []) => {
+    if (!Array.isArray(roles)) return [];
+
+    return roles.flatMap((rol) => {
+      if (rol == null) return [];
+      const valor = String(rol).trim().toLowerCase();
+      if (valor === 'admin') return ['administrador'];
+      if (valor === 'administrador') return ['administrador'];
+      if (valor === 'cliente') return ['cliente'];
+      return [valor];
+    });
+  };
+
+  // Redirigir según el rol del usuario
+  const redirigirPorRol = (roles) => {
+    const rolesNormalizados = normalizarRoles(roles);
+
+    if (rolesNormalizados.includes('administrador')) {
+      navigate("/admin/dashboard");
+    } else if (rolesNormalizados.includes('cliente')) {
+      navigate("/cliente/catalogo");
+    } else {
+      navigate("/");
+    }
+  };
+
   // Funciones de navegación rápidas
   const cancelar = () => navigate("/registro"); // ir a página de registro
-  const ingresar = () => navigate("/"); // ruta por defecto tras login exitoso
-
+  
   // Maneja el envío del formulario: valida campos, llama al backend y guarda token/user
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -28,7 +64,9 @@ function InicioSesion() {
 
     // Validaciones básicas en cliente
     if (!correo) return setError("Ingresa tu correo electrónico.");
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo)) return setError("El correo no es válido.");
     if (!contraseña) return setError("Ingresa tu contraseña.");
+    if (contraseña.length < 6) return setError("La contraseña debe tener al menos 6 caracteres.");
 
     setLoading(true);
     try {
@@ -38,23 +76,49 @@ function InicioSesion() {
       // Petición POST a /login con JSON
       const res = await fetch(`${BACKEND}/login`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json'
+        },
         body: JSON.stringify({ email: correo, password: contraseña }),
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Error en el login');
+      
+      if (!res.ok) {
+        // Manejar diferentes códigos de error
+        if (res.status === 403) {
+          throw new Error('El usuario está inactivo. Contacta al administrador.');
+        } else if (res.status === 401) {
+          throw new Error('Correo o contraseña incorrectos.');
+        } else if (res.status === 400) {
+          throw new Error(data.error || 'Datos inválidos.');
+        }
+        throw new Error(data.error || 'Error en el login');
+      }
+
+      // Validar que la respuesta tenga los datos esperados
+      if (!data.token || !data.user) {
+        throw new Error('Respuesta inválida del servidor');
+      }
 
       // Almacenamiento de credenciales/tokens en localStorage (simple y persistente)
       // Nota: para mayor seguridad usar HttpOnly cookies en producción
-      if (data.token) localStorage.setItem('token', data.token);
-      if (data.user) localStorage.setItem('user', JSON.stringify(data.user));
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
+      localStorage.setItem('usuario', JSON.stringify(data.user));
+      localStorage.setItem('userRoles', JSON.stringify(data.user.roles || []));
 
-      // Redirigir tras login exitoso
-      ingresar();
-    } catch {
-      // Mensaje genérico en caso de error (no revelar detalles sensibles)
-      setError("Correo o contraseña incorrectos.");
+      // Limpiar formulario
+      correoRef.current.value = '';
+      contraseñaRef.current.value = '';
+
+      // Redirigir según rol
+      redirigirPorRol(data.user.roles);
+      
+    } catch (err) {
+      // Mensaje de error específico
+      setError(err.message || "Correo o contraseña incorrectos.");
+      console.error('Error en login:', err);
     } finally {
       setLoading(false);
     }
@@ -83,6 +147,8 @@ function InicioSesion() {
               ref={correoRef}
               type="email"
               placeholder="correo@ejemplo.com"
+              disabled={loading}
+              autoComplete="email"
             />
           </div>
 
@@ -95,12 +161,15 @@ function InicioSesion() {
                 ref={contraseñaRef}
                 type={showPass ? "text" : "password"}
                 placeholder="Ingresa tu contraseña"
+                disabled={loading}
+                autoComplete="current-password"
               />
               {/* Botón para alternar visibilidad de la contraseña */}
               <button
                 type="button"
                 className="login-toggle-pass"
                 onClick={() => setShowPass(!showPass)}
+                disabled={loading}
               >
                 {showPass ? "👁" : "🔒"}
               </button>
@@ -117,7 +186,7 @@ function InicioSesion() {
             <button type="submit" className="btn-ingresar" disabled={loading}>
               {loading ? "Ingresando..." : "Ingresar"}
             </button>
-            <button type="button" className="btn-registro" onClick={cancelar}>
+            <button type="button" className="btn-registro" onClick={cancelar} disabled={loading}>
               Registrarse
             </button>
           </div>
@@ -129,3 +198,4 @@ function InicioSesion() {
 }
 
 export default InicioSesion;
+               

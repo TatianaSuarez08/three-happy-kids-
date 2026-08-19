@@ -1,6 +1,5 @@
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
-
 
 function InicioSesion() {
   // Referencias a los inputs (no controlados) para leer valores sin estado adicional
@@ -14,7 +13,7 @@ function InicioSesion() {
   const [loading, setLoading] = useState(false); // indicador de envío
   const navigate = useNavigate(); // hook de react-router para navegación programática
 
-  const normalizarRoles = (roles = []) => {
+  const normalizarRoles = useCallback((roles = []) => {
     if (!Array.isArray(roles)) return [];
 
     return roles.flatMap((rol) => {
@@ -25,10 +24,10 @@ function InicioSesion() {
       if (valor === 'cliente') return ['cliente'];
       return [valor];
     });
-  };
+  }, []);
 
   // Redirigir según el rol del usuario
-  const redirigirPorRol = (roles) => {
+  const redirigirPorRol = useCallback((roles) => {
     const rolesNormalizados = normalizarRoles(roles);
 
     if (rolesNormalizados.includes('administrador')) {
@@ -38,7 +37,7 @@ function InicioSesion() {
     } else {
       navigate("/");
     }
-  };
+  }, [navigate, normalizarRoles]);
 
   // Verificar si ya existe sesión activa al volver a la pantalla de login
   useEffect(() => {
@@ -61,7 +60,7 @@ function InicioSesion() {
       sessionStorage.removeItem('usuario');
       sessionStorage.removeItem('userRoles');
     }
-  }, [navigate]);
+  }, [redirigirPorRol]);
 
   // Funciones de navegación rápidas
   const cancelar = () => navigate("/registro"); // ir a página de registro

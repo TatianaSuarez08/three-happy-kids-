@@ -52,6 +52,25 @@ El menú de usuario muestra correo, rol, enlaces administrativos, perfil, favori
 
 Los estilos se mantienen en `Front-end/src/styles/global.css` y `Front-end/src/styles/style.css`. La interfaz conserva el fondo claro, naranja de HappyKids, tarjetas compactas y adaptación móvil.
 
+## Registro de clientes
+
+`Registro.jsx` se conecta con el backend usando `POST /registro` y envía:
+
+```json
+{
+	"nombre_usuario": "usuario",
+	"email": "usuario@example.com",
+	"password": "123456",
+	"confirmar_password": "123456"
+}
+```
+
+Cuando el backend responde correctamente, el usuario se crea con rol `cliente`, se guardan el token y sus datos, y se muestra una confirmación antes de ir al catálogo.
+
+La confirmación utiliza un modal accesible con fondo atenuado, icono de éxito, texto centrado, animación suave y botón para continuar. Sus estilos están en `global.css` con las clases `.login-modal-overlay`, `.login-modal` y `.login-modal-icon`.
+
+El formulario identifica errores de validación, correo o usuario repetido, backend apagado, respuesta inválida y problemas de conexión con MySQL.
+
 ## Últimos ajustes
 
 - `Index.jsx` obtiene la búsqueda directamente desde `?buscar=` para evitar actualizar estado dentro de un efecto de React.

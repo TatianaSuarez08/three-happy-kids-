@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import 'bootstrap/dist/css/bootstrap.min.css';
 
 function Nav() {
@@ -7,8 +7,30 @@ function Nav() {
   const [busqueda, setBusqueda] = useState("");
   const dropdownRef = useRef(null);
   const navigate = useNavigate();
+  const location = useLocation();
 
-  const usuario = JSON.parse(localStorage.getItem("user") || localStorage.getItem("usuario") || "null");
+  const storage = localStorage.getItem("user") ? localStorage : sessionStorage;
+  const usuario = JSON.parse(storage.getItem("user") || storage.getItem("usuario") || "null");
+  const roles = Array.isArray(usuario?.roles) ? usuario.roles : [];
+  const esAdministrador = roles.some((role) => {
+    const normalizedRole = String(role).trim().toLowerCase();
+    return normalizedRole === "admin" || normalizedRole === "administrador";
+  });
+  const rolPrincipal = esAdministrador ? "Administrador" : "Cliente";
+
+  const estaActivo = (ruta) => {
+    if (ruta === "/") return location.pathname === "/";
+    return location.pathname === ruta || location.pathname.startsWith(`${ruta}/`);
+  };
+
+  const estiloEnlace = (ruta, colorNormal = "#ccc") => ({
+    color: estaActivo(ruta) ? "#ff8c42" : colorNormal,
+    textDecoration: "none",
+    fontSize: "13px",
+    fontWeight: estaActivo(ruta) ? 600 : 400,
+    borderBottom: estaActivo(ruta) ? "2px solid #ff8c42" : "2px solid transparent",
+    padding: "6px 0 4px",
+  });
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -26,7 +48,11 @@ function Nav() {
     localStorage.removeItem("user");
     localStorage.removeItem("userRoles");
     localStorage.removeItem("token");
-    navigate("/");
+    sessionStorage.removeItem("usuario");
+    sessionStorage.removeItem("user");
+    sessionStorage.removeItem("userRoles");
+    sessionStorage.removeItem("token");
+    navigate("/login", { replace: true });
   };
 
   const handleBuscar = (e) => {
@@ -97,19 +123,39 @@ function Nav() {
                       {usuario ? usuario.correo : "Invitado"}
                     </div>
                     <div style={{ color: "#666", fontSize: "12px" }}>
-                      {usuario ? "Sesión activa" : "No has iniciado sesión"}
+                      {usuario ? `${rolPrincipal} · Sesión activa` : "No has iniciado sesión"}
                     </div>
                   </div>
 
                   {usuario ? (
                     <>
+                      {esAdministrador && (
+                        <div style={{ borderBottom: "1px solid #2e2e2e", padding: "6px 0" }}>
+                          <Link to="/admin/dashboard" onClick={() => setDropdownOpen(false)} style={{ display: "flex", alignItems: "center", gap: "10px", padding: "10px 16px", color: "#ff8c42", textDecoration: "none", fontSize: "14px", fontWeight: 600 }}>
+                            <span aria-hidden="true">▦</span>
+                            Dashboard
+                          </Link>
+                          <Link to="/admin/productos" onClick={() => setDropdownOpen(false)} style={{ display: "flex", alignItems: "center", gap: "10px", padding: "10px 16px", color: "#ccc", textDecoration: "none", fontSize: "14px" }}>
+                            <span aria-hidden="true">▣</span>
+                            Productos
+                          </Link>
+                          <Link to="/admin/inventario" onClick={() => setDropdownOpen(false)} style={{ display: "flex", alignItems: "center", gap: "10px", padding: "10px 16px", color: "#ccc", textDecoration: "none", fontSize: "14px" }}>
+                            <span aria-hidden="true">▤</span>
+                            Inventario
+                          </Link>
+                          <Link to="/admin/pedidos" onClick={() => setDropdownOpen(false)} style={{ display: "flex", alignItems: "center", gap: "10px", padding: "10px 16px", color: "#ccc", textDecoration: "none", fontSize: "14px" }}>
+                            <span aria-hidden="true">▧</span>
+                            Pedidos
+                          </Link>
+                          <Link to="/admin/usuarios" onClick={() => setDropdownOpen(false)} style={{ display: "flex", alignItems: "center", gap: "10px", padding: "10px 16px", color: "#ccc", textDecoration: "none", fontSize: "14px" }}>
+                            <span aria-hidden="true">♙</span>
+                            Usuarios
+                          </Link>
+                        </div>
+                      )}
                       <Link to="/ActualizarPerfil" onClick={() => setDropdownOpen(false)} style={{ display: "flex", alignItems: "center", gap: "10px", padding: "12px 16px", color: "#4a90d9", textDecoration: "none", background: "#2a3a5c", fontSize: "14px", fontWeight: 500 }}>
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="#4a90d9" strokeWidth={2}><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                         Actualizar perfil
-                      </Link>
-                      <Link to="/mis-pedidos" onClick={() => setDropdownOpen(false)} style={{ display: "flex", alignItems: "center", gap: "10px", padding: "12px 16px", color: "#ccc", textDecoration: "none", fontSize: "14px" }}>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
-                        Mis pedidos
                       </Link>
                       <Link to="/favoritos" onClick={() => setDropdownOpen(false)} style={{ display: "flex", alignItems: "center", gap: "10px", padding: "12px 16px", color: "#ccc", textDecoration: "none", fontSize: "14px" }}>
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
@@ -140,11 +186,25 @@ function Nav() {
 
       {/* Fila inferior: links */}
       <div style={{ background: "#111", borderBottom: "1px solid #2e2e2e", padding: "6px 0" }}>
-        <div className="container d-flex align-items-center gap-4">
-          <Link to="/" style={{ color: "#ccc", textDecoration: "none", fontSize: "13px" }}>Inicio</Link>
-          <Link to="/catalogo" style={{ color: "#ccc", textDecoration: "none", fontSize: "13px" }}>Catálogo</Link>
-          {usuario && (
-            <Link to="/mis-pedidos" style={{ color: "#ccc", textDecoration: "none", fontSize: "13px" }}>Mis pedidos</Link>
+        <div className="container d-flex align-items-center gap-4" style={{ overflowX: "auto", whiteSpace: "nowrap" }}>
+          {esAdministrador ? (
+            <>
+              <Link to="/admin/dashboard" style={estiloEnlace("/admin/dashboard")}>Dashboard</Link>
+              <Link to="/admin/productos" style={estiloEnlace("/admin/productos")}>Productos</Link>
+              <Link to="/admin/inventario" style={estiloEnlace("/admin/inventario")}>Inventario</Link>
+              <Link to="/admin/pedidos" style={estiloEnlace("/admin/pedidos")}>Pedidos</Link>
+              <Link to="/admin/usuarios" style={estiloEnlace("/admin/usuarios")}>Usuarios</Link>
+              <Link to="/mis-pedidos" style={estiloEnlace("/mis-pedidos")}>Mis pedidos</Link>
+              <Link to="/catalogo" style={{ ...estiloEnlace("/catalogo", "#ff8c42"), marginLeft: "auto" }}>Comprar en la tienda</Link>
+            </>
+          ) : (
+            <>
+              <Link to="/" style={estiloEnlace("/")}>Inicio</Link>
+              <Link to="/catalogo" style={estiloEnlace("/catalogo")}>Catálogo</Link>
+              {usuario && (
+                <Link to="/mis-pedidos" style={estiloEnlace("/mis-pedidos")}>Mis pedidos</Link>
+              )}
+            </>
           )}
         </div>
       </div>

@@ -1,0 +1,24 @@
+# Documentación de Three Happy Kids
+
+Esta carpeta contiene la documentación consolidada del proyecto. Cada tema tiene una sola guía para evitar información repetida.
+
+## Orden recomendado
+
+1. `01-INICIO-Y-CONFIGURACION.md`: instalación, `.env` y ejecución.
+2. `02-AUTENTICACION-SHA2-Y-JWT.md`: registro, login, SHA-256 con salt, roles y tokens.
+3. `03-FRONTEND-RUTAS-Y-COMPRAS.md`: rutas, panel admin, sesión, menú, carrito y pedidos.
+4. `04-BASE-DE-DATOS.md`: estructura MySQL, usuarios de prueba y consultas.
+5. `sql/USUARIOS_SHA2_SETUP.sql`: crea roles y usuarios de prueba.
+6. `sql/sql_insert_test_users.sql`: script adicional de datos de prueba.
+
+La documentación describe el código actual. Para configurar el proyecto se necesita editar `Back-end/.env` y ejecutar los comandos indicados en la primera guía.
+
+## Estado actual
+
+- Autenticación con SHA-256 + salt y JWT.
+- Sesión opcional: `localStorage` con “Recordarme” o `sessionStorage` para sesión temporal.
+- Rutas administrativas protegidas por el rol `administrador`.
+- El administrador también puede comprar desde el catálogo, usar el carrito y consultar sus pedidos.
+- Menú adaptado para clientes y administradores.
+- `Mis pedidos` con filtros por estado y detalles expandibles.
+- Documentación antigua consolidada en esta carpeta para evitar versiones repetidas.

@@ -1,5 +1,5 @@
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { Link, useSearchParams } from "react-router-dom";
+import { useState } from "react";
 
 import img1 from "./assets/productos/producto1.jpg";
 import img2 from "./assets/productos/producto2.jpg";
@@ -27,12 +27,7 @@ const todos = [
 
 function Index() {
   const [searchParams] = useSearchParams();
-  const [busqueda, setBusqueda] = useState(searchParams.get("buscar") || "");
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    setBusqueda(searchParams.get("buscar") || "");
-  }, [searchParams]);
+  const busqueda = searchParams.get("buscar") || "";
 
   const productos = todos.filter((p) =>
     p.nombre.toLowerCase().includes(busqueda.toLowerCase())

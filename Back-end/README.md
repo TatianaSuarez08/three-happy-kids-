@@ -24,33 +24,21 @@ Endpoints relevantes:
 - `GET /me` — header `Authorization: Bearer <token>` — devuelve `user` (payload del token).
 
 Si la tabla `Usuarios` no contiene la columna `role`, aplica la migración en `db-migrations/001-add-role-to-usuarios.sql`.
-# Back-end Three Happy Kids
+# Backend Three Happy Kids
 
-## Dependencias
+La guía única del proyecto está en [DOCUMENTACION/README.md](../DOCUMENTACION/README.md).
+
+Para configurar y ejecutar el backend, consulta:
+
+- `DOCUMENTACION/01-INICIO-Y-CONFIGURACION.md`
+- `DOCUMENTACION/02-AUTENTICACION-SHA2-Y-JWT.md`
+- `DOCUMENTACION/04-BASE-DE-DATOS.md`
+
+Inicio rápido:
 
 ```bash
 npm install
-```
-
-## Iniciar servidor
-
-```bash
 npm run dev
 ```
 
-## Rutas de autenticación
-
-- `POST /api/auth/register`
-- `POST /api/auth/login`
-
-## Ejemplo de tabla SQL
-
-```sql
-CREATE TABLE Usuarios (
-  id INT IDENTITY(1,1) PRIMARY KEY,
-  nombre VARCHAR(100) NOT NULL,
-  email VARCHAR(200) NOT NULL UNIQUE,
-  password VARCHAR(255) NOT NULL,
-  created_at DATETIME2 DEFAULT GETDATE()
-);
-```
+El backend usa las rutas actuales `POST /registro`, `POST /login` y `GET /me`.

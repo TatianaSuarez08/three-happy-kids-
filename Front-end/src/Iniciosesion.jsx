@@ -9,20 +9,10 @@ function InicioSesion() {
 
   // Estados locales del componente
   const [showPass, setShowPass] = useState(false); // controla mostrar/ocultar contraseña
+  const [recordarme, setRecordarme] = useState(false); // decide si la sesión permanece al cerrar la pestaña
   const [error, setError] = useState(""); // mensaje de error para mostrar en la UI
   const [loading, setLoading] = useState(false); // indicador de envío
   const navigate = useNavigate(); // hook de react-router para navegación programática
-
-  // Verificar si ya existe sesión activa
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    const user = localStorage.getItem('user');
-    if (token && user) {
-      // Si ya hay sesión, redirigir según el rol
-      const userData = JSON.parse(user);
-      redirigirPorRol(userData.roles);
-    }
-  }, []);
 
   const normalizarRoles = (roles = []) => {
     if (!Array.isArray(roles)) return [];
@@ -49,6 +39,29 @@ function InicioSesion() {
       navigate("/");
     }
   };
+
+  // Verificar si ya existe sesión activa al volver a la pantalla de login
+  useEffect(() => {
+    const storage = localStorage.getItem('token') ? localStorage : sessionStorage;
+    const token = storage.getItem('token');
+    const userJson = storage.getItem('user');
+
+    if (!token || !userJson) return;
+
+    try {
+      const user = JSON.parse(userJson);
+      redirigirPorRol(user.roles);
+    } catch {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      localStorage.removeItem('usuario');
+      localStorage.removeItem('userRoles');
+      sessionStorage.removeItem('token');
+      sessionStorage.removeItem('user');
+      sessionStorage.removeItem('usuario');
+      sessionStorage.removeItem('userRoles');
+    }
+  }, [navigate]);
 
   // Funciones de navegación rápidas
   const cancelar = () => navigate("/registro"); // ir a página de registro
@@ -103,17 +116,29 @@ function InicioSesion() {
 
       // Almacenamiento de credenciales/tokens en localStorage (simple y persistente)
       // Nota: para mayor seguridad usar HttpOnly cookies en producción
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('user', JSON.stringify(data.user));
-      localStorage.setItem('usuario', JSON.stringify(data.user));
-      localStorage.setItem('userRoles', JSON.stringify(data.user.roles || []));
+      const userSession = {
+        ...data.user,
+        roles: Array.isArray(data.user.roles) ? data.user.roles : [],
+      };
+
+      const storage = recordarme ? localStorage : sessionStorage;
+      const otherStorage = recordarme ? sessionStorage : localStorage;
+
+      otherStorage.removeItem('token');
+      otherStorage.removeItem('user');
+      otherStorage.removeItem('usuario');
+      otherStorage.removeItem('userRoles');
+      storage.setItem('token', data.token);
+      storage.setItem('user', JSON.stringify(userSession));
+      storage.setItem('usuario', JSON.stringify(userSession));
+      storage.setItem('userRoles', JSON.stringify(userSession.roles));
 
       // Limpiar formulario
       correoRef.current.value = '';
       contraseñaRef.current.value = '';
 
       // Redirigir según rol
-      redirigirPorRol(data.user.roles);
+      redirigirPorRol(userSession.roles);
       
     } catch (err) {
       // Mensaje de error específico
@@ -130,6 +155,8 @@ function InicioSesion() {
 
         {/* Sección de logo/instrucción */}
         <div className="login-logo">
+          <div className="login-logo-icon" aria-hidden="true">HK</div>
+          <h1>HappyKids</h1>
           <p>Inicia sesión para continuar</p>
         </div>
 
@@ -180,6 +207,16 @@ function InicioSesion() {
           <div className="login-forgot">
             <Link to="/recuperar-pass">¿Olvidaste tu contraseña?</Link>
           </div>
+
+          <label className="login-remember">
+            <input
+              type="checkbox"
+              checked={recordarme}
+              onChange={(e) => setRecordarme(e.target.checked)}
+              disabled={loading}
+            />
+            Recordarme en este dispositivo
+          </label>
 
           {/* Botones: enviar formulario y navegar a registro */}
           <div className="botones">

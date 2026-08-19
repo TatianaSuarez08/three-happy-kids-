@@ -20,9 +20,10 @@ const normalizeRoles = (roles) => {
 // - children: elemento a renderizar si autorizado
 // - allowedRoles: array de roles permitidos (opcional)
 export default function ProtectedRoute({ children, allowedRoles = [] }) {
-  const token = localStorage.getItem('token');
-  const userJson = localStorage.getItem('user') || localStorage.getItem('usuario');
-  const userRolesJson = localStorage.getItem('userRoles');
+  const storage = localStorage.getItem('token') ? localStorage : sessionStorage;
+  const token = storage.getItem('token');
+  const userJson = storage.getItem('user') || storage.getItem('usuario');
+  const userRolesJson = storage.getItem('userRoles');
   const user = userJson ? JSON.parse(userJson) : null;
 
   const userRoles = normalizeRoles(

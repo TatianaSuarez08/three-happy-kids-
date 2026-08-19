@@ -50,17 +50,43 @@ const estadoEmoji = {
 function MisPedidos() {
   const navigate = useNavigate();
   const [pedidoAbierto, setPedidoAbierto] = useState(null);
+  const [filtroEstado, setFiltroEstado] = useState("Todos");
+
+  const pedidosFiltrados = pedidosEjemplo.filter(
+    (pedido) => filtroEstado === "Todos" || pedido.estado === filtroEstado
+  );
+
+  const cantidadPorEstado = (estado) =>
+    pedidosEjemplo.filter((pedido) => pedido.estado === estado).length;
 
   return (
     <div className="pedidos-page">
       <div className="pedidos-container">
 
-        <button className="pedidos-volver" onClick={() => navigate("/")}>
-          ← Volver al inicio
+        <button className="pedidos-volver" onClick={() => navigate("/cliente/catalogo")}>
+          ← Volver al catálogo
         </button>
 
-        <h2 className="pedidos-titulo">Mis pedidos</h2>
-        <p className="pedidos-sub">Historial de todas tus compras</p>
+        <div className="pedidos-heading">
+          <div>
+            <h2 className="pedidos-titulo">Mis pedidos</h2>
+            <p className="pedidos-sub">Consulta el estado y el detalle de tus compras</p>
+          </div>
+          <span className="pedidos-total-count">{pedidosEjemplo.length} pedidos</span>
+        </div>
+
+        <div className="pedidos-resumen" aria-label="Resumen de pedidos">
+          {["Todos", "Pendiente", "En camino", "Entregado"].map((estado) => (
+            <button
+              key={estado}
+              className={`pedido-resumen-item ${filtroEstado === estado ? "seleccionado" : ""}`}
+              onClick={() => setFiltroEstado(estado)}
+            >
+              <span>{estado === "Todos" ? pedidosEjemplo.length : cantidadPorEstado(estado)}</span>
+              <small>{estado}</small>
+            </button>
+          ))}
+        </div>
 
         {pedidosEjemplo.length === 0 ? (
           <div className="pedidos-vacio">
@@ -71,11 +97,28 @@ function MisPedidos() {
               Ver productos
             </button>
           </div>
-        ) : (
+        ) : pedidosFiltrados.length === 0 ? (
+            <div className="pedidos-vacio pedidos-vacio-filtro">
+              <span>⌕</span>
+              <h3>No hay pedidos con este estado</h3>
+              <p>Prueba seleccionando otro filtro.</p>
+            </div>
+          ) : (
           <div className="pedidos-lista">
-            {pedidosEjemplo.map((pedido) => (
+            {pedidosFiltrados.map((pedido) => (
               <div key={pedido.id} className="pedido-card">
-                <div className="pedido-header" onClick={() => setPedidoAbierto(pedidoAbierto === pedido.id ? null : pedido.id)}>
+                <div
+                  className="pedido-header"
+                  role="button"
+                  tabIndex="0"
+                  onClick={() => setPedidoAbierto(pedidoAbierto === pedido.id ? null : pedido.id)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      setPedidoAbierto(pedidoAbierto === pedido.id ? null : pedido.id);
+                    }
+                  }}
+                >
                   <div className="pedido-header-info">
                     <span className="pedido-numero">Pedido #{pedido.id}</span>
                     <span className="pedido-fecha">{pedido.fecha}</span>
@@ -112,7 +155,7 @@ function MisPedidos() {
               </div>
             ))}
           </div>
-        )}
+          )}
       </div>
     </div>
   );

@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 
 // Vistas de Cliente (SIN .jsx al final)
 import Index from './Index';
@@ -16,7 +16,6 @@ import Registro from './Registro';
 
 
 // Vistas de Admin (SIN .jsx al final)
-import IndexAdmi from './admin/IndexAdmi';
 import Dashboard from './admin/page-Dashboard';
 import Inventario from './admin/page-Inventario';
 import Pedidos from './admin/page-Pedidos';
@@ -52,11 +51,12 @@ function App() {
         <Route path="/no-autorizado" element={<NoAutorizado />} />
 
         {/* Rutas Admin protegidas por role 'administrador' */}
+        <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
         <Route
           path="/admin/dashboard"
           element={
             <ProtectedRoute allowedRoles={["administrador"]}>
-              <IndexAdmi />
+              <Dashboard />
             </ProtectedRoute>
           }
         />
@@ -78,6 +78,30 @@ function App() {
         />
         <Route
           path="/admin/producto"
+          element={
+            <ProtectedRoute allowedRoles={["administrador"]}>
+              <Producto />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/productos"
+          element={
+            <ProtectedRoute allowedRoles={["administrador"]}>
+              <Producto />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/agregar-producto"
+          element={
+            <ProtectedRoute allowedRoles={["administrador"]}>
+              <Producto />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/editar-producto/:id"
           element={
             <ProtectedRoute allowedRoles={["administrador"]}>
               <Producto />

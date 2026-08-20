@@ -145,7 +145,7 @@ export const loginUser = async (req, res) => {
     if (error.message === 'El usuario está inactivo') {
       return res.status(403).json({ error: 'El usuario está inactivo' });
     }
-    
+
     res.status(500).json({ error: 'Error en el login' });
   }
 };

@@ -12,8 +12,9 @@ Esta carpeta contiene la documentación consolidada del proyecto. Cada tema tien
 6. `06-DIAGNOSTICO-BASE-DE-DATOS-Y-DASHBOARD.md`: revisión del esquema, riesgos, consultas y API necesaria para el dashboard.
 7. `07-CAMBIOS-BASE-DE-DATOS-CORREGIDA.md`: explicación de los cambios aplicados al nuevo esquema SQL y sus motivos.
 8. `sql/DataBaseHappyKids_CORREGIDA.sql`: esquema completo corregido, sin datos de prueba ni consultas `SELECT`.
-9. `sql/USUARIOS_SHA2_SETUP.sql`: crea roles y usuarios de prueba.
-10. `sql/sql_insert_test_users.sql`: script adicional de datos de prueba.
+9. `08-COMPARACION-PRODUCTO-Y-SUBIDA-DE-IMAGEN.md`: correspondencia de campos y flujo para guardar imágenes de productos.
+10. `sql/USUARIOS_SHA2_SETUP.sql`: crea roles y usuarios de prueba.
+11. `sql/sql_insert_test_users.sql`: script adicional de datos de prueba.
 
 La documentación describe el código actual. Para configurar el proyecto se necesita editar `Back-end/.env` y ejecutar los comandos indicados en la primera guía.
 

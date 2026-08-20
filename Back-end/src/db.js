@@ -1,5 +1,11 @@
 import mysql from 'mysql2/promise'; // Cliente MySQL que soporta Promises (async/await)
-import 'dotenv/config'; // Carga variables de entorno desde un archivo .env (side-effect import)
+import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const currentFile = fileURLToPath(import.meta.url);
+const currentDirectory = path.dirname(currentFile);
+dotenv.config({ path: path.resolve(currentDirectory, '../../.env') });
 
 // Configuración de la conexión y del pool de conexiones usando variables de entorno
 const config = {

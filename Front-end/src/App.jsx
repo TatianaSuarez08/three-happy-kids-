@@ -20,6 +20,8 @@ import Dashboard from './admin/page-Dashboard';
 import Inventario from './admin/page-Inventario';
 import Pedidos from './admin/page-Pedidos';
 import Producto from './admin/page-producto';
+import AgregarProducto from './admin/page-AgregarProducto';
+import EditarProducto from './admin/page-EditarProducto';
 import Usuarios from './admin/page-Usuarios';
 
 // Componentes globales
@@ -96,7 +98,7 @@ function App() {
           path="/admin/agregar-producto"
           element={
             <ProtectedRoute allowedRoles={["administrador"]}>
-              <Producto />
+              <AgregarProducto />
             </ProtectedRoute>
           }
         />
@@ -104,7 +106,7 @@ function App() {
           path="/admin/editar-producto/:id"
           element={
             <ProtectedRoute allowedRoles={["administrador"]}>
-              <Producto />
+              <EditarProducto />
             </ProtectedRoute>
           }
         />

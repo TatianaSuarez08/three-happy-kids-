@@ -1,36 +1,67 @@
-
-
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import "../styles/style.css";
-
-const productosEjemplo = [
-  { id: 1, nombre: "Sudadera con body", precio: "$35.000", categoria: "Bebés", stock: 10, estado: "Activo" },
-  { id: 2, nombre: "Retro jean", precio: "$58.000", categoria: "Niños", stock: 5, estado: "Activo" },
-  { id: 3, nombre: "Conjunto bunny", precio: "$29.000", categoria: "Niñas", stock: 8, estado: "Activo" },
-  { id: 4, nombre: "Sudadera los Angeles", precio: "$45.000", categoria: "Niños", stock: 3, estado: "Activo" },
-  { id: 5, nombre: "Bermuda seleccion", precio: "$32.000", categoria: "Niños", stock: 12, estado: "Activo" },
-  { id: 6, nombre: "Capibara canguro", precio: "$36.000", categoria: "Niños", stock: 7, estado: "Activo" },
-  { id: 7, nombre: "Bermuda K-POP", precio: "$36.000", categoria: "Niñas", stock: 9, estado: "Activo" },
-  { id: 8, nombre: "Sudadera montera", precio: "$39.000", categoria: "Niños", stock: 6, estado: "Activo" },
-  { id: 9, nombre: "Sudadera mui mui", precio: "$31.000", categoria: "Niñas", stock: 11, estado: "Activo" },
-  { id: 10, nombre: "Sudadera new york", precio: "$31.000", categoria: "Niños", stock: 8, estado: "Activo" },
-];
 
 function Productos() {
   const navigate = useNavigate();
-  const [productos, setProductos] = useState(productosEjemplo);
+  const [productos, setProductos] = useState([]);
   const [busqueda, setBusqueda] = useState("");
   const [modal, setModal] = useState(null);
   const [productoSeleccionado, setProductoSeleccionado] = useState(null);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const backend = import.meta.env.VITE_BACKEND_URL || "http://localhost:3000";
+
+  useEffect(() => {
+    const cargarProductos = async () => {
+      setLoading(true);
+      setError("");
+
+      try {
+        const storage = localStorage.getItem("token") ? localStorage : sessionStorage;
+        const token = storage.getItem("token");
+        const response = await fetch(`${backend}/productos`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || "No se pudieron cargar los productos");
+        }
+
+        setProductos(data.products || []);
+      } catch (err) {
+        setError(err.message || "No se pudieron cargar los productos");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    cargarProductos();
+  }, [backend]);
 
   const productosFiltrados = productos.filter((p) =>
     p.nombre.toLowerCase().includes(busqueda.toLowerCase())
   );
 
-  const eliminar = (id) => {
-    setProductos((prev) => prev.filter((p) => p.id !== id));
-    setModal(null);
+  const eliminar = async (id) => {
+    setError("");
+
+    try {
+      const storage = localStorage.getItem("token") ? localStorage : sessionStorage;
+      const response = await fetch(`${backend}/productos/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${storage.getItem("token")}` },
+      });
+      const data = await response.json();
+
+      if (!response.ok) throw new Error(data.error || "No se pudo desactivar el producto");
+
+      setProductos((prev) => prev.filter((p) => p.id !== id));
+      setModal(null);
+    } catch (err) {
+      setError(err.message || "No se pudo desactivar el producto");
+    }
   };
 
   const confirmarEliminar = (producto) => {
@@ -54,6 +85,8 @@ function Productos() {
         </div>
 
         {/* Búsqueda */}
+        {error && <div className="login-error">{error}</div>}
+
         <div className="admin-search">
           <span>🔍</span>
           <input
@@ -79,7 +112,13 @@ function Productos() {
               </tr>
             </thead>
             <tbody>
-              {productosFiltrados.length === 0 ? (
+              {loading ? (
+                <tr>
+                  <td colSpan="7" style={{ textAlign: "center", color: "#888", padding: "2rem" }}>
+                    Cargando productos...
+                  </td>
+                </tr>
+              ) : productosFiltrados.length === 0 ? (
                 <tr>
                   <td colSpan="7" style={{ textAlign: "center", color: "#888", padding: "2rem" }}>
                     No se encontraron productos
@@ -98,7 +137,9 @@ function Productos() {
                       </span>
                     </td>
                     <td>
-                      <span className="admin-badge activo">{p.estado}</span>
+                      <span className={`admin-badge ${p.estado === "Activo" ? "activo" : "inactivo"}`}>
+                        {p.estado}
+                      </span>
                     </td>
                     <td>
                       <div className="admin-acciones">

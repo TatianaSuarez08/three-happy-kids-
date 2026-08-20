@@ -1,10 +1,11 @@
-import 'dotenv/config'; // Carga variables de entorno desde un archivo .env (side-effect import)
 import express from 'express'; // Importa el framework Express para crear el servidor
 import cors from 'cors'; // Importa middleware para habilitar CORS (peticiones entre orígenes)
 import morgan from 'morgan'; // Importa logger HTTP para desarrollo
 
 import './src/db.js'; // Ejecuta la inicialización de la base de datos (conexión a MySQL)
 import userRoutes from './src/routes/UsuarioRoute.js'; // Importa las rutas relacionadas con usuarios
+import productRoutes from './src/routes/ProductoRoute.js'; // Importa las rutas relacionadas con productos
+import { productImagesDirectory } from './src/middleware/subidaImagen.js';
 
 const app = express(); // Crea la instancia de la aplicación Express
 
@@ -22,6 +23,7 @@ app.use(cors(corsOptions)); // Activa CORS con opciones configuradas
 app.use(express.json()); // Middleware para parsear bodies en formato JSON
 app.use(express.urlencoded({ extended: true })); // Middleware para parsear bodies URL-encoded (formularios)
 app.use(morgan('dev')); // Activa el logger en modo 'dev' para ver peticiones en consola
+app.use('/assets/productos', express.static(productImagesDirectory));
 
 // Ruta raíz: responde con un JSON indicando que la API está lista
 app.get('/', (req, res) => {
@@ -34,6 +36,7 @@ app.get('/', (req, res) => {
 
 // Monta las rutas de usuario en la ruta base '/'
 app.use('/', userRoutes);
+app.use('/', productRoutes);
 
 // Inicia el servidor escuchando en el puerto configurado
 app.listen(PORT, () => {

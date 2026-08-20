@@ -175,6 +175,67 @@ Respuesta correcta:
 
 El endpoint responde `401` si falta el token, no utiliza el formato `Bearer <token>` o el JWT no es válido o ha expirado.
 
+### `GET /productos`
+
+Obtiene los productos junto con su categoría, talla, color y stock. Es una ruta administrativa y requiere:
+
+```http
+Authorization: Bearer jwt_del_administrador
+```
+
+La respuesta contiene un arreglo `products`. El frontend lo utiliza para llenar la tabla de productos del panel administrativo.
+
+### `POST /productos`
+
+Crea un producto y su registro inicial en `inventario` dentro de una transacción. También es una ruta exclusiva para administradores.
+
+Cabeceras:
+
+```http
+Content-Type: application/json
+Authorization: Bearer jwt_del_administrador
+```
+
+Cuerpo enviado por el formulario de `page-producto.jsx`:
+
+```json
+{
+  "nombre": "Sudadera nueva",
+  "descripcion": "Sudadera para niños",
+  "precioCompra": 20000,
+  "precioVenta": 35000,
+  "marca": "HappyKids",
+  "imagen": "https://ejemplo.com/sudadera.jpg",
+  "idCategoria": 1,
+  "idTalla": 2,
+  "idColor": 3,
+  "stock": 10,
+  "stockMinimo": 3
+}
+```
+
+`idCategoria`, `idTalla` e `idColor` deben corresponder a registros existentes en las tablas `categoria`, `talla` y `color`. Al guardar, el backend inserta el producto y crea su inventario inicial. Si alguna operación falla, la transacción se revierte.
+
+### `GET /productos/:id`
+
+Obtiene un producto individual para llenar el formulario de edición. Requiere un JWT de administrador.
+
+### `PUT /productos/:id`
+
+Actualiza los datos del producto y su inventario. Usa `multipart/form-data`, igual que el alta. La imagen es opcional: si no se envía, se conserva la imagen actual; si se envía una nueva, se guarda y se elimina la anterior.
+
+### `DELETE /productos/:id`
+
+Desactiva el producto cambiando `producto.estado` a `Inactivo`. No elimina físicamente la fila porque puede estar relacionada con `detalle_pedido`, `detalle_compra` o registros históricos.
+
+Todas las rutas de productos requieren:
+
+```http
+Authorization: Bearer jwt_del_administrador
+```
+
+El CRUD de productos está implementado en `ProductoModel.js`, `ProductoController.js` y `UsuarioRoute.js`. El formulario de alta está en `page-AgregarProducto.jsx` y el de edición en `page-EditarProducto.jsx`.
+
 ## 4. Cómo se consume desde React
 
 El login construye la URL a partir de la variable de entorno y usa `fetch`:

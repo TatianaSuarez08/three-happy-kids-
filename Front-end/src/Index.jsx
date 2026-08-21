@@ -1,39 +1,44 @@
 import { Link, useSearchParams } from "react-router-dom";
-import { useState } from "react";
-
-import img1 from "./assets/productos/producto1.jpg";
-import img2 from "./assets/productos/producto2.jpg";
-import img3 from "./assets/productos/producto3.jpg";
-import img4 from "./assets/productos/producto4.jpg";
-import img5 from "./assets/productos/producto5.jpg";
-import img6 from "./assets/productos/producto6.jpg";
-import img7 from "./assets/productos/producto7.jpg";
-import img8 from "./assets/productos/producto8.jpg";
-import img9 from "./assets/productos/producto9.jpg";
-import img10 from "./assets/productos/producto10.jpg";
-
-const todos = [
-  { id: 1, nombre: "Sudadera con body", precio: "$35.000", img: img1, categoria: "niña" },
-  { id: 2, nombre: "Retro jean", precio: "$58.000", img: img2, categoria: "ninos" },
-  { id: 3, nombre: "Conjunto bunny", precio: "$29.000", img: img3, categoria: "ninas" },
-  { id: 4, nombre: "Sudadera los Angeles", precio: "$45.000", img: img4, categoria: "ninos" },
-  { id: 5, nombre: "Bermuda seleccion", precio: "$32.000", img: img5, categoria: "ninos" },
-  { id: 6, nombre: "Capibara canguro", precio: "$36.000", img: img6, categoria: "ninos" },
-  { id: 7, nombre: "Bermuda K-POP", precio: "$36.000", img: img7, categoria: "ninas" },
-  { id: 8, nombre: "Sudadera montera con cremallera", precio: "$39.000", img: img8, categoria: "ninos" },
-  { id: 9, nombre: "Sudadera mui mui", precio: "$31.000", img: img9, categoria: "ninas" },
-  { id: 10, nombre: "Sudadera new york", precio: "$31.000", img: img10, categoria: "ninos" },
-];
+import { useEffect, useState } from "react";
 
 function Index() {
   const [searchParams] = useSearchParams();
   const busqueda = searchParams.get("buscar") || "";
+  const [productos, setProductos] = useState([]);
+  const [cargando, setCargando] = useState(true);
+  const [error, setError] = useState("");
+  const [hoverBtn, setHoverBtn] = useState(null);
+  const backend = import.meta.env.VITE_BACKEND_URL || "http://localhost:3000";
 
-  const productos = todos.filter((p) =>
+  useEffect(() => {
+    const cargarProductos = async () => {
+      try {
+        const response = await fetch(`${backend}/productos-publicos`);
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || "No se pudieron cargar los productos");
+        }
+
+        setProductos(data.products || []);
+      } catch (err) {
+        setError(err.message || "No se pudo conectar con la base de datos");
+      } finally {
+        setCargando(false);
+      }
+    };
+
+    cargarProductos();
+  }, [backend]);
+
+  const productosFiltrados = productos.filter((p) =>
     p.nombre.toLowerCase().includes(busqueda.toLowerCase())
   );
-
-  const [hoverBtn, setHoverBtn] = useState(null);
+  const formatoPrecio = new Intl.NumberFormat("es-CO", {
+    style: "currency",
+    currency: "COP",
+    maximumFractionDigits: 0,
+  });
 
   return (
     <div style={{ background: "#ffffff", minHeight: "100vh", fontFamily: "'Inter', sans-serif" }}>
@@ -86,14 +91,22 @@ function Index() {
           Los productos más recientes para tus pequeños
         </p>
 
-        {productos.length === 0 ? (
+        {cargando ? (
+          <div style={{ textAlign: "center", padding: "3rem 1rem", color: "#8a8a8a" }}>
+            Cargando productos...
+          </div>
+        ) : error ? (
+          <div style={{ textAlign: "center", padding: "3rem 1rem", color: "#a32d2d" }}>
+            {error}
+          </div>
+        ) : productosFiltrados.length === 0 ? (
           <div style={{ textAlign: "center", padding: "3rem 1rem", color: "#8a8a8a" }}>
             <span style={{ fontSize: "40px", display: "block", marginBottom: "12px" }}>😕</span>
             <p>No se encontraron productos para "<strong>{busqueda}</strong>"</p>
           </div>
         ) : (
           <div className="hk-productos-grid">
-            {productos.map((p) => (
+            {productosFiltrados.map((p) => (
               <div
                 key={p.id}
                 style={{
@@ -106,7 +119,9 @@ function Index() {
               >
                 <div style={{ aspectRatio: "1 / 1", overflow: "hidden" }}>
                   <img
-                    src={p.img}
+                    src={p.imagen_producto
+                      ? `${backend}${p.imagen_producto.startsWith("/assets/") ? p.imagen_producto : `/assets/productos/${p.imagen_producto}`}`
+                      : ""}
                     alt={p.nombre}
                     style={{ width: "100%", height: "100%", objectFit: "cover" }}
                   />
@@ -116,7 +131,7 @@ function Index() {
                     {p.nombre}
                   </span>
                   <span style={{ fontSize: "16px", fontWeight: 700, color: "#ff8c42", display: "block", marginBottom: "14px" }}>
-                    {p.precio}
+                    {formatoPrecio.format(Number(p.precio) || 0)}
                   </span>
                   <Link
                     to={`/producto/${p.id}`}

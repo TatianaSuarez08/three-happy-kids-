@@ -14,6 +14,7 @@ import { uploadProductImage } from '../middleware/subidaImagen.js';
 const router = Router();
 const administrador = [auth, permitRoles('administrador')];
 
+router.get('/productos-publicos', getProducts);
 router.get('/colores', ...administrador, getColors);
 router.get('/productos', ...administrador, getProducts);
 router.get('/productos/:id', ...administrador, getProduct);

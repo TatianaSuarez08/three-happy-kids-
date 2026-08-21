@@ -7,6 +7,9 @@ function ConfirmarCompra() {
   const { carrito, total, vaciarCarrito } = useCarrito();
   const navigate = useNavigate();
   const [modal, setModal] = useState(null);
+  const [error, setError] = useState("");
+  const [guardando, setGuardando] = useState(false);
+  const backend = import.meta.env.VITE_BACKEND_URL || "http://localhost:3000";
   const [form, setForm] = useState({
     direccion: "",
     ciudad: "",
@@ -18,16 +21,36 @@ function ConfirmarCompra() {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.direccion || !form.ciudad || !form.telefono) return;
-    setModal("exito");
+    setError("");
+    setGuardando(true);
+
+    try {
+      const storage = localStorage.getItem("token") ? localStorage : sessionStorage;
+      const response = await fetch(`${backend}/pedidos`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${storage.getItem("token")}`,
+        },
+        body: JSON.stringify({ ...form, productos: carrito.map((producto) => ({ id: producto.id, cantidad: producto.cantidad })) }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "No se pudo crear el pedido");
+      setModal("exito");
+    } catch (err) {
+      setError(err.message || "No se pudo crear el pedido");
+    } finally {
+      setGuardando(false);
+    }
   };
 
   const modalExito = () => {
     vaciarCarrito();
     setModal(null);
-    navigate("/");
+    navigate("/mis-pedidos");
   };
 
   if (carrito.length === 0) {
@@ -39,6 +62,7 @@ function ConfirmarCompra() {
     <div className="carrito-page">
       <div className="carrito-container">
         <h2 className="carrito-titulo">Confirmar compra</h2>
+        {error && <div className="login-error">{error}</div>}
 
         <div className="carrito-layout">
 
@@ -112,8 +136,8 @@ function ConfirmarCompra() {
               </div>
 
               <div className="confirmar-botones">
-                <button type="submit" className="btn-ingresar">
-                  ✅ Realizar pedido
+                <button type="submit" className="btn-ingresar" disabled={guardando}>
+                  {guardando ? "Guardando pedido..." : "✅ Realizar pedido"}
                 </button>
                 <button
                   type="button"
@@ -155,7 +179,7 @@ function ConfirmarCompra() {
           <div className="modal-box">
             <h4 style={{ color: "#3a7d44" }}>¡Pedido realizado!</h4>
             <p>Tu pedido ha sido confirmado. Pronto nos pondremos en contacto contigo.</p>
-            <button className="btn-ingresar" onClick={modalExito}>Aceptar</button>
+            <button className="btn-ingresar" onClick={modalExito}>Ver mis pedidos</button>
           </div>
         </div>
       )}

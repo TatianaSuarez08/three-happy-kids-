@@ -2,6 +2,7 @@ import { unlink } from 'fs/promises';
 import {
   createProduct,
   deactivateProduct,
+  findColors,
   findProductById,
   findProducts,
   updateProduct
@@ -10,6 +11,16 @@ import {
 const toNumber = (value) => {
   const number = Number(value);
   return Number.isFinite(number) ? number : null;
+};
+
+export const getColors = async (_req, res) => {
+  try {
+    const colors = await findColors();
+    res.json({ success: true, colors });
+  } catch (error) {
+    console.error('Error al consultar colores:', error);
+    res.status(500).json({ error: 'No se pudieron consultar los colores' });
+  }
 };
 
 export const getProducts = async (_req, res) => {
@@ -51,7 +62,8 @@ export const addProduct = async (req, res) => {
       idTalla,
       idColor,
       stock,
-      stockMinimo
+      stockMinimo,
+      estado
     } = req.body;
 
     if (!req.file) {
@@ -67,6 +79,7 @@ export const addProduct = async (req, res) => {
     const parsedColor = Number.parseInt(idColor, 10);
     const parsedStock = Number.parseInt(stock, 10);
     const parsedStockMinimo = Number.parseInt(stockMinimo, 10);
+    const parsedEstado = estado || 'Activo';
 
     if (!nombre || nombre.trim().length < 3) {
       return res.status(400).json({ error: 'El nombre debe tener al menos 3 caracteres' });
@@ -92,6 +105,10 @@ export const addProduct = async (req, res) => {
       return res.status(400).json({ error: 'El stock mínimo debe ser un número mayor o igual a cero' });
     }
 
+    if (!['Activo', 'Inactivo'].includes(parsedEstado)) {
+      return res.status(400).json({ error: 'El estado del producto no es válido' });
+    }
+
     const product = await createProduct({
       nombre: nombre.trim(),
       descripcion: descripcion?.trim(),
@@ -103,7 +120,8 @@ export const addProduct = async (req, res) => {
       idTalla: parsedTalla,
       idColor: parsedColor,
       stock: parsedStock,
-      stockMinimo: parsedStockMinimo
+      stockMinimo: parsedStockMinimo,
+      estado: parsedEstado
     });
 
     res.status(201).json({
@@ -141,7 +159,8 @@ const parseProductData = (body) => {
     idTalla,
     idColor,
     stock,
-    stockMinimo
+    stockMinimo,
+    estado
   } = body;
 
   const parsedPrecioCompra = precioCompra === '' || precioCompra == null
@@ -153,6 +172,7 @@ const parseProductData = (body) => {
   const parsedColor = Number.parseInt(idColor, 10);
   const parsedStock = Number.parseInt(stock, 10);
   const parsedStockMinimo = Number.parseInt(stockMinimo, 10);
+  const parsedEstado = estado || 'Activo';
 
   if (!nombre || nombre.trim().length < 3) {
     return { error: 'El nombre debe tener al menos 3 caracteres' };
@@ -172,6 +192,9 @@ const parseProductData = (body) => {
   if (!Number.isInteger(parsedStockMinimo) || parsedStockMinimo < 0) {
     return { error: 'El stock mínimo debe ser un número mayor o igual a cero' };
   }
+  if (!['Activo', 'Inactivo'].includes(parsedEstado)) {
+    return { error: 'El estado del producto no es válido' };
+  }
 
   return {
     value: {
@@ -184,7 +207,8 @@ const parseProductData = (body) => {
       idTalla: parsedTalla,
       idColor: parsedColor,
       stock: parsedStock,
-      stockMinimo: parsedStockMinimo
+      stockMinimo: parsedStockMinimo,
+      estado: parsedEstado
     }
   };
 };

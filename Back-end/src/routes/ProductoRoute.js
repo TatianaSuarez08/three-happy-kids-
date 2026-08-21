@@ -2,6 +2,7 @@ import { Router } from 'express';
 import {
   addProduct,
   editProduct,
+  getColors,
   getProduct,
   getProducts,
   removeProduct
@@ -13,6 +14,7 @@ import { uploadProductImage } from '../middleware/subidaImagen.js';
 const router = Router();
 const administrador = [auth, permitRoles('administrador')];
 
+router.get('/colores', ...administrador, getColors);
 router.get('/productos', ...administrador, getProducts);
 router.get('/productos/:id', ...administrador, getProduct);
 router.post(

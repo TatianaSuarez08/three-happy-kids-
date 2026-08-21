@@ -5,7 +5,7 @@ import { fileURLToPath } from 'url';
 
 const currentFile = fileURLToPath(import.meta.url);
 const currentDirectory = path.dirname(currentFile);
-dotenv.config({ path: path.resolve(currentDirectory, '../../.env') });
+dotenv.config({ path: path.resolve(currentDirectory, '../.env') });
 
 // Configuración de la conexión y del pool de conexiones usando variables de entorno
 const config = {

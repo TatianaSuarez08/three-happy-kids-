@@ -1,30 +1,7 @@
 
 import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
 import "../styles/style.css";
-
-const stats = {
-  totalVentas: "$1.245.000",
-  totalPedidos: 4,
-  totalClientes: 5,
-  totalProductos: 10,
-  pedidosPendientes: 2,
-  pedidosEnCamino: 1,
-  pedidosEntregados: 1,
-  stockBajo: 3,
-};
-
-const pedidosRecientes = [
-  { id: 1, cliente: "Ana López", fecha: "2026-07-01", estado: "Entregado", total: "$35.000" },
-  { id: 2, cliente: "Carlos Ramírez", fecha: "2026-07-10", estado: "En camino", total: "$87.000" },
-  { id: 3, cliente: "María García", fecha: "2026-07-25", estado: "Pendiente", total: "$36.000" },
-  { id: 4, cliente: "Luis Martínez", fecha: "2026-07-28", estado: "Pendiente", total: "$70.000" },
-];
-
-const productosStockBajo = [
-  { nombre: "Sudadera con body", talla: "M", stock: 3 },
-  { nombre: "Sudadera los Angeles", talla: "M", stock: 2 },
-  { nombre: "Capibara canguro", talla: "M", stock: 1 },
-];
 
 const estadoColor = {
   "Entregado": { bg: "#eafbea", color: "#3a7d44" },
@@ -42,6 +19,37 @@ const estadoEmoji = {
 
 function Dashboard() {
   const navigate = useNavigate();
+  const backend = import.meta.env.VITE_BACKEND_URL || "http://localhost:3000";
+  const [dashboard, setDashboard] = useState({ stats: {}, recentOrders: [], lowStock: [] });
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const cargarDashboard = async () => {
+      try {
+        const storage = localStorage.getItem("token") ? localStorage : sessionStorage;
+        const response = await fetch(`${backend}/dashboard`, {
+          headers: { Authorization: `Bearer ${storage.getItem("token")}` },
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || "No se pudo cargar el dashboard");
+        setDashboard({ stats: data.stats || {}, recentOrders: data.recentOrders || [], lowStock: data.lowStock || [] });
+      } catch (err) {
+        setError(err.message || "No se pudo cargar el dashboard");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    cargarDashboard();
+  }, [backend]);
+
+  const stats = dashboard.stats;
+  const pedidosRecientes = dashboard.recentOrders;
+  const productosStockBajo = dashboard.lowStock;
+  const formatoPrecio = new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", currencyDisplay: "code", maximumFractionDigits: 0 });
+
+  if (loading) return <div className="admin-page"><div className="admin-container">Cargando dashboard...</div></div>;
 
   return (
     <div className="admin-page">
@@ -58,13 +66,15 @@ function Dashboard() {
           </div>
         </div>
 
+        {error && <div className="login-error">{error}</div>}
+
         {/* Tarjetas de estadísticas */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "1rem", marginBottom: "2rem" }}>
           {[
-            { label: "Ventas totales", valor: stats.totalVentas, emoji: "💰", color: "#3a7d44", bg: "#eafbea" },
+            { label: "Ventas totales", valor: formatoPrecio.format(Number(stats.totalVentas) || 0), emoji: "💰", color: "#3a7d44", bg: "#eafbea" },
             { label: "Total pedidos", valor: stats.totalPedidos, emoji: "📦", color: "#4a90d9", bg: "#e8f4ff" },
             { label: "Clientes", valor: stats.totalClientes, emoji: "👥", color: "#ff8c42", bg: "#fff3e0" },
-            { label: "Productos", valor: stats.totalProductos, emoji: "👕", color: "#7c3aed", bg: "#f5f0ff" },
+            { label: "Inventario", valor: stats.totalProductos, emoji: "👕", color: "#7c3aed", bg: "#f5f0ff" },
           ].map((stat) => (
             <div key={stat.label} style={{ background: "#fff", border: "1px solid #eee", borderRadius: "12px", padding: "1.25rem" }}>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.75rem" }}>
@@ -124,7 +134,7 @@ function Dashboard() {
                     >
                       {estadoEmoji[p.estado]} {p.estado}
                     </span>
-                    <span style={{ fontSize: "14px", fontWeight: 700, color: "#ff8c42" }}>{p.total}</span>
+                    <span style={{ fontSize: "14px", fontWeight: 700, color: "#ff8c42" }}>{formatoPrecio.format(Number(p.total) || 0)}</span>
                   </div>
                 </div>
               ))}
@@ -164,7 +174,6 @@ function Dashboard() {
           <h3 style={{ fontSize: "16px", fontWeight: 700, color: "#1a1a1a", marginBottom: "1rem" }}>Accesos rápidos</h3>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "1rem" }}>
             {[
-              { label: "Productos", emoji: "👕", ruta: "/admin/productos" },
               { label: "Usuarios", emoji: "👥", ruta: "/admin/usuarios" },
               { label: "Pedidos", emoji: "📦", ruta: "/admin/pedidos" },
               { label: "Inventario", emoji: "📋", ruta: "/admin/inventario" },

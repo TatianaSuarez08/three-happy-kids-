@@ -1,5 +1,16 @@
 import pool from '../db.js';
 
+export const findColors = async () => {
+  const [rows] = await pool.execute(
+    `SELECT id, nombre_color AS nombre
+     FROM color
+     WHERE estado = 'Activo'
+     ORDER BY nombre_color`
+  );
+
+  return rows;
+};
+
 export const findProducts = async () => {
   const [rows] = await pool.execute(
     `SELECT
@@ -20,7 +31,8 @@ export const findProducts = async () => {
      JOIN categoria c ON c.id = p.id_categoria
      JOIN talla t ON t.id = p.id_talla
      JOIN color co ON co.id = p.id_color
-     LEFT JOIN inventario i ON i.id_producto = p.id
+    LEFT JOIN inventario i ON i.id_producto = p.id
+    WHERE p.estado = 'Activo'
      ORDER BY p.id DESC`
   );
 
@@ -62,7 +74,7 @@ export const createProduct = async (productData) => {
       `INSERT INTO producto
         (nombre_producto, descripcion, precio_compra, precio_venta, marca,
          imagen_producto, id_categoria, id_talla, id_color, estado)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'Activo')`,
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         productData.nombre,
         productData.descripcion || null,
@@ -72,7 +84,8 @@ export const createProduct = async (productData) => {
         productData.imagen || null,
         productData.idCategoria,
         productData.idTalla,
-        productData.idColor
+        productData.idColor,
+        productData.estado
       ]
     );
 
@@ -91,7 +104,7 @@ export const createProduct = async (productData) => {
       precio: productData.precioVenta,
       stock: productData.stock,
       stockMin: productData.stockMinimo,
-      estado: 'Activo'
+      estado: productData.estado
     };
   } catch (error) {
     await connection.rollback();
@@ -118,7 +131,8 @@ export const updateProduct = async (id, productData) => {
       productData.marca || null,
       productData.idCategoria,
       productData.idTalla,
-      productData.idColor
+      productData.idColor,
+      productData.estado
     ];
 
     if (productData.imagen) productParams.push(productData.imagen);
@@ -128,7 +142,7 @@ export const updateProduct = async (id, productData) => {
       `UPDATE producto
        SET nombre_producto = ?, descripcion = ?, precio_compra = ?,
            precio_venta = ?, marca = ?, id_categoria = ?, id_talla = ?,
-           id_color = ?${imageClause}
+           id_color = ?, estado = ?${imageClause}
        WHERE id = ?`,
       productParams
     );
@@ -160,10 +174,17 @@ export const updateProduct = async (id, productData) => {
 };
 
 export const deactivateProduct = async (id) => {
-  const [result] = await pool.execute(
+  const [products] = await pool.execute(
+    `SELECT id FROM producto WHERE id = ?`,
+    [id]
+  );
+
+  if (products.length === 0) return false;
+
+  await pool.execute(
     `UPDATE producto SET estado = 'Inactivo' WHERE id = ?`,
     [id]
   );
 
-  return result.affectedRows > 0;
+  return true;
 };

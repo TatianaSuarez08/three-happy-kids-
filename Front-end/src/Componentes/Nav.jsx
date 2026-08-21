@@ -4,6 +4,8 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 
 function Nav() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [categoriasOpen, setCategoriasOpen] = useState(false);
+  const [categorias, setCategorias] = useState([]);
   const [busqueda, setBusqueda] = useState("");
   const dropdownRef = useRef(null);
   const navigate = useNavigate();
@@ -32,6 +34,19 @@ function Nav() {
     padding: "6px 0 4px",
   });
 
+  const estiloEnlaceDropdown = (ruta) => ({
+    display: "flex",
+    alignItems: "center",
+    gap: "10px",
+    padding: "10px 16px",
+    color: estaActivo(ruta) ? "#ff8c42" : "#ccc",
+    background: estaActivo(ruta) ? "#2a2a2a" : "transparent",
+    borderLeft: estaActivo(ruta) ? "3px solid #ff8c42" : "3px solid transparent",
+    textDecoration: "none",
+    fontSize: "14px",
+    fontWeight: estaActivo(ruta) ? 600 : 400,
+  });
+
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
@@ -40,6 +55,14 @@ function Nav() {
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  useEffect(() => {
+    const backend = import.meta.env.VITE_BACKEND_URL || "http://localhost:3000";
+    fetch(`${backend}/categorias`)
+      .then((response) => response.json())
+      .then((data) => setCategorias(data.categories || []))
+      .catch(() => setCategorias([]));
   }, []);
 
   const cerrarSesion = () => {
@@ -131,23 +154,19 @@ function Nav() {
                     <>
                       {esAdministrador && (
                         <div style={{ borderBottom: "1px solid #2e2e2e", padding: "6px 0" }}>
-                          <Link to="/admin/dashboard" onClick={() => setDropdownOpen(false)} style={{ display: "flex", alignItems: "center", gap: "10px", padding: "10px 16px", color: "#ff8c42", textDecoration: "none", fontSize: "14px", fontWeight: 600 }}>
+                          <Link to="/admin/dashboard" onClick={() => setDropdownOpen(false)} style={estiloEnlaceDropdown("/admin/dashboard")}>
                             <span aria-hidden="true">▦</span>
                             Dashboard
                           </Link>
-                          <Link to="/admin/productos" onClick={() => setDropdownOpen(false)} style={{ display: "flex", alignItems: "center", gap: "10px", padding: "10px 16px", color: "#ccc", textDecoration: "none", fontSize: "14px" }}>
-                            <span aria-hidden="true">▣</span>
-                            Productos
-                          </Link>
-                          <Link to="/admin/inventario" onClick={() => setDropdownOpen(false)} style={{ display: "flex", alignItems: "center", gap: "10px", padding: "10px 16px", color: "#ccc", textDecoration: "none", fontSize: "14px" }}>
+                          <Link to="/admin/inventario" onClick={() => setDropdownOpen(false)} style={estiloEnlaceDropdown("/admin/inventario")}>
                             <span aria-hidden="true">▤</span>
                             Inventario
                           </Link>
-                          <Link to="/admin/pedidos" onClick={() => setDropdownOpen(false)} style={{ display: "flex", alignItems: "center", gap: "10px", padding: "10px 16px", color: "#ccc", textDecoration: "none", fontSize: "14px" }}>
+                          <Link to="/admin/pedidos" onClick={() => setDropdownOpen(false)} style={estiloEnlaceDropdown("/admin/pedidos")}>
                             <span aria-hidden="true">▧</span>
                             Pedidos
                           </Link>
-                          <Link to="/admin/usuarios" onClick={() => setDropdownOpen(false)} style={{ display: "flex", alignItems: "center", gap: "10px", padding: "10px 16px", color: "#ccc", textDecoration: "none", fontSize: "14px" }}>
+                          <Link to="/admin/usuarios" onClick={() => setDropdownOpen(false)} style={estiloEnlaceDropdown("/admin/usuarios")}>
                             <span aria-hidden="true">♙</span>
                             Usuarios
                           </Link>
@@ -157,9 +176,13 @@ function Nav() {
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="#4a90d9" strokeWidth={2}><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                         Actualizar perfil
                       </Link>
-                      <Link to="/favoritos" onClick={() => setDropdownOpen(false)} style={{ display: "flex", alignItems: "center", gap: "10px", padding: "12px 16px", color: "#ccc", textDecoration: "none", fontSize: "14px" }}>
+                      <Link to="/favoritos" onClick={() => setDropdownOpen(false)} style={{ ...estiloEnlaceDropdown("/favoritos"), padding: "12px 16px" }}>
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
                         Mis favoritos
+                      </Link>
+                      <Link to="/mis-pedidos" onClick={() => setDropdownOpen(false)} style={{ ...estiloEnlaceDropdown("/mis-pedidos"), padding: "12px 16px" }}>
+                        <span aria-hidden="true">📦</span>
+                        Mis pedidos
                       </Link>
                       <button onClick={cerrarSesion} style={{ display: "flex", alignItems: "center", gap: "10px", padding: "12px 16px", color: "#e53935", background: "none", border: "none", borderTop: "1px solid #2e2e2e", width: "100%", textAlign: "left", fontSize: "14px", cursor: "pointer" }}>
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
@@ -186,11 +209,10 @@ function Nav() {
 
       {/* Fila inferior: links */}
       <div style={{ background: "#111", borderBottom: "1px solid #2e2e2e", padding: "6px 0" }}>
-        <div className="container d-flex align-items-center gap-4" style={{ overflowX: "auto", whiteSpace: "nowrap" }}>
+        <div className="container nav-links-bar d-flex align-items-center gap-4">
           {esAdministrador ? (
             <>
               <Link to="/admin/dashboard" style={estiloEnlace("/admin/dashboard")}>Dashboard</Link>
-              <Link to="/admin/productos" style={estiloEnlace("/admin/productos")}>Productos</Link>
               <Link to="/admin/inventario" style={estiloEnlace("/admin/inventario")}>Inventario</Link>
               <Link to="/admin/pedidos" style={estiloEnlace("/admin/pedidos")}>Pedidos</Link>
               <Link to="/admin/usuarios" style={estiloEnlace("/admin/usuarios")}>Usuarios</Link>
@@ -200,7 +222,22 @@ function Nav() {
           ) : (
             <>
               <Link to="/" style={estiloEnlace("/")}>Inicio</Link>
-              <Link to="/catalogo" style={estiloEnlace("/catalogo")}>Catálogo</Link>
+              <div style={{ position: "relative" }}>
+                <button type="button" onClick={() => setCategoriasOpen(!categoriasOpen)} style={{ ...estiloEnlace("/catalogo"), display: "inline-flex", alignItems: "center", gap: "5px", background: "none", border: "none", cursor: "pointer", fontFamily: "inherit", lineHeight: 1.2 }}>
+                  Categorías <span style={{ fontSize: "10px" }}>▾</span>
+                </button>
+                {categoriasOpen && (
+                  <div className="catalogo-categorias-menu">
+                    {categorias.length === 0 ? (
+                      <span style={{ display: "block", padding: "10px 14px", color: "#888", fontSize: "13px" }}>Sin categorías disponibles</span>
+                    ) : categorias.map((categoria) => (
+                      <Link key={categoria.id_categoria} to={`/catalogo?categoria=${categoria.id_categoria}`} onClick={() => setCategoriasOpen(false)} style={{ display: "block", padding: "10px 14px", color: "#ccc", textDecoration: "none", fontSize: "13px", borderLeft: "3px solid transparent" }} onMouseEnter={(event) => { event.currentTarget.style.color = "#ff8c42"; event.currentTarget.style.background = "#2a2a2a"; event.currentTarget.style.borderLeftColor = "#ff8c42"; }} onMouseLeave={(event) => { event.currentTarget.style.color = "#ccc"; event.currentTarget.style.background = "transparent"; event.currentTarget.style.borderLeftColor = "transparent"; }}>
+                        {categoria.nombre} <span style={{ color: "#888", fontSize: "12px" }}>({categoria.id_categoria})</span>
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
               {usuario && (
                 <Link to="/mis-pedidos" style={estiloEnlace("/mis-pedidos")}>Mis pedidos</Link>
               )}

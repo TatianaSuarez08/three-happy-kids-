@@ -95,6 +95,9 @@ function Carrito() {
             <button onClick={() => navigate("/")} style={{ width: "100%", height: "44px", borderRadius: "8px", border: "1px solid #ddd", background: "transparent", color: "#444", fontSize: "15px", fontWeight: 500, cursor: "pointer" }}>
               Seguir comprando
             </button>
+            <button onClick={() => navigate("/mis-pedidos")} style={{ width: "100%", height: "44px", borderRadius: "8px", border: "1px solid #ddd", background: "transparent", color: "#444", fontSize: "15px", fontWeight: 500, cursor: "pointer", marginTop: "10px" }}>
+              Ver mis pedidos
+            </button>
           </div>
 
         </div>

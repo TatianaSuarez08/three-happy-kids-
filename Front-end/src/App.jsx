@@ -7,7 +7,7 @@ import Carrito from './cliente/page-Carrito';
 import ConfirmarCompra from './cliente/page-ConfirmarCompra';
 import DetalleProducto from './cliente/page-DetalleProducto';
 import Favoritos from './cliente/page-Favoritos';
-import MisPedidos from './cliente/page-MisPedidos';
+import MisPedidos from './cliente/page-MisPedidosBD';
 import RecuperarPass from './cliente/page-RecuperarPass';
 
 // Vistas de Autenticación (SIN .jsx al final)
@@ -17,12 +17,13 @@ import Registro from './Registro';
 
 // Vistas de Admin (SIN .jsx al final)
 import Dashboard from './admin/page-Dashboard';
-import Inventario from './admin/page-Inventario';
-import Pedidos from './admin/page-Pedidos';
-import Producto from './admin/page-producto';
+import Pedidos from './admin/page-PedidosBD';
+import Inventario from './admin/page-producto';
 import AgregarProducto from './admin/page-AgregarProducto';
 import EditarProducto from './admin/page-EditarProducto';
-import Usuarios from './admin/page-Usuarios';
+import Usuarios from './admin/page-UsuariosBD';
+import CrearUsuario from './admin/page-CrearUsuario';
+import EditarUsuario from './admin/page-EditarUsuario';
 
 // Componentes globales
 import Nav from './Componentes/Nav';
@@ -41,10 +42,10 @@ function App() {
         <Route path="/cliente/catalogo" element={<Catalogo />} />
         <Route path="/catalogo" element={<Catalogo />} />
         <Route path="/producto/:id" element={<DetalleProducto />} />
-        <Route path="/carrito" element={<Carrito />} />
-        <Route path="/confirmar-compra" element={<ConfirmarCompra />} />
-        <Route path="/favoritos" element={<Favoritos />} />
-        <Route path="/mis-pedidos" element={<MisPedidos />} />
+        <Route path="/carrito" element={<ProtectedRoute><Carrito /></ProtectedRoute>} />
+        <Route path="/confirmar-compra" element={<ProtectedRoute><ConfirmarCompra /></ProtectedRoute>} />
+        <Route path="/favoritos" element={<ProtectedRoute><Favoritos /></ProtectedRoute>} />
+        <Route path="/mis-pedidos" element={<ProtectedRoute><MisPedidos /></ProtectedRoute>} />
         <Route path="/login" element={<Login />} />
         <Route path="/registro" element={<Registro />} />
         <Route path="/recuperar-pass" element={<RecuperarPass />} />
@@ -79,22 +80,6 @@ function App() {
           }
         />
         <Route
-          path="/admin/producto"
-          element={
-            <ProtectedRoute allowedRoles={["administrador"]}>
-              <Producto />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/admin/productos"
-          element={
-            <ProtectedRoute allowedRoles={["administrador"]}>
-              <Producto />
-            </ProtectedRoute>
-          }
-        />
-        <Route
           path="/admin/agregar-producto"
           element={
             <ProtectedRoute allowedRoles={["administrador"]}>
@@ -115,6 +100,22 @@ function App() {
           element={
             <ProtectedRoute allowedRoles={["administrador"]}>
               <Usuarios />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/crear-usuario"
+          element={
+            <ProtectedRoute allowedRoles={["administrador"]}>
+              <CrearUsuario />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/editar-usuario/:id"
+          element={
+            <ProtectedRoute allowedRoles={["administrador"]}>
+              <EditarUsuario />
             </ProtectedRoute>
           }
         />

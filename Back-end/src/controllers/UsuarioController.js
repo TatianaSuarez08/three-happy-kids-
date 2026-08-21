@@ -19,7 +19,7 @@ const verifyPassword = (password, storedHash) => {
 // Genera un token JWT con información pública del usuario y expiración
 const generateToken = (user) => {
   return jwt.sign(
-    { email: user.email, nombre: user.nombre, roles: user.roles || [] },
+    { id: user.id, email: user.email, nombre: user.nombre, roles: user.roles || [] },
     process.env.JWT_SECRET || 'secretkey',
     { expiresIn: '8h' }
   );

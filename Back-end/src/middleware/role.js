@@ -2,14 +2,21 @@
 export default function permitRoles(...allowedRoles) {
   return (req, res, next) => {
     const user = req.user;
-    // Esperamos que `req.user.roles` sea un array de nombres de rol
-    const roles = (user && user.roles) || [];
-    if (!user || !Array.isArray(roles) || roles.length === 0) {
+    const roles = Array.isArray(user?.roles)
+      ? user.roles
+      : user?.roles
+        ? [user.roles]
+        : user?.role
+          ? [user.role]
+          : [];
+    const normalizedRoles = roles.map((role) => String(role).trim().toLowerCase());
+    const normalizedAllowedRoles = allowedRoles.map((role) => String(role).trim().toLowerCase());
+
+    if (!user || normalizedRoles.length === 0) {
       return res.status(403).json({ error: 'Acceso denegado: rol no disponible' });
     }
 
-    // Comprobar intersección entre roles del usuario y roles permitidos
-    const has = roles.some((r) => allowedRoles.includes(r));
+    const has = normalizedRoles.some((role) => normalizedAllowedRoles.includes(role));
     if (!has) {
       return res.status(403).json({ error: 'Acceso denegado: rol insuficiente' });
     }

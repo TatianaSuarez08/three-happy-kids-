@@ -132,6 +132,12 @@ function DetalleProducto() {
   const favoritoActivo = esFavorito(producto.id);
 
   const handleAgregarCarrito = () => {
+    const storage = localStorage.getItem("token") ? localStorage : sessionStorage;
+    if (!storage.getItem("token")) {
+      navigate("/login");
+      return;
+    }
+
     agregarAlCarrito({
       ...producto,
       talla: tallaSeleccionada,
@@ -217,6 +223,11 @@ function DetalleProducto() {
               <button
                 className={favoritoActivo ? "btn-favorito-activo" : "btn-registro"}
                 onClick={() => {
+                  const storage = localStorage.getItem("token") ? localStorage : sessionStorage;
+                  if (!storage.getItem("token")) {
+                    navigate("/login");
+                    return;
+                  }
                   favoritoActivo ? quitarFavorito(producto.id) : agregarFavorito(producto);
                 }}
               >

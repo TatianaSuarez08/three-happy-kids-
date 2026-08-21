@@ -5,6 +5,10 @@ import morgan from 'morgan'; // Importa logger HTTP para desarrollo
 import './src/db.js'; // Ejecuta la inicialización de la base de datos (conexión a MySQL)
 import userRoutes from './src/routes/UsuarioRoute.js'; // Importa las rutas relacionadas con usuarios
 import productRoutes from './src/routes/ProductoRoute.js'; // Importa las rutas relacionadas con productos
+import orderRoutes from './src/routes/PedidoRoute.js';
+import adminUserRoutes from './src/routes/AdminUsuarioRoute.js';
+import dashboardRoutes from './src/routes/DashboardRoute.js';
+import catalogRoutes from './src/routes/CatalogoRoute.js';
 import { productImagesDirectory } from './src/middleware/subidaImagen.js';
 
 const app = express(); // Crea la instancia de la aplicación Express
@@ -37,6 +41,10 @@ app.get('/', (req, res) => {
 // Monta las rutas de usuario en la ruta base '/'
 app.use('/', userRoutes);
 app.use('/', productRoutes);
+app.use('/', orderRoutes);
+app.use('/', adminUserRoutes);
+app.use('/', dashboardRoutes);
+app.use('/', catalogRoutes);
 
 // Inicia el servidor escuchando en el puerto configurado
 app.listen(PORT, () => {

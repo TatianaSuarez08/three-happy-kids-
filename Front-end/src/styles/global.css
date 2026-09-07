@@ -661,6 +661,24 @@ body {
 .admin-page { min-height: 100vh; background: #f5f5f5; padding: 2rem 1rem; }
 .admin-container { max-width: 1100px; margin: 0 auto; }
 
+.mensajeria-page .mensajeria-vista { width: 100%; }
+.mensajeria-page .mensajeria-panel { padding: 1.25rem; }
+.mensajeria-page .mensajeria-panel h2 { font-size: 16px; font-weight: 700; color: #1a1a1a; margin: 0 0 1rem; }
+.mensajeria-page .mensajeria-encabezado { margin-bottom: 1.5rem; }
+.mensajeria-page .mensajeria-encabezado h2 { margin-bottom: 4px; }
+.mensajeria-page .mensajeria-stats-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+.mensajeria-page .mensajeria-stat-card { background: #fff; border: 1px solid #eee; border-radius: 12px; padding: 1.25rem; }
+.mensajeria-page .mensajeria-stat-label { font-size: 13px; color: #888; }
+.mensajeria-page .mensajeria-stat-value { display: block; margin-top: 10px; font-size: 24px; font-weight: 800; }
+.mensajeria-page .mensajeria-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+.mensajeria-page .mensajeria-panel { background: #fff; border: 1px solid #eee; border-radius: 12px; overflow: hidden; }
+.mensajeria-page .mensajeria-panel-body { padding: 1.25rem; }
+
+@media (max-width: 768px) {
+  .mensajeria-page .mensajeria-stats-grid,
+  .mensajeria-page .mensajeria-columns { grid-template-columns: 1fr; }
+}
+
 .admin-header {
   display: flex;
   align-items: flex-start;

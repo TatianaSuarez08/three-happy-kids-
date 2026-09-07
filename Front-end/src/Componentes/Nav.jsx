@@ -18,7 +18,9 @@ function Nav() {
     const normalizedRole = String(role).trim().toLowerCase();
     return normalizedRole === "admin" || normalizedRole === "administrador";
   });
-  const rolPrincipal = esAdministrador ? "Administrador" : "Cliente";
+  const esMensajero = roles.some((role) => String(role).trim().toLowerCase() === "mensajero");
+  const esCliente = roles.some((role) => String(role).trim().toLowerCase() === "cliente");
+  const rolPrincipal = esAdministrador ? "Administrador" : esMensajero ? "Mensajero" : "Cliente";
 
   const estaActivo = (ruta) => {
     if (ruta === "/") return location.pathname === "/";
@@ -117,19 +119,23 @@ function Nav() {
           {/* Iconos */}
           <div className="d-flex align-items-center gap-2">
 
-            {/* Favoritos */}
-            <button className="btn text-white border-0 p-2 position-relative" onClick={() => navigate("/favoritos")}>
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-              </svg>
-            </button>
+            {esCliente && (
+              <>
+                {/* Favoritos */}
+                <button className="btn text-white border-0 p-2 position-relative" onClick={() => navigate("/favoritos")}>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                  </svg>
+                </button>
 
-            {/* Carrito */}
-            <button className="btn text-white border-0 p-2 position-relative" onClick={() => navigate("/carrito")}>
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/>
-              </svg>
-            </button>
+                {/* Carrito */}
+                <button className="btn text-white border-0 p-2 position-relative" onClick={() => navigate("/carrito")}>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 1 1-8 0"/>
+                  </svg>
+                </button>
+              </>
+            )}
 
             {/* Usuario */}
             <div className="position-relative" ref={dropdownRef}>
@@ -176,14 +182,23 @@ function Nav() {
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="#4a90d9" strokeWidth={2}><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                         Actualizar perfil
                       </Link>
-                      <Link to="/favoritos" onClick={() => setDropdownOpen(false)} style={{ ...estiloEnlaceDropdown("/favoritos"), padding: "12px 16px" }}>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-                        Mis favoritos
-                      </Link>
-                      <Link to="/mis-pedidos" onClick={() => setDropdownOpen(false)} style={{ ...estiloEnlaceDropdown("/mis-pedidos"), padding: "12px 16px" }}>
-                        <span aria-hidden="true">📦</span>
-                        Mis pedidos
-                      </Link>
+                      {esCliente && (
+                        <>
+                          <Link to="/favoritos" onClick={() => setDropdownOpen(false)} style={{ ...estiloEnlaceDropdown("/favoritos"), padding: "12px 16px" }}>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                            Mis favoritos
+                          </Link>
+                          <Link to="/mis-pedidos" onClick={() => setDropdownOpen(false)} style={{ ...estiloEnlaceDropdown("/mis-pedidos"), padding: "12px 16px" }}>
+                            <span aria-hidden="true">📦</span>
+                            Mis pedidos
+                          </Link>
+                        </>
+                      )}
+                      {esMensajero && (
+                        <Link to="/mensajeria" onClick={() => setDropdownOpen(false)} style={{ ...estiloEnlaceDropdown("/mensajeria"), padding: "12px 16px" }}>
+                          Mensajería
+                        </Link>
+                      )}
                       <button onClick={cerrarSesion} style={{ display: "flex", alignItems: "center", gap: "10px", padding: "12px 16px", color: "#e53935", background: "none", border: "none", borderTop: "1px solid #2e2e2e", width: "100%", textAlign: "left", fontSize: "14px", cursor: "pointer" }}>
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
                         Cerrar sesión
@@ -217,6 +232,22 @@ function Nav() {
               <Link to="/admin/pedidos" style={estiloEnlace("/admin/pedidos")}>Pedidos</Link>
               <Link to="/admin/usuarios" style={estiloEnlace("/admin/usuarios")}>Usuarios</Link>
               <Link to="/mis-pedidos" style={estiloEnlace("/mis-pedidos")}>Mis pedidos</Link>
+              <Link to="/catalogo" style={{ ...estiloEnlace("/catalogo", "#ff8c42"), marginLeft: "auto" }}>Comprar en la tienda</Link>
+            </>
+          ) : esMensajero ? (
+            <>
+              <Link to="/mensajeria" style={estiloEnlace("/mensajeria")}>Inicio</Link>
+              <Link to="/mensajeria/entregas" style={estiloEnlace("/mensajeria/entregas")}>Mis entregas</Link>
+              <Link to="/mensajeria/ruta" style={estiloEnlace("/mensajeria/ruta")}>Ruta / Mapa</Link>
+              <Link to="/mensajeria/detalle" style={estiloEnlace("/mensajeria/detalle")}>Detalle</Link>
+              <Link to="/mensajeria/evidencias" style={estiloEnlace("/mensajeria/evidencias")}>Evidencias</Link>
+              <Link to="/mensajeria/novedades" style={estiloEnlace("/mensajeria/novedades")}>Novedades</Link>
+              <Link to="/mensajeria/agenda" style={estiloEnlace("/mensajeria/agenda")}>Agenda</Link>
+              <Link to="/mensajeria/pagos" style={estiloEnlace("/mensajeria/pagos")}>Pagos</Link>
+              <Link to="/mensajeria/historial" style={estiloEnlace("/mensajeria/historial")}>Historial</Link>
+              <Link to="/mensajeria/notificaciones" style={estiloEnlace("/mensajeria/notificaciones")}>Notificaciones</Link>
+              <Link to="/mensajeria/perfil" style={estiloEnlace("/mensajeria/perfil")}>Mi perfil</Link>
+              <Link to="/mensajeria/configuracion" style={estiloEnlace("/mensajeria/configuracion")}>Configuración</Link>
               <Link to="/catalogo" style={{ ...estiloEnlace("/catalogo", "#ff8c42"), marginLeft: "auto" }}>Comprar en la tienda</Link>
             </>
           ) : (

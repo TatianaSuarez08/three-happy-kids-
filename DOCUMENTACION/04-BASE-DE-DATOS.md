@@ -24,6 +24,8 @@ Usuarios de prueba definidos por el script:
 
 - Cliente: `cliente@example.com` / `cliente123`.
 - Administrador: `admin@example.com` / `admin123`.
+- Bodeguero: `bodeguero@example.com` / `bodeguero123`.
+- Mensajero: `mensajero@example.com` / `mensajero123`.
 
 Los hashes incluidos corresponden a esas contraseñas y no deben usarse en producción.
 

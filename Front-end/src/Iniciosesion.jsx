@@ -32,6 +32,8 @@ function InicioSesion() {
 
     if (rolesNormalizados.includes('administrador')) {
       navigate("/admin/dashboard");
+    } else if (rolesNormalizados.includes('mensajero')) {
+      navigate("/mensajeria");
     } else if (rolesNormalizados.includes('cliente')) {
       navigate("/cliente/catalogo");
     } else {

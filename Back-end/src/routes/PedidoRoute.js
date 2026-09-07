@@ -5,9 +5,9 @@ import permitRoles from '../middleware/role.js';
 
 const router = Router();
 
-router.get('/pedidos', auth, permitRoles('administrador'), getOrders);
+router.get('/pedidos', auth, permitRoles('administrador', 'mensajero'), getOrders);
 router.post('/pedidos', auth, placeOrder);
-router.put('/pedidos/:id/estado', auth, permitRoles('administrador'), changeOrderStatus);
+router.put('/pedidos/:id/estado', auth, permitRoles('administrador', 'mensajero'), changeOrderStatus);
 router.get('/mis-pedidos', auth, getMyOrders);
 
 export default router;

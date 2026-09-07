@@ -9,3 +9,51 @@ body {
   background: #fff8f0;
 }
 
+.mensajeria-vista {
+  width: min(100%, 1120px);
+  margin: 0 auto;
+  color: #1a1a1a;
+}
+
+.mensajeria-encabezado {
+  margin-bottom: 1.5rem;
+}
+
+.mensajeria-encabezado h1 {
+  margin: 0;
+  color: #1a1a1a;
+  font-size: 26px;
+  font-weight: 700;
+}
+
+.mensajeria-encabezado p {
+  color: #888;
+  margin: 6px 0 0;
+  font-size: 14px;
+}
+
+.mensajeria-panel h2 {
+  margin: 0 0 1rem;
+  color: #1a1a1a;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.mensajeria-vista button:focus-visible,
+.mensajeria-vista input:focus-visible,
+.mensajeria-vista select:focus-visible,
+.mensajeria-vista textarea:focus-visible {
+  outline: 3px solid rgba(255, 140, 66, 0.25);
+  outline-offset: 2px;
+}
+
+@media (max-width: 768px) {
+  .mensajeria-vista {
+    width: 100%;
+  }
+
+  .mensajeria-encabezado h1 {
+    font-size: 22px;
+  }
+}
+

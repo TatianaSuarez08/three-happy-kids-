@@ -1,7 +1,11 @@
 import { coloresEstado, styles } from "./mensajeriaData";
 
 export function VistaMensajeria({ children }) {
-  return <div className="admin-page mensajeria-page"><div className="admin-container mensajeria-vista">{children}</div></div>;
+  return (
+    <div className="admin-page">
+      <div className="admin-container">{children}</div>
+    </div>
+  );
 }
 
 export function Encabezado({ titulo, subtitulo }) {

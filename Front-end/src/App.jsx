@@ -12,15 +12,10 @@ import RecuperarPass from './cliente/page-RecuperarPass';
 import Mensajeria from './mensajeria/page-Mensajeria';
 import EntregasMensajeria from './mensajeria/page-EntregasMensajeria';
 import RutaMensajeria from './mensajeria/page-RutaMensajeria';
-import DetalleEntregaMensajeria from './mensajeria/page-DetalleEntregaMensajeria';
 import EvidenciasMensajeria from './mensajeria/page-EvidenciasMensajeria';
 import NovedadesMensajeria from './mensajeria/page-NovedadesMensajeria';
-import AgendaMensajeria from './mensajeria/page-AgendaMensajeria';
-import PagosMensajeria from './mensajeria/page-PagosMensajeria';
 import HistorialMensajeria from './mensajeria/page-HistorialMensajeria';
-import NotificacionesMensajeria from './mensajeria/page-NotificacionesMensajeria';
 import PerfilMensajeria from './mensajeria/page-PerfilMensajeria';
-import ConfiguracionMensajeria from './mensajeria/page-ConfiguracionMensajeria';
 
 // Vistas de Autenticación (SIN .jsx al final)
 import Login from './InicioSesion';
@@ -90,14 +85,12 @@ function App() {
             </ProtectedRoute>
           }
         />
-        {[
-          ["entregas", EntregasMensajeria], ["ruta", RutaMensajeria], ["detalle", DetalleEntregaMensajeria],
-          ["evidencias", EvidenciasMensajeria], ["novedades", NovedadesMensajeria], ["agenda", AgendaMensajeria],
-          ["pagos", PagosMensajeria], ["historial", HistorialMensajeria], ["notificaciones", NotificacionesMensajeria],
-          ["perfil", PerfilMensajeria], ["configuracion", ConfiguracionMensajeria],
-        ].map(([nombre, Componente]) => (
-          <Route key={nombre} path={`/mensajeria/${nombre}`} element={<ProtectedRoute allowedRoles={["mensajero"]}><Componente /></ProtectedRoute>} />
-        ))}
+        <Route path="/mensajeria/entregas" element={<ProtectedRoute allowedRoles={['mensajero']}><EntregasMensajeria /></ProtectedRoute>} />
+        <Route path="/mensajeria/ruta" element={<ProtectedRoute allowedRoles={['mensajero']}><RutaMensajeria /></ProtectedRoute>} />
+        <Route path="/mensajeria/evidencias" element={<ProtectedRoute allowedRoles={['mensajero']}><EvidenciasMensajeria /></ProtectedRoute>} />
+        <Route path="/mensajeria/novedades" element={<ProtectedRoute allowedRoles={['mensajero']}><NovedadesMensajeria /></ProtectedRoute>} />
+        <Route path="/mensajeria/historial" element={<ProtectedRoute allowedRoles={['mensajero']}><HistorialMensajeria /></ProtectedRoute>} />
+        <Route path="/mensajeria/perfil" element={<ProtectedRoute allowedRoles={['mensajero']}><PerfilMensajeria /></ProtectedRoute>} />
 
         {/* Página para cuando el usuario no tiene permisos */}
         <Route path="/no-autorizado" element={<NoAutorizado />} />

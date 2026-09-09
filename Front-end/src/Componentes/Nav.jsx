@@ -24,6 +24,7 @@ function Nav() {
 
   const estaActivo = (ruta) => {
     if (ruta === "/") return location.pathname === "/";
+    if (ruta === "/mensajeria") return location.pathname === "/mensajeria";
     return location.pathname === ruta || location.pathname.startsWith(`${ruta}/`);
   };
 
@@ -239,15 +240,10 @@ function Nav() {
               <Link to="/mensajeria" style={estiloEnlace("/mensajeria")}>Inicio</Link>
               <Link to="/mensajeria/entregas" style={estiloEnlace("/mensajeria/entregas")}>Mis entregas</Link>
               <Link to="/mensajeria/ruta" style={estiloEnlace("/mensajeria/ruta")}>Ruta / Mapa</Link>
-              <Link to="/mensajeria/detalle" style={estiloEnlace("/mensajeria/detalle")}>Detalle</Link>
               <Link to="/mensajeria/evidencias" style={estiloEnlace("/mensajeria/evidencias")}>Evidencias</Link>
               <Link to="/mensajeria/novedades" style={estiloEnlace("/mensajeria/novedades")}>Novedades</Link>
-              <Link to="/mensajeria/agenda" style={estiloEnlace("/mensajeria/agenda")}>Agenda</Link>
-              <Link to="/mensajeria/pagos" style={estiloEnlace("/mensajeria/pagos")}>Pagos</Link>
               <Link to="/mensajeria/historial" style={estiloEnlace("/mensajeria/historial")}>Historial</Link>
-              <Link to="/mensajeria/notificaciones" style={estiloEnlace("/mensajeria/notificaciones")}>Notificaciones</Link>
               <Link to="/mensajeria/perfil" style={estiloEnlace("/mensajeria/perfil")}>Mi perfil</Link>
-              <Link to="/mensajeria/configuracion" style={estiloEnlace("/mensajeria/configuracion")}>Configuración</Link>
               <Link to="/catalogo" style={{ ...estiloEnlace("/catalogo", "#ff8c42"), marginLeft: "auto" }}>Comprar en la tienda</Link>
             </>
           ) : (

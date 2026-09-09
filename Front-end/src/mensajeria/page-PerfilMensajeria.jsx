@@ -1,19 +1,20 @@
-import { Encabezado, Panel, VistaMensajeria } from "./MensajeriaUI";
-
 export default function PerfilMensajeria() {
-    return (
-    <VistaMensajeria>
-                <Encabezado titulo="👤 Mi perfil" subtitulo="Informacion personal y del vehiculo." />
-        <Panel titulo="Datos del mensajero">
-            <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
-                <div style={{ width: "64px", height: "64px", borderRadius: "50%", background: "#ff8c42", color: "#fff", display: "grid", placeItems: "center", fontWeight: 800, fontSize: "20px" }}>MG</div>
-                <div>
-                    <h3 style={{ margin: 0 }}>Mensajero HappyKids</h3>
-                    <p style={{ color: "#888", margin: "5px 0" }}>mensajero@example.com</p>
-                    <p style={{ color: "#555", margin: 0 }}>Motocicleta - Disponible</p>
-                </div>
-            </div>
-        </Panel>
-    </VistaMensajeria>
-    );
+  return (
+    <div className="admin-page">
+      <div className="admin-container">
+        <div className="admin-header">
+          <div>
+            <h2 className="admin-titulo">Mi perfil</h2>
+            <p className="admin-sub">Información del mensajero y configuración personal.</p>
+          </div>
+        </div>
+
+        <div style={{ background: "#fff", border: "1px solid #eee", borderRadius: "12px", boxShadow: "0 8px 20px rgba(26, 26, 26, 0.04)", padding: "1.25rem" }}>
+          <p style={{ margin: "0 0 8px", color: "#555", fontSize: "13px" }}><strong>Nombre:</strong> Carlos López</p>
+          <p style={{ margin: "0 0 8px", color: "#555", fontSize: "13px" }}><strong>Unidad:</strong> Moto - 208</p>
+          <p style={{ margin: 0, color: "#555", fontSize: "13px" }}><strong>Turno:</strong> 8:00 a. m. - 5:00 p. m.</p>
+        </div>
+      </div>
+    </div>
+  );
 }

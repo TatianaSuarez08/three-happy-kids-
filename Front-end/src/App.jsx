@@ -1,58 +1,67 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 
 // Vistas de Cliente (SIN .jsx al final)
-import Index from './Index';
-import Catalogo from './cliente/page-catalogo';
-import Carrito from './cliente/page-Carrito';
-import ConfirmarCompra from './cliente/page-ConfirmarCompra';
-import DetalleProducto from './cliente/page-DetalleProducto';
-import Favoritos from './cliente/page-Favoritos';
-import MisPedidos from './cliente/page-MisPedidosBD';
-import RecuperarPass from './cliente/page-RecuperarPass';
-import Mensajeria from './mensajeria/page-Mensajeria';
-import EntregasMensajeria from './mensajeria/page-EntregasMensajeria';
-import RutaMensajeria from './mensajeria/page-RutaMensajeria';
-import EvidenciasMensajeria from './mensajeria/page-EvidenciasMensajeria';
-import NovedadesMensajeria from './mensajeria/page-NovedadesMensajeria';
-import HistorialMensajeria from './mensajeria/page-HistorialMensajeria';
-import PerfilMensajeria from './mensajeria/page-PerfilMensajeria';
+import Index from './pages/publicas/Index';
+import Catalogo from './pages/cliente/page-catalogo';
+import Carrito from './pages/cliente/page-Carrito';
+import ConfirmarCompra from './pages/cliente/page-ConfirmarCompra';
+import DetalleProducto from './pages/cliente/page-DetalleProducto';
+import Favoritos from './pages/cliente/page-Favoritos';
+import MisPedidos from './pages/cliente/page-MisPedidosBD';
+import RecuperarPass from './pages/cliente/page-RecuperarPass';
+import Mensajeria from './pages/mensajeria/page-Mensajeria';
+import EntregasMensajeria from './pages/mensajeria/page-EntregasMensajeria';
+import RutaMensajeria from './pages/mensajeria/page-RutaMensajeria';
+import EvidenciasMensajeria from './pages/mensajeria/page-EvidenciasMensajeria';
+import NovedadesMensajeria from './pages/mensajeria/page-NovedadesMensajeria';
+import HistorialMensajeria from './pages/mensajeria/page-HistorialMensajeria';
+import PerfilMensajeria from './pages/mensajeria/page-PerfilMensajeria';
 
 // Vistas de Autenticación (SIN .jsx al final)
-import Login from './InicioSesion';
-import Registro from './Registro';
+import Login from './pages/publicas/InicioSesion';
+import Registro from './pages/publicas/Registro';
 
 
 // Vistas de Admin (SIN .jsx al final)
-import Dashboard from './admin/page-Dashboard';
-import Pedidos from './admin/page-PedidosBD';
-import Inventario from './admin/page-producto';
-import AgregarProducto from './admin/page-AgregarProducto';
-import EditarProducto from './admin/page-EditarProducto';
-import Usuarios from './admin/page-UsuariosBD';
-import CrearUsuario from './admin/page-CrearUsuario';
-import EditarUsuario from './admin/page-EditarUsuario';
+import Dashboard from './pages/administracion/page-Dashboard';
+import Pedidos from './pages/administracion/page-PedidosBD';
+import Inventario from './pages/administracion/page-producto';
+import AgregarProducto from './pages/administracion/page-AgregarProducto';
+import EditarProducto from './pages/administracion/page-EditarProducto';
+import Usuarios from './pages/administracion/page-UsuariosBD';
+import CrearUsuario from './pages/administracion/page-CrearUsuario';
+import EditarUsuario from './pages/administracion/page-EditarUsuario';
+import BodegueroLayout from './pages/bodeguero/BodegueroLayout';
+import BodegueroDashboard from './pages/bodeguero/BodegueroDashboard';
+import BodegueroInventario from './pages/bodeguero/BodegueroInventario';
+import BodegueroPedidos from './pages/bodeguero/BodegueroPedidos';
+import BodegueroMovimientos from './pages/bodeguero/BodegueroMovimientos';
 
 // Componentes globales
-import Nav from './Componentes/Nav';
-import ProtectedRoute from './Componentes/ProtectedRoute';
-import NoAutorizado from './Componentes/NoAutorizado';
+import Nav from './components/Nav';
+import ProtectedRoute from './components/ProtectedRoute';
+import NoAutorizado from './components/NoAutorizado';
 
 function EntradaPrincipal() {
   const storage = localStorage.getItem('token') ? localStorage : sessionStorage;
   const userJson = storage.getItem('user') || storage.getItem('usuario');
+  let redirectPath = '';
 
   if (userJson) {
     try {
       const user = JSON.parse(userJson);
       const roles = Array.isArray(user.roles) ? user.roles : user.rol ? [user.rol] : [];
       const esMensajero = roles.some((role) => String(role).trim().toLowerCase() === 'mensajero');
+      const esBodeguero = roles.some((role) => String(role).trim().toLowerCase() === 'bodeguero');
 
-      if (esMensajero) return <Navigate to="/mensajeria" replace />;
+      if (esMensajero) redirectPath = '/mensajeria';
+      if (esBodeguero) redirectPath = '/bodeguero';
     } catch {
       // La portada sigue disponible si los datos de sesión no son válidos.
     }
   }
 
+  if (redirectPath) return <Navigate to={redirectPath} replace />;
   return <Index />;
 }
 
@@ -65,13 +74,13 @@ function App() {
 
         {/* Rutas Cliente */}
         <Route path="/" element={<EntradaPrincipal />} />
-        <Route path="/cliente/catalogo" element={<ProtectedRoute allowedRoles={["cliente", "mensajero"]}><Catalogo /></ProtectedRoute>} />
-        <Route path="/catalogo" element={<ProtectedRoute allowedRoles={["cliente", "mensajero"]}><Catalogo /></ProtectedRoute>} />
-        <Route path="/producto/:id" element={<ProtectedRoute allowedRoles={["cliente", "mensajero"]}><DetalleProducto /></ProtectedRoute>} />
-        <Route path="/carrito" element={<ProtectedRoute allowedRoles={["cliente"]}><Carrito /></ProtectedRoute>} />
-        <Route path="/confirmar-compra" element={<ProtectedRoute allowedRoles={["cliente"]}><ConfirmarCompra /></ProtectedRoute>} />
-        <Route path="/favoritos" element={<ProtectedRoute allowedRoles={["cliente"]}><Favoritos /></ProtectedRoute>} />
-        <Route path="/mis-pedidos" element={<ProtectedRoute allowedRoles={["cliente"]}><MisPedidos /></ProtectedRoute>} />
+        <Route path="/cliente/catalogo" element={<ProtectedRoute allowedRoles={["cliente", "administrador", "bodeguero", "mensajero"]}><Catalogo /></ProtectedRoute>} />
+        <Route path="/catalogo" element={<ProtectedRoute allowedRoles={["cliente", "administrador", "bodeguero", "mensajero"]}><Catalogo /></ProtectedRoute>} />
+        <Route path="/producto/:id" element={<ProtectedRoute allowedRoles={["cliente", "administrador", "bodeguero", "mensajero"]}><DetalleProducto /></ProtectedRoute>} />
+        <Route path="/carrito" element={<ProtectedRoute allowedRoles={["cliente", "administrador", "bodeguero", "mensajero"]}><Carrito /></ProtectedRoute>} />
+        <Route path="/confirmar-compra" element={<ProtectedRoute allowedRoles={["cliente", "administrador", "bodeguero", "mensajero"]}><ConfirmarCompra /></ProtectedRoute>} />
+        <Route path="/favoritos" element={<ProtectedRoute allowedRoles={["cliente", "administrador", "bodeguero", "mensajero"]}><Favoritos /></ProtectedRoute>} />
+        <Route path="/mis-pedidos" element={<ProtectedRoute allowedRoles={["cliente", "administrador", "bodeguero", "mensajero"]}><MisPedidos /></ProtectedRoute>} />
         <Route path="/login" element={<Login />} />
         <Route path="/registro" element={<Registro />} />
         <Route path="/recuperar-pass" element={<RecuperarPass />} />
@@ -107,6 +116,18 @@ function App() {
         />
         <Route
           path="/admin/inventario"
+          element={
+            <ProtectedRoute allowedRoles={["administrador"]}>
+              <Inventario />
+            </ProtectedRoute>
+          }
+        />
+        <Route path="/bodeguero" element={<ProtectedRoute allowedRoles={["bodeguero"]}><BodegueroLayout><BodegueroDashboard /></BodegueroLayout></ProtectedRoute>} />
+        <Route path="/bodeguero/inventario" element={<ProtectedRoute allowedRoles={["bodeguero"]}><BodegueroLayout><BodegueroInventario /></BodegueroLayout></ProtectedRoute>} />
+        <Route path="/bodeguero/pedidos" element={<ProtectedRoute allowedRoles={["bodeguero"]}><BodegueroLayout><BodegueroPedidos /></BodegueroLayout></ProtectedRoute>} />
+        <Route path="/bodeguero/movimientos" element={<ProtectedRoute allowedRoles={["bodeguero"]}><BodegueroLayout><BodegueroMovimientos /></BodegueroLayout></ProtectedRoute>} />
+        <Route
+          path="/bodega"
           element={
             <ProtectedRoute allowedRoles={["administrador"]}>
               <Inventario />

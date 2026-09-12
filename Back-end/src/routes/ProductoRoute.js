@@ -12,24 +12,25 @@ import permitRoles from '../middleware/role.js';
 import { uploadProductImage } from '../middleware/subidaImagen.js';
 
 const router = Router();
-const administrador = [auth, permitRoles('administrador')];
+const productosAdmin = [auth, permitRoles('administrador', 'bodeguero', { permission: 'productos:write' })];
+const productosRead = [auth, permitRoles('administrador', 'bodeguero', { permission: 'productos:read' })];
 
 router.get('/productos-publicos', getProducts);
-router.get('/colores', ...administrador, getColors);
-router.get('/productos', ...administrador, getProducts);
-router.get('/productos/:id', ...administrador, getProduct);
+router.get('/colores', ...productosRead, getColors);
+router.get('/productos', ...productosRead, getProducts);
+router.get('/productos/:id', ...productosRead, getProduct);
 router.post(
   '/productos',
-  ...administrador,
+  ...productosAdmin,
   uploadProductImage.single('imagen'),
   addProduct
 );
 router.put(
   '/productos/:id',
-  ...administrador,
+  ...productosAdmin,
   uploadProductImage.single('imagen'),
   editProduct
 );
-router.delete('/productos/:id', ...administrador, removeProduct);
+router.delete('/productos/:id', ...productosAdmin, removeProduct);
 
 export default router;

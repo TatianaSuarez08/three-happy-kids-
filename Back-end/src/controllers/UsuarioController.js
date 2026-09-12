@@ -1,5 +1,6 @@
 import crypto from 'crypto'; // Para hashear con SHA2
 import jwt from 'jsonwebtoken'; // Librería para generar y verificar tokens JWT
+import { buildRolePermissions } from '../middleware/role.js';
 import { findUserByEmail, createUser } from '../models/UsuarioModel.js'; // Funciones del modelo de usuario
 
 // Función para hashear contraseña con SHA2 + SALT
@@ -18,8 +19,16 @@ const verifyPassword = (password, storedHash) => {
 
 // Genera un token JWT con información pública del usuario y expiración
 const generateToken = (user) => {
+  const permissions = buildRolePermissions(user.roles || []);
+
   return jwt.sign(
-    { id: user.id, email: user.email, nombre: user.nombre, roles: user.roles || [] },
+    {
+      id: user.id,
+      email: user.email,
+      nombre: user.nombre,
+      roles: user.roles || [],
+      permissions
+    },
     process.env.JWT_SECRET || 'secretkey',
     { expiresIn: '8h' }
   );

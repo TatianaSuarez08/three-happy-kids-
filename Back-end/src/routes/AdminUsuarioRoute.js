@@ -4,9 +4,10 @@ import auth from '../middleware/autenticacion.js';
 import permitRoles from '../middleware/role.js';
 
 const router = Router();
-const administrador = [auth, permitRoles('administrador')];
+const administrador = [auth, permitRoles('administrador', { permission: 'usuarios:write' })];
+const usuariosRead = [auth, permitRoles('administrador', { permission: 'usuarios:read' })];
 
-router.get('/usuarios', ...administrador, getUsers);
+router.get('/usuarios', ...usuariosRead, getUsers);
 router.post('/usuarios', ...administrador, createUser);
 router.put('/usuarios/:id', ...administrador, editUser);
 router.put('/usuarios/:id/estado', ...administrador, changeUserStatus);

@@ -1,6 +1,5 @@
-import { createContext, useContext, useState, useEffect } from "react";
-
-const FavoritosContext = createContext();
+import { useEffect, useState } from "react";
+import { FavoritosContext } from "./favoritos-context";
 
 export function FavoritosProvider({ children }) {
   const [favoritos, setFavoritos] = useState(() => {
@@ -8,30 +7,10 @@ export function FavoritosProvider({ children }) {
     return guardado ? JSON.parse(guardado) : [];
   });
 
-  useEffect(() => {
-    localStorage.setItem("favoritos", JSON.stringify(favoritos));
-  }, [favoritos]);
-
-  const agregarFavorito = (producto) => {
-    setFavoritos((prev) => {
-      if (prev.find((p) => p.id === producto.id)) return prev;
-      return [...prev, producto];
-    });
-  };
-
-  const quitarFavorito = (id) => {
-    setFavoritos((prev) => prev.filter((p) => p.id !== id));
-  };
-
+  useEffect(() => { localStorage.setItem("favoritos", JSON.stringify(favoritos)); }, [favoritos]);
+  const agregarFavorito = (producto) => setFavoritos((prev) => prev.find((p) => p.id === producto.id) ? prev : [...prev, producto]);
+  const quitarFavorito = (id) => setFavoritos((prev) => prev.filter((p) => p.id !== id));
   const esFavorito = (id) => favoritos.some((p) => p.id === id);
 
-  return (
-    <FavoritosContext.Provider value={{ favoritos, agregarFavorito, quitarFavorito, esFavorito }}>
-      {children}
-    </FavoritosContext.Provider>
-  );
-}
-
-export function useFavoritos() {
-  return useContext(FavoritosContext);
+  return <FavoritosContext.Provider value={{ favoritos, agregarFavorito, quitarFavorito, esFavorito }}>{children}</FavoritosContext.Provider>;
 }

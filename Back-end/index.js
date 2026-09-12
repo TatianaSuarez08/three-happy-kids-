@@ -9,6 +9,8 @@ import orderRoutes from './src/routes/PedidoRoute.js';
 import adminUserRoutes from './src/routes/AdminUsuarioRoute.js';
 import dashboardRoutes from './src/routes/DashboardRoute.js';
 import catalogRoutes from './src/routes/CatalogoRoute.js';
+import inventarioRoutes from './src/routes/InventarioRoute.js';
+import logisticaRoutes from './src/routes/LogisticaRoute.js';
 import { productImagesDirectory } from './src/middleware/subidaImagen.js';
 
 const app = express(); // Crea la instancia de la aplicación Express
@@ -45,6 +47,8 @@ app.use('/', orderRoutes);
 app.use('/', adminUserRoutes);
 app.use('/', dashboardRoutes);
 app.use('/', catalogRoutes);
+app.use('/', inventarioRoutes);
+app.use('/', logisticaRoutes);
 
 // Inicia el servidor escuchando en el puerto configurado
 app.listen(PORT, () => {

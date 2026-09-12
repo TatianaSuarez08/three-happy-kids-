@@ -136,6 +136,26 @@ CREATE TABLE IF NOT EXISTS inventario (
         CHECK (cantidad_disponible >= 0 AND cantidad_minima >= 0)
 ) ENGINE=InnoDB;
 
+CREATE TABLE IF NOT EXISTS inventario_movimiento (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    id_producto INT NOT NULL,
+    tipo ENUM('entrada', 'salida', 'ajuste') NOT NULL DEFAULT 'ajuste',
+    cantidad INT NOT NULL DEFAULT 0,
+    delta INT NOT NULL DEFAULT 0,
+    motivo VARCHAR(200) NOT NULL DEFAULT 'Ajuste de inventario',
+    referencia VARCHAR(100),
+    id_usuario INT NULL,
+    fecha_movimiento DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_inventario_movimiento_producto
+        FOREIGN KEY (id_producto) REFERENCES producto(id),
+    CONSTRAINT fk_inventario_movimiento_usuario
+        FOREIGN KEY (id_usuario) REFERENCES usuario(id),
+    CONSTRAINT chk_inventario_movimiento_cantidad
+        CHECK (cantidad >= 0),
+    CONSTRAINT chk_inventario_movimiento_delta
+        CHECK (delta <> 0)
+) ENGINE=InnoDB;
+
 CREATE TABLE IF NOT EXISTS carrito (
     id INT AUTO_INCREMENT PRIMARY KEY,
     fecha_creacion DATE NOT NULL DEFAULT (CURRENT_DATE),

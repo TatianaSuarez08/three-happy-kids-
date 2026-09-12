@@ -52,10 +52,16 @@ export const findProductById = async (id) => {
        p.id_categoria AS idCategoria,
        p.id_talla AS idTalla,
        p.id_color AS idColor,
+       c.nombre_categoria AS categoria,
+       t.nombre_talla AS talla,
+       co.nombre_color AS color,
        p.estado,
        COALESCE(i.cantidad_disponible, 0) AS stock,
        COALESCE(i.cantidad_minima, 0) AS stockMinimo
      FROM producto p
+     JOIN categoria c ON c.id = p.id_categoria
+     JOIN talla t ON t.id = p.id_talla
+     JOIN color co ON co.id = p.id_color
      LEFT JOIN inventario i ON i.id_producto = p.id
      WHERE p.id = ?`,
     [id]

@@ -10,9 +10,7 @@ export default function PerfilMensajeria() {
         </div>
 
         <div style={{ background: "#fff", border: "1px solid #eee", borderRadius: "12px", boxShadow: "0 8px 20px rgba(26, 26, 26, 0.04)", padding: "1.25rem" }}>
-          <p style={{ margin: "0 0 8px", color: "#555", fontSize: "13px" }}><strong>Nombre:</strong> Carlos López</p>
-          <p style={{ margin: "0 0 8px", color: "#555", fontSize: "13px" }}><strong>Unidad:</strong> Moto - 208</p>
-          <p style={{ margin: 0, color: "#555", fontSize: "13px" }}><strong>Turno:</strong> 8:00 a. m. - 5:00 p. m.</p>
+          <p style={{ margin: 0, color: "#777", fontSize: "13px" }}>El perfil del mensajero estará disponible cuando exista un endpoint de perfil conectado.</p>
         </div>
       </div>
     </div>

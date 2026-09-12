@@ -11,6 +11,7 @@
 ### Productos
 
 - GET /productos-publicos
+- GET /productos-publicos/:id
 - GET /colores
 - GET /productos
 - GET /productos/:id
@@ -37,6 +38,15 @@
 
 - GET /dashboard
 
+### Inventario
+
+- GET /inventario/:id/historial
+- POST /inventario/movimiento
+
+### Logística
+
+- GET /logistica
+
 ## Archivos de implementación
 
 - [Back-end/index.js](../Back-end/index.js)
@@ -49,3 +59,5 @@
 ## Observación importante
 
 La API está funcionando, pero no está documentada con permisos ni con control granular por módulo y acción. La autorización está parcialmente en la ruta, aunque no es una matriz de permisos completa.
+
+`GET /productos-publicos` y `GET /productos-publicos/:id` se utilizan para el catálogo y el detalle del cliente. El frontend consume estos endpoints mediante `productoService.js`; los datos de nombre, descripción, precio, imagen, talla, color y stock proceden del modelo `ProductoModel.js`.

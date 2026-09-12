@@ -16,6 +16,11 @@ function ConfirmarCompra() {
     telefono: "",
     pago: "efectivo",
   });
+  const formatoPrecio = new Intl.NumberFormat("es-CO", {
+    style: "currency",
+    currency: "COP",
+    maximumFractionDigits: 0,
+  });
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -147,7 +152,7 @@ function ConfirmarCompra() {
             {carrito.map((p) => (
               <div key={p.id} className="carrito-resumen-linea">
                 <span>{p.nombre} x{p.cantidad}</span>
-                <span>{p.precio}</span>
+                <span>{formatoPrecio.format(Number(p.precioVenta ?? p.precio) || 0)}</span>
               </div>
             ))}
             <div className="carrito-resumen-linea">
@@ -156,7 +161,7 @@ function ConfirmarCompra() {
             </div>
             <div className="carrito-resumen-total">
               <span>Total</span>
-              <span>${total.toLocaleString("es-CO")}</span>
+              <span>{formatoPrecio.format(total)}</span>
             </div>
           </div>
 

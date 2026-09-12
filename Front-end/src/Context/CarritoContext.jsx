@@ -12,7 +12,10 @@ export function CarritoProvider({ children }) {
   const quitarDelCarrito = (id) => setCarrito((prev) => prev.filter((p) => p.id !== id));
   const actualizarCantidad = (id, cantidad) => { if (cantidad >= 1) setCarrito((prev) => prev.map((p) => p.id === id ? { ...p, cantidad } : p)); };
   const vaciarCarrito = () => setCarrito([]);
-  const total = carrito.reduce((acc, p) => acc + parseInt(String(p.precio).replace(/\$|\./g, ""), 10) * p.cantidad, 0);
+  const total = carrito.reduce((acc, p) => {
+    const precio = Number(p.precioVenta ?? p.precio) || 0;
+    return acc + precio * p.cantidad;
+  }, 0);
   const totalItems = carrito.reduce((acc, p) => acc + p.cantidad, 0);
 
   return <CarritoContext.Provider value={{ carrito, agregarAlCarrito, quitarDelCarrito, actualizarCantidad, vaciarCarrito, total, totalItems }}>{children}</CarritoContext.Provider>;

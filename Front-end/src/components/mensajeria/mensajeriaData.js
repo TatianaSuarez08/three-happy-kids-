@@ -1,9 +1,3 @@
-export const entregasDemo = [
-  { id: "HK-1048", cliente: "Laura Gomez", direccion: "Cra. 18 #42-16", hora: "10:30 a. m.", estado: "En camino", paquete: "Ropa infantil" },
-  { id: "HK-1049", cliente: "Carlos Perez", direccion: "Calle 73 #10-22", hora: "11:15 a. m.", estado: "Asignado", paquete: "Juguetes" },
-  { id: "HK-1050", cliente: "Mariana Rojas", direccion: "Av. 5 #81-09", hora: "12:00 p. m.", estado: "Recogiendo", paquete: "Accesorios" },
-];
-
 export const coloresEstado = {
   Asignado: ["#fff8e0", "#b87800"],
   Recogiendo: ["#e8f4ff", "#3578b8"],

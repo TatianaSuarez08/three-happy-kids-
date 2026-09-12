@@ -5,6 +5,11 @@ export const getPublicProducts = async () => {
   return data?.products || [];
 };
 
+export const getPublicProduct = async (productId) => {
+  const data = await request(`/productos-publicos/${productId}`);
+  return data?.product || null;
+};
+
 export const getProducts = async () => {
   const data = await request('/productos');
   return data?.products || [];

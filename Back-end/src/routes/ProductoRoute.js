@@ -16,6 +16,7 @@ const productosAdmin = [auth, permitRoles('administrador', 'bodeguero', { permis
 const productosRead = [auth, permitRoles('administrador', 'bodeguero', { permission: 'productos:read' })];
 
 router.get('/productos-publicos', getProducts);
+router.get('/productos-publicos/:id', getProduct);
 router.get('/colores', ...productosRead, getColors);
 router.get('/productos', ...productosRead, getProducts);
 router.get('/productos/:id', ...productosRead, getProduct);

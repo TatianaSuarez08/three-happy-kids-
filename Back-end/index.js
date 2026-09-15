@@ -11,7 +11,7 @@ import dashboardRoutes from './src/routes/DashboardRoute.js';
 import catalogRoutes from './src/routes/CatalogoRoute.js';
 import inventarioRoutes from './src/routes/InventarioRoute.js';
 import logisticaRoutes from './src/routes/LogisticaRoute.js';
-import { productImagesDirectory } from './src/middleware/subidaImagen.js';
+import { productImagesDirectory, profileImagesDirectory } from './src/middleware/subidaImagen.js';
 
 const app = express(); // Crea la instancia de la aplicación Express
 
@@ -30,6 +30,7 @@ app.use(express.json()); // Middleware para parsear bodies en formato JSON
 app.use(express.urlencoded({ extended: true })); // Middleware para parsear bodies URL-encoded (formularios)
 app.use(morgan('dev')); // Activa el logger en modo 'dev' para ver peticiones en consola
 app.use('/assets/productos', express.static(productImagesDirectory));
+app.use('/assets/foto_de_perfil', express.static(profileImagesDirectory));
 
 // Ruta raíz: responde con un JSON indicando que la API está lista
 app.get('/', (req, res) => {

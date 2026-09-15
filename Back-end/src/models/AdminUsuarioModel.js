@@ -3,7 +3,7 @@ import pool from '../db.js';
 
 const rolesAdministrativos = ['Administrador', 'Bodeguero', 'Mensajero'];
 
-export const createAdminUser = async ({ nombre, apellido, correo, password, rol }) => {
+export const createAdminUser = async ({ nombre, apellido, correo, telefono, fotoPerfil, password, rol }) => {
   if (!rolesAdministrativos.includes(rol)) {
     const error = new Error('El rol seleccionado no está permitido para este apartado');
     error.code = 'INVALID_ROLE';
@@ -17,9 +17,9 @@ export const createAdminUser = async ({ nombre, apellido, correo, password, rol 
   try {
     await connection.beginTransaction();
     const [userResult] = await connection.execute(
-      `INSERT INTO usuario (nombre_usuario, contrasena, correo, activo, idioma)
-       VALUES (?, ?, ?, 1, 'es')`,
-      [nombre, `${salt}:${hash}`, correo]
+      `INSERT INTO usuario (nombre_usuario, contrasena, correo, telefono, foto_perfil, activo, idioma)
+       VALUES (?, ?, ?, ?, ?, 1, 'es')`,
+      [nombre, `${salt}:${hash}`, correo, telefono, fotoPerfil]
     );
     const [roleRows] = await connection.execute(
       'SELECT id FROM rol WHERE LOWER(nombre_rol) = LOWER(?)',
@@ -48,7 +48,7 @@ export const createAdminUser = async ({ nombre, apellido, correo, password, rol 
       [nombre, apellido, userResult.insertId, cargoRows[0].id]
     );
     await connection.commit();
-    return { id: userResult.insertId, nombre, apellido, correo, rol, estado: 'Activo', telefono: '' };
+    return { id: userResult.insertId, nombre, apellido, correo, rol, estado: 'Activo', telefono: telefono || '', fotoPerfil };
   } catch (error) {
     await connection.rollback();
     throw error;
@@ -65,7 +65,8 @@ export const findUsers = async () => {
       COALESCE(e.apellido, '') AS apellido,
        u.correo,
        u.activo,
-       COALESCE(c.telefono, '') AS telefono,
+      COALESCE(u.telefono, c.telefono, '') AS telefono,
+      u.foto_perfil AS fotoPerfil,
       COALESCE(e.id_cargo, 0) AS id_cargo,
       COALESCE(cargo.nombre_cargo, '') AS cargo,
        COALESCE(GROUP_CONCAT(r.nombre_rol ORDER BY r.nombre_rol SEPARATOR ', '), 'Sin rol') AS rol
@@ -75,7 +76,7 @@ export const findUsers = async () => {
     LEFT JOIN cargo ON cargo.id = e.id_cargo
      LEFT JOIN usuario_rol ur ON ur.id_usuario = u.id
      LEFT JOIN rol r ON r.id = ur.id_rol
-    GROUP BY u.id, u.nombre_usuario, e.apellido, u.correo, u.activo, c.telefono, e.id_cargo, cargo.nombre_cargo
+    GROUP BY u.id, u.nombre_usuario, e.apellido, u.correo, u.activo, u.telefono, c.telefono, u.foto_perfil, e.id_cargo, cargo.nombre_cargo
      ORDER BY u.id DESC`
   );
 
@@ -94,7 +95,7 @@ export const updateUserStatus = async (id, active) => {
   return result.affectedRows > 0;
 };
 
-export const updateAdminUser = async ({ id, nombre, apellido, correo, password, rol }) => {
+export const updateAdminUser = async ({ id, nombre, apellido, correo, telefono, password, rol }) => {
   if (!rolesAdministrativos.includes(rol)) {
     const error = new Error('El rol seleccionado no está permitido para este apartado');
     error.code = 'INVALID_ROLE';
@@ -109,8 +110,8 @@ export const updateAdminUser = async ({ id, nombre, apellido, correo, password, 
       await connection.rollback();
       return false;
     }
-    const userValues = [nombre, correo];
-    let userQuery = 'UPDATE usuario SET nombre_usuario = ?, correo = ?';
+    const userValues = [nombre, correo, telefono || null];
+    let userQuery = 'UPDATE usuario SET nombre_usuario = ?, correo = ?, telefono = ?';
     if (password) {
       const salt = crypto.randomBytes(16).toString('hex');
       const hash = crypto.createHash('sha256').update(salt + password).digest('hex');

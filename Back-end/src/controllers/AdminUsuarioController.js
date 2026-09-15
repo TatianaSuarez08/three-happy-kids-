@@ -3,7 +3,7 @@ import { createAdminUser, deactivateUser, findUsers, updateAdminUser, updateUser
 const rolesAdministrativos = ['Administrador', 'Bodeguero', 'Mensajero'];
 
 export const createUser = async (req, res) => {
-  const { nombre, apellido, correo, password, rol } = req.body;
+  const { nombre, apellido, correo, telefono, password, rol } = req.body;
   if (!nombre || !apellido || !correo || !password || !rol) {
     return res.status(400).json({ error: 'Nombre, apellido, correo, contraseña y rol son obligatorios' });
   }
@@ -14,7 +14,15 @@ export const createUser = async (req, res) => {
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo)) return res.status(400).json({ error: 'El correo no es válido' });
 
   try {
-    const user = await createAdminUser({ nombre: nombre.trim(), apellido: apellido.trim(), correo: correo.trim().toLowerCase(), password, rol });
+    const user = await createAdminUser({
+      nombre: nombre.trim(),
+      apellido: apellido.trim(),
+      correo: correo.trim().toLowerCase(),
+      telefono: telefono?.trim() || null,
+      fotoPerfil: req.file ? `/assets/foto_de_perfil/${req.file.filename}` : null,
+      password,
+      rol
+    });
     res.status(201).json({ success: true, message: 'Usuario creado correctamente', user });
   } catch (error) {
     console.error('Error al crear usuario:', error);
@@ -62,7 +70,7 @@ export const changeUserStatus = async (req, res) => {
 
 export const editUser = async (req, res) => {
   const id = Number.parseInt(req.params.id, 10);
-  const { nombre, apellido, correo, password, rol } = req.body;
+  const { nombre, apellido, correo, telefono, password, rol } = req.body;
   if (!Number.isInteger(id)) return res.status(400).json({ error: 'El ID del usuario no es válido' });
   if (!nombre || !apellido || !correo || !rol) return res.status(400).json({ error: 'Nombre, apellido, correo y rol son obligatorios' });
   if (nombre.trim().length < 3) return res.status(400).json({ error: 'El nombre debe tener al menos 3 caracteres' });
@@ -72,7 +80,7 @@ export const editUser = async (req, res) => {
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo)) return res.status(400).json({ error: 'El correo no es válido' });
 
   try {
-    const updated = await updateAdminUser({ id, nombre: nombre.trim(), apellido: apellido.trim(), correo: correo.trim().toLowerCase(), password, rol });
+    const updated = await updateAdminUser({ id, nombre: nombre.trim(), apellido: apellido.trim(), correo: correo.trim().toLowerCase(), telefono: telefono?.trim() || null, password, rol });
     if (!updated) return res.status(404).json({ error: 'Usuario no encontrado' });
     res.json({ success: true, message: 'Usuario actualizado correctamente' });
   } catch (error) {

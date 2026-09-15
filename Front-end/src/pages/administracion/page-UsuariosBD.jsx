@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../../styles/style.css";
 
+const backendUrl = import.meta.env.VITE_BACKEND_URL || "http://localhost:3000";
+
 const rolColor = {
   Cliente: { bg: "#e8f4ff", color: "#4a90d9" },
   Administrador: { bg: "#fff3e0", color: "#ff8c42" },
@@ -104,7 +106,7 @@ function Usuarios() {
       <div className="admin-container">
         <div className="admin-header">
           <div>
-            <h2 className="admin-titulo">Usuarios</h2>
+            <h2 className="admin-titulo">Todos los usuarios</h2>
             <p className="admin-sub">Gestiona los usuarios registrados en la base de datos</p>
           </div>
           <div className="admin-meta">
@@ -136,7 +138,7 @@ function Usuarios() {
                 const color = rolColor[usuario.rol.split(", ")[0]] || { bg: "#f5f5f5", color: "#555" };
                 return <tr key={usuario.id}>
                   <td>{indice + 1}</td>
-                  <td className="admin-tabla-nombre">{usuario.nombre} {usuario.apellido}</td>
+                  <td className="admin-tabla-nombre"><div style={{ display: "flex", alignItems: "center", gap: "10px" }}><img src={usuario.fotoPerfil ? `${backendUrl}${usuario.fotoPerfil}` : ""} alt="" style={{ width: "36px", height: "36px", borderRadius: "50%", objectFit: "cover", background: "#fff3e0" }} />{usuario.nombre} {usuario.apellido}</div></td>
                   <td>{usuario.correo}</td>
                   <td>{usuario.telefono || "Sin registrar"}</td>
                   <td><span className="status-badge" style={{ background: color.bg, color: color.color }}>{usuario.rol}</span></td>

@@ -1,5 +1,6 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { API_BASE_URL, getSessionToken } from "../../services/httpClient";
 import "../../styles/style.css";
 
 function ActualizarPerfil() {
@@ -16,7 +17,18 @@ function ActualizarPerfil() {
   const [error, setError] = useState("");
   const [modal, setModal] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [perfil, setPerfil] = useState(null);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    fetch(`${API_BASE_URL}/me`, { headers: { Authorization: `Bearer ${getSessionToken()}` } })
+      .then(async (response) => {
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || "No se pudo cargar el perfil");
+        setPerfil(data.user);
+      })
+      .catch((err) => setError(err.message));
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -48,10 +60,10 @@ function ActualizarPerfil() {
   const cancelar = () => navigate("/");
 
   return (
-    <div className="login-page">
-      <div className="login-card">
+    <div className="login-page perfil-page">
+      <div className="login-card perfil-card">
 
-        <div className="login-logo">
+        <div className="login-logo perfil-heading">
           <div className="login-logo-icon">👤</div>
           <h1>Actualizar perfil</h1>
           <p>Modifica tus datos personales</p>
@@ -59,7 +71,14 @@ function ActualizarPerfil() {
 
         {error && <div className="login-error">{error}</div>}
 
-        <form onSubmit={handleSubmit}>
+        {perfil && <div className="perfil-summary">
+          <div className="perfil-avatar-wrap">
+            <img className="perfil-avatar" src={perfil.fotoPerfil ? `${API_BASE_URL}${perfil.fotoPerfil}` : ""} alt="Foto de perfil" />
+          </div>
+          <div className="perfil-summary-info"><strong>{perfil.nombre}</strong><div>{perfil.email}</div><div>{perfil.telefono || "Sin teléfono registrado"}</div><div className="perfil-summary-meta"><span>{perfil.rol}</span><span>{perfil.estado}</span></div></div>
+        </div>}
+
+        <form className="perfil-form" onSubmit={handleSubmit}>
 
           {/* Nombre */}
           <div className="login-field">
@@ -150,7 +169,7 @@ function ActualizarPerfil() {
           </div>
 
           {/* Botones */}
-          <div className="botones" style={{ marginTop: "1.5rem" }}>
+          <div className="botones perfil-actions">
             <button type="submit" className="btn-ingresar" disabled={loading}>
               {loading ? "Guardando..." : "Guardar cambios"}
             </button>

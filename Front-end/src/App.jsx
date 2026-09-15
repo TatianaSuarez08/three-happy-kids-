@@ -31,6 +31,7 @@ import EditarProducto from './pages/administracion/page-EditarProducto';
 import Usuarios from './pages/administracion/page-UsuariosBD';
 import CrearUsuario from './pages/administracion/page-CrearUsuario';
 import EditarUsuario from './pages/administracion/page-EditarUsuario';
+import ActualizarPerfil from './pages/cliente/page-ActualizarPerfil';
 import BodegueroLayout from './pages/bodeguero/BodegueroLayout';
 import BodegueroDashboard from './pages/bodeguero/BodegueroDashboard';
 import BodegueroInventario from './pages/bodeguero/BodegueroInventario';
@@ -84,6 +85,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/registro" element={<Registro />} />
         <Route path="/recuperar-pass" element={<RecuperarPass />} />
+        <Route path="/perfil" element={<ProtectedRoute allowedRoles={["cliente", "administrador", "bodeguero", "mensajero"]}><ActualizarPerfil /></ProtectedRoute>} />
 
         {/* Ruta protegida para usuarios mensajeros */}
         <Route

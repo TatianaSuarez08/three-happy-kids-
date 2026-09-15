@@ -132,6 +132,157 @@ img {
   padding: 6px 0 4px;
 }
 
+.catalogo-nav-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 13px 6px;
+  border: 1px solid rgba(255, 140, 66, 0.35);
+  border-radius: 9px;
+  background: rgba(255, 140, 66, 0.1);
+  color: #fff;
+  font-weight: 600;
+  transition: background-color 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
+}
+
+.catalogo-nav-link:hover,
+.catalogo-nav-link:focus-visible {
+  color: #fff;
+  background: #ff8c42;
+  border-color: #ff8c42;
+  transform: translateY(-1px);
+}
+
+.perfil-page {
+  align-items: flex-start;
+  padding: 3rem 1rem;
+}
+
+.login-card.perfil-card {
+  width: min(100%, 1180px);
+  max-width: 1180px;
+  align-self: stretch;
+  padding: 2rem 2.25rem;
+}
+
+.perfil-heading {
+  margin-bottom: 1.25rem;
+}
+
+.perfil-summary {
+  display: grid;
+  grid-template-columns: 112px minmax(0, 1fr);
+  align-items: center;
+  gap: 1.25rem;
+  padding: 1rem 1.15rem;
+  margin-bottom: 1.5rem;
+  background: #fffaf5;
+  border: 1px solid #f1e4d8;
+  border-radius: 12px;
+}
+
+.perfil-avatar-wrap {
+  display: grid;
+  place-items: center;
+}
+
+.perfil-avatar {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: #ffe4c7;
+  border: 4px solid #fff;
+  box-shadow: 0 6px 16px rgba(255, 140, 66, 0.16);
+}
+
+.perfil-summary-info {
+  min-width: 0;
+  color: #666;
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.perfil-summary-info strong {
+  display: block;
+  margin-bottom: 3px;
+  color: #1a1a1a;
+  font-size: 18px;
+}
+
+.perfil-summary-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 7px;
+}
+
+.perfil-summary-meta span {
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: #fff;
+  color: #b85f25;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.perfil-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 1.25rem;
+}
+
+.perfil-form .login-field:nth-child(5),
+.perfil-form .login-field:nth-child(6),
+.perfil-actions {
+  grid-column: 1 / -1;
+}
+
+.perfil-actions {
+  justify-content: flex-end;
+  margin-top: 0.5rem;
+}
+
+@media (max-width: 640px) {
+  .perfil-page {
+    padding: 1.5rem 0.75rem;
+  }
+
+  .perfil-card {
+    padding: 1.5rem 1rem;
+  }
+
+  .perfil-summary {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    gap: 0.75rem;
+    text-align: center;
+    padding: 1rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .perfil-summary-meta {
+    justify-content: center;
+  }
+
+  .perfil-form {
+    grid-template-columns: 1fr;
+  }
+
+  .perfil-form .login-field,
+  .perfil-actions {
+    grid-column: auto;
+  }
+
+  .perfil-actions {
+    flex-direction: column;
+  }
+
+  .perfil-actions button {
+    width: 100%;
+  }
+}
+
 .nav-link-item.active {
   color: #ff8c42;
   border-bottom: 2px solid #ff8c42;

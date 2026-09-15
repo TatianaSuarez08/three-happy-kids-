@@ -1,7 +1,7 @@
 import crypto from 'crypto'; // Para hashear con SHA2
 import jwt from 'jsonwebtoken'; // Librería para generar y verificar tokens JWT
 import { buildRolePermissions } from '../middleware/role.js';
-import { findUserByEmail, createUser } from '../models/UsuarioModel.js'; // Funciones del modelo de usuario
+import { findUserByEmail, findUserProfile, createUser } from '../models/UsuarioModel.js'; // Funciones del modelo de usuario
 
 // Función para hashear contraseña con SHA2 + SALT
 const hashPassword = (password) => {
@@ -90,6 +90,8 @@ export const registerUser = async (req, res) => {
         id: nuevoUsuario.id,
         nombre: nuevoUsuario.nombre,
         email: nuevoUsuario.email,
+        telefono: nuevoUsuario.telefono,
+        fotoPerfil: nuevoUsuario.fotoPerfil,
         idioma: nuevoUsuario.idioma,
         roles: nuevoUsuario.roles || []
       },
@@ -142,7 +144,9 @@ export const loginUser = async (req, res) => {
       user: { 
         id: user.id,
         nombre: user.nombre, 
-        email: user.email, 
+        email: user.email,
+        telefono: user.telefono,
+        fotoPerfil: user.fotoPerfil,
         idioma: user.idioma,
         roles: user.roles || [] 
       }, 
@@ -156,5 +160,16 @@ export const loginUser = async (req, res) => {
     }
 
     res.status(500).json({ error: 'Error en el login' });
+  }
+};
+
+export const getMyProfile = async (req, res) => {
+  try {
+    const profile = await findUserProfile(req.user.id);
+    if (!profile) return res.status(404).json({ error: 'Usuario no encontrado' });
+    res.json({ success: true, user: profile });
+  } catch (error) {
+    console.error('Error al consultar el perfil:', error);
+    res.status(500).json({ error: 'No se pudo consultar el perfil' });
   }
 };

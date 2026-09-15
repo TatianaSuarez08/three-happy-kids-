@@ -35,6 +35,7 @@ function Nav() {
 
   const cerrarSesion = () => {
     [localStorage, sessionStorage].forEach((store) => ["usuario", "user", "userRoles", "token"].forEach((key) => store.removeItem(key)));
+    window.dispatchEvent(new Event("happykids:session-changed"));
     setDropdownOpen(false);
     navigate("/login", { replace: true });
   };
@@ -60,7 +61,7 @@ function Nav() {
                   {esAdministrador && <div style={{ borderBottom: "1px solid #2e2e2e", padding: "6px 0" }}>{menuLink("/admin/dashboard", "Dashboard", "▦")}{menuLink("/admin/inventario", "Inventario", "▤")}{menuLink("/admin/pedidos", "Pedidos", "▧")}{menuLink("/admin/usuarios", "Usuarios", "♙")}</div>}
                   {esBodeguero && <div style={{ borderBottom: "1px solid #2e2e2e", padding: "6px 0" }}>{menuLink("/bodeguero", "Inicio bodeguero", "▤")}{menuLink("/bodeguero/inventario", "Inventario", "▤")}{menuLink("/bodeguero/pedidos", "Pedidos", "▧")}{menuLink("/bodeguero/movimientos", "Movimientos", "≡")}</div>}
                   {esMensajero && menuLink("/mensajeria", "Mensajería", "▣")}
-                  {menuLink("/ActualizarPerfil", "Actualizar perfil", "♙")}
+                  {menuLink("/perfil", "Actualizar perfil", "♙")}
                   <button onClick={cerrarSesion} style={{ width: "100%", padding: "12px 16px", color: "#e53935", background: "none", border: "none", borderTop: "1px solid #2e2e2e", textAlign: "left" }}>↪ Cerrar sesión</button>
                 </> : <>{menuLink("/login", "Iniciar sesión", "↪")}{menuLink("/registro", "Registrarse", "✎")}</>}
               </div>}
@@ -69,7 +70,7 @@ function Nav() {
         </div>
       </nav>
       <div className="nav-secondary"><div className="container nav-links-bar">
-        {esAdministrador ? <><Link to="/admin/dashboard" className="nav-link-item">Dashboard</Link><Link to="/admin/inventario" className="nav-link-item">Inventario</Link><Link to="/admin/pedidos" className="nav-link-item">Pedidos</Link><Link to="/admin/usuarios" className="nav-link-item">Usuarios</Link></> : esBodeguero ? <><Link to="/bodeguero" className="nav-link-item">Inicio</Link><Link to="/bodeguero/inventario" className="nav-link-item">Inventario</Link><Link to="/bodeguero/pedidos" className="nav-link-item">Pedidos</Link><Link to="/bodeguero/movimientos" className="nav-link-item">Movimientos</Link></> : esMensajero ? <><Link to="/mensajeria" className="nav-link-item">Inicio</Link><Link to="/mensajeria/entregas" className="nav-link-item">Mis entregas</Link><Link to="/mensajeria/ruta" className="nav-link-item">Ruta / Mapa</Link><Link to="/mensajeria/historial" className="nav-link-item">Historial</Link></> : <><Link to="/" className="nav-link-item">Inicio</Link><div style={{ position: "relative" }}><button type="button" className="nav-link-item" style={{ background: "none", border: 0 }} onClick={() => setCategoriasOpen(!categoriasOpen)}>Categorías ▾</button>{categoriasOpen && <div className="catalogo-categorias-menu">{categorias.map((categoria) => <Link key={categoria.id_categoria} to={`/catalogo?categoria=${categoria.id_categoria}`} onClick={() => setCategoriasOpen(false)}>{categoria.nombre}</Link>)}</div>}</div>{usuario && <Link to="/mis-pedidos" className="nav-link-item">Mis pedidos</Link>}</>}
+        {esAdministrador ? <><Link to="/admin/dashboard" className="nav-link-item">Dashboard</Link><Link to="/admin/inventario" className="nav-link-item">Inventario</Link><Link to="/admin/pedidos" className="nav-link-item">Pedidos</Link><Link to="/admin/usuarios" className="nav-link-item">Usuarios</Link></> : esBodeguero ? <><Link to="/bodeguero" className="nav-link-item">Inicio</Link><Link to="/bodeguero/inventario" className="nav-link-item">Inventario</Link><Link to="/bodeguero/pedidos" className="nav-link-item">Pedidos</Link><Link to="/bodeguero/movimientos" className="nav-link-item">Movimientos</Link></> : esMensajero ? <><Link to="/mensajeria" className="nav-link-item">Inicio</Link><Link to="/mensajeria/entregas" className="nav-link-item">Mis entregas</Link><Link to="/mensajeria/ruta" className="nav-link-item">Ruta / Mapa</Link><Link to="/mensajeria/historial" className="nav-link-item">Historial</Link></> : <><Link to="/" className="nav-link-item">Inicio</Link><div style={{ position: "relative" }}><button type="button" className="nav-link-item catalogo-nav-link" onClick={() => setCategoriasOpen(!categoriasOpen)}><span aria-hidden="true">▦</span>Catálogo ▾</button>{categoriasOpen && <div className="catalogo-categorias-menu">{categorias.map((categoria) => <Link className="catalogo-option" key={categoria.id_categoria} to={`/catalogo?categoria=${categoria.id_categoria}`} onClick={() => setCategoriasOpen(false)}><span className="catalogo-option-icon" aria-hidden="true">◈</span><span>{categoria.nombre}</span><span className="catalogo-option-arrow" aria-hidden="true">›</span></Link>)}</div>}</div>{usuario && <Link to="/mis-pedidos" className="nav-link-item">Mis pedidos</Link>}</>}
       </div></div>
     </>
   );

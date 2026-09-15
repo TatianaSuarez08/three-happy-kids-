@@ -65,6 +65,26 @@ Pruebas realizadas:
 
 ## Impacto
 
+## Perfil, usuarios y carrito por sesión
+
+- La tabla `usuario` incorpora `telefono` y `foto_perfil`; para instalaciones existentes se incluye `sql/MIGRACION_PERFIL_USUARIOS.sql`.
+- El alta administrativa conserva la ruta `/usuarios`, recibe `multipart/form-data`, valida imágenes JPG, PNG, WEBP o GIF de hasta 5 MB y guarda únicamente una ruta como `/assets/foto_de_perfil/perfil-<uuid>.<ext>`.
+- El backend publica `GET /me` con autenticación JWT y el apartado `Todos los usuarios` reutiliza `GET /usuarios`, mostrando teléfono, estado, rol y foto.
+- Las fotos se almacenan en `Front-end/src/assets/foto_de_perfil` y se sirven mediante `/assets/foto_de_perfil`.
+- El carrito permanece en `localStorage`, pero usa `carrito_usuario_<id>` con el `id` del JWT/sesión. Al iniciar o cerrar sesión se cambia el estado cargado, evitando compartir productos entre usuarios; la clave histórica `carrito` se migra una sola vez al usuario activo.
+- El backend de pedidos continúa tomando el usuario de `req.user.id`; el cliente no puede seleccionar otro propietario del pedido.
+
+### Archivos principales
+
+- Backend: `src/middleware/subidaImagen.js`, `src/routes/AdminUsuarioRoute.js`, `src/controllers/AdminUsuarioController.js`, `src/models/AdminUsuarioModel.js`, `src/routes/UsuarioRoute.js` y `src/models/UsuarioModel.js`.
+- Frontend: `src/Context/CarritoContext.jsx`, `src/pages/administracion/page-CrearUsuario.jsx`, `src/pages/administracion/page-UsuariosBD.jsx`, `src/pages/cliente/page-ActualizarPerfil.jsx` y `src/App.jsx`.
+
+### Validación
+
+- `Front-end`: `npm run lint` y `npm run build` completados correctamente.
+- `Back-end`: comprobación sintáctica con `node --check` completada correctamente.
+- La prueba manual pendiente requiere una base MySQL con la migración aplicada y dos sesiones autenticadas para comprobar el aislamiento del carrito, subida de imagen y lectura del perfil.
+
 Los recursos afectados fueron:
 
 - frontend,

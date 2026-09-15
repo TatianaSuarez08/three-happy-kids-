@@ -7,11 +7,21 @@ const roles = ["Administrador", "Bodeguero", "Mensajero"];
 function CrearUsuario() {
   const backend = import.meta.env.VITE_BACKEND_URL || "http://localhost:3000";
   const navigate = useNavigate();
-  const [formulario, setFormulario] = useState({ nombre: "", apellido: "", correo: "", password: "", rol: "Administrador" });
+  const [formulario, setFormulario] = useState({ nombre: "", apellido: "", correo: "", telefono: "", password: "", rol: "Administrador", foto: null });
+  const [vistaPrevia, setVistaPrevia] = useState("");
   const [error, setError] = useState("");
   const [guardando, setGuardando] = useState(false);
 
-  const cambiar = (event) => setFormulario({ ...formulario, [event.target.name]: event.target.value });
+  const cambiar = (event) => {
+    const { name, value, files } = event.target;
+    if (name === "foto") {
+      const archivo = files?.[0] || null;
+      setFormulario({ ...formulario, foto: archivo });
+      setVistaPrevia(archivo ? URL.createObjectURL(archivo) : "");
+      return;
+    }
+    setFormulario({ ...formulario, [name]: value });
+  };
 
   const guardar = async (event) => {
     event.preventDefault();
@@ -19,10 +29,14 @@ function CrearUsuario() {
     setGuardando(true);
     try {
       const storage = localStorage.getItem("token") ? localStorage : sessionStorage;
+      const datos = new FormData();
+      Object.entries(formulario).forEach(([campo, valor]) => {
+        if (valor !== null && valor !== "") datos.append(campo, valor);
+      });
       const response = await fetch(`${backend}/usuarios`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${storage.getItem("token")}` },
-        body: JSON.stringify(formulario),
+        headers: { Authorization: `Bearer ${storage.getItem("token")}` },
+        body: datos,
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "No se pudo crear el usuario");
@@ -41,8 +55,11 @@ function CrearUsuario() {
       <label className="admin-form-field">Nombre de usuario<input name="nombre" value={formulario.nombre} onChange={cambiar} minLength="3" required /></label>
       <label className="admin-form-field">Apellido<input name="apellido" value={formulario.apellido} onChange={cambiar} minLength="2" required /></label>
       <label className="admin-form-field">Correo<input name="correo" type="email" value={formulario.correo} onChange={cambiar} required /></label>
+      <label className="admin-form-field">Teléfono<input name="telefono" type="tel" value={formulario.telefono} onChange={cambiar} maxLength="20" /></label>
       <label className="admin-form-field">Contraseña<input name="password" type="password" value={formulario.password} onChange={cambiar} minLength="6" required /></label>
       <label className="admin-form-field">Rol<select name="rol" value={formulario.rol} onChange={cambiar} required>{roles.map((rol) => <option key={rol} value={rol}>{rol}</option>)}</select></label>
+      <label className="admin-form-field">Foto de perfil<input name="foto" type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={cambiar} /></label>
+      {vistaPrevia && <img src={vistaPrevia} alt="Vista previa del perfil" style={{ width: "72px", height: "72px", borderRadius: "50%", objectFit: "cover" }} />}
     </div><div className="admin-form-actions"><button type="button" className="btn-admin-cancelar" onClick={() => navigate("/admin/usuarios")}>Cancelar</button><button type="submit" className="btn-admin-primary" disabled={guardando}>{guardando ? "Guardando..." : "Crear usuario"}</button></div></form>
   </div></div>;
 }

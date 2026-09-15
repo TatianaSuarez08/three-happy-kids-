@@ -16,6 +16,8 @@ CREATE TABLE IF NOT EXISTS usuario (
     nombre_usuario VARCHAR(50) NOT NULL UNIQUE,
     contrasena VARCHAR(255) NOT NULL,
     correo VARCHAR(100) NOT NULL UNIQUE,
+    telefono VARCHAR(20),
+    foto_perfil VARCHAR(255),
     activo BOOLEAN NOT NULL DEFAULT TRUE,
     idioma VARCHAR(10) NOT NULL DEFAULT 'es'
 ) ENGINE=InnoDB;

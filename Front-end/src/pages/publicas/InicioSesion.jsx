@@ -135,6 +135,7 @@ function InicioSesion() {
       storage.setItem('user', JSON.stringify(userSession));
       storage.setItem('usuario', JSON.stringify(userSession));
       storage.setItem('userRoles', JSON.stringify(userSession.roles));
+      window.dispatchEvent(new Event('happykids:session-changed'));
 
       // Limpiar formulario
       correoRef.current.value = '';

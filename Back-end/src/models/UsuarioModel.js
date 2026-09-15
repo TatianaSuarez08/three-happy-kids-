@@ -5,7 +5,7 @@ import pool from '../db.js'; // Importa el pool de conexiones creado en db.js
 export const findUserByEmail = async (email) => {
   // Buscar el usuario por correo (columna `correo`)
   const [users] = await pool.execute(
-    'SELECT id, nombre_usuario AS nombre, contrasena AS password, correo AS email, activo, idioma FROM usuario WHERE correo = ?',
+    'SELECT id, nombre_usuario AS nombre, contrasena AS password, correo AS email, telefono, foto_perfil AS fotoPerfil, activo, idioma FROM usuario WHERE correo = ?',
     [email]
   );
 
@@ -30,7 +30,22 @@ export const findUserByEmail = async (email) => {
   const roles = rolesRows.map((r) => r.nombre_rol);
 
   // Devolver usuario con la propiedad `roles`
-  return { id: user.id, nombre: user.nombre, email: user.email, password: user.password, activo: !!user.activo, idioma: user.idioma, roles };
+  return { id: user.id, nombre: user.nombre, email: user.email, telefono: user.telefono, fotoPerfil: user.fotoPerfil, password: user.password, activo: !!user.activo, idioma: user.idioma, roles };
+};
+
+export const findUserProfile = async (id) => {
+  const [rows] = await pool.execute(
+    `SELECT u.id, u.nombre_usuario AS nombre, u.correo AS email, u.telefono,
+            u.foto_perfil AS fotoPerfil, u.activo, u.idioma,
+            COALESCE(GROUP_CONCAT(r.nombre_rol ORDER BY r.nombre_rol SEPARATOR ', '), 'Sin rol') AS rol
+     FROM usuario u
+     LEFT JOIN usuario_rol ur ON ur.id_usuario = u.id
+     LEFT JOIN rol r ON r.id = ur.id_rol
+     WHERE u.id = ?
+     GROUP BY u.id, u.nombre_usuario, u.correo, u.telefono, u.foto_perfil, u.activo, u.idioma`,
+    [id]
+  );
+  return rows[0] ? { ...rows[0], estado: rows[0].activo ? 'Activo' : 'Inactivo' } : null;
 };
 
 // Crea un nuevo usuario en la base de datos con rol 'cliente' por defecto

@@ -1,0 +1,16 @@
+@import "./tokens.css";
+@import "./theme-light.css";
+@import "./base.css";
+@import "./layout.css";
+@import "./components/buttons.css";
+@import "./components/cards.css";
+@import "./components/forms.css";
+@import "./components/navbar.css";
+@import "./components/tables.css";
+@import "./components/modals.css";
+@import "./pages/catalogo.css";
+@import "./pages/carrito.css";
+@import "./pages/dashboard.css";
+@import "./pages/bodeguero.css";
+@import "./pages/mensajeria.css";
+@import "./theme-dark.css";

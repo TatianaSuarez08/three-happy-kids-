@@ -3,10 +3,10 @@ import { getLogistica } from "../../services/logisticaService";
 
 const estados = ["Pendiente", "En camino", "Entregado", "Cancelado"];
 const estadoColor = {
-  Pendiente: { bg: "#fff8e0", color: "#f0a500", emoji: "📋" },
-  "En camino": { bg: "#e8f4ff", color: "#4a90d9", emoji: "🚚" },
-  Entregado: { bg: "#eafbea", color: "#3a7d44", emoji: "✅" },
-  Cancelado: { bg: "#fff0f0", color: "#e53935", emoji: "❌" },
+  Pendiente: { bg: "#fff8e0", color: "#f0a500", icon: "bi-hourglass-split" },
+  "En camino": { bg: "#e8f4ff", color: "#4a90d9", icon: "bi-truck" },
+  Entregado: { bg: "#eafbea", color: "#3a7d44", icon: "bi-check-circle-fill" },
+  Cancelado: { bg: "#fff0f0", color: "#e53935", icon: "bi-x-circle-fill" },
 };
 
 function InicioMensajeria() {
@@ -69,7 +69,7 @@ function InicioMensajeria() {
                 lineHeight: 1.2,
               }}
             >
-              {estado === "todos" ? "Todos" : `${estadoColor[estado].emoji} ${estado}`}
+              {estado === "todos" ? "Todos" : <><i className={`bi ${estadoColor[estado].icon}`} aria-hidden="true" /> {estado}</>}
             </button>
           ))}
         </div>
@@ -109,7 +109,7 @@ function InicioMensajeria() {
                       <p style={{ color: "#888", fontSize: "13px", margin: "5px 0 0" }}>{entrega.cliente} · {entrega.fecha}</p>
                     </div>
                     <span className="status-badge" style={{ background: estadoTexto.bg, color: estadoTexto.color }}>
-                      {estadoTexto.emoji} {entrega.estadoEntrega}
+                      <i className={`bi ${estadoTexto.icon}`} aria-hidden="true" /> {entrega.estadoEntrega}
                     </span>
                   </div>
 
@@ -149,7 +149,7 @@ function InicioMensajeria() {
                     <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
                       {estados.filter((opcion) => opcion !== entrega.estadoEntrega).map((opcion) => (
                         <button key={opcion} type="button" className="btn-admin-editar" style={{ fontSize: "12px", padding: "6px 12px" }}>
-                          {estadoColor[opcion].emoji} {opcion}
+                          <><i className={`bi ${estadoColor[opcion].icon}`} aria-hidden="true" /> {opcion}</>
                         </button>
                       ))}
                     </div>

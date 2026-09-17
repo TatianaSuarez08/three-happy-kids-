@@ -10,8 +10,8 @@ html {
 
 body {
   font-family: 'Segoe UI', sans-serif;
-  background: linear-gradient(180deg, #fffaf5 0%, #fff3ea 100%);
-  color: #1a1a1a;
+  background: linear-gradient(180deg, var(--color-page-soft) 0%, var(--color-brand-soft) 100%);
+  color: var(--color-ink);
 }
 
 button,
@@ -27,9 +27,9 @@ img {
 }
 
 .topbar-shell {
-  background: linear-gradient(180deg, #1b1b1b 0%, #141414 100%);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.14);
+  background: linear-gradient(180deg, var(--color-surface) 0%, var(--color-page) 100%);
+  border-bottom: 1px solid var(--color-border);
+  box-shadow: var(--shadow-soft);
 }
 
 .brand-wordmark {
@@ -38,25 +38,25 @@ img {
 }
 
 .brand-wordmark span {
-  color: #fff;
+  color: var(--color-ink);
   font-weight: 900;
   font-size: 22px;
   letter-spacing: 1px;
 }
 
 .brand-accent {
-  color: #ff8c42;
+  color: var(--color-brand);
 }
 
 .search-shell {
   flex: 1;
   display: flex;
   align-items: center;
-  background: #ffffff;
+  background: var(--color-surface);
   border-radius: 12px;
   overflow: hidden;
   height: 42px;
-  border: 1px solid rgba(255, 140, 66, 0.15);
+  border: 1px solid var(--color-border);
 }
 
 .search-input {
@@ -65,23 +65,23 @@ img {
   outline: none;
   padding: 0 16px;
   font-size: 14px;
-  color: #1a1a1a;
+  color: var(--color-ink);
   background: transparent;
 }
 
 .search-button {
-  background: #f7f7f7;
+  background: var(--color-surface-soft);
   border: none;
-  border-left: 1px solid #ddd;
+  border-left: 1px solid var(--color-border);
   height: 100%;
   padding: 0 16px;
   cursor: pointer;
-  color: #333;
+  color: var(--color-ink);
 }
 
 .nav-icon-button {
   background: transparent !important;
-  color: #fff !important;
+  color: var(--color-ink) !important;
   border: none !important;
   padding: 0.5rem !important;
   border-radius: 10px !important;
@@ -91,12 +91,12 @@ img {
   position: absolute;
   right: 0;
   top: calc(100% + 8px);
-  background: #1e1e1e;
-  border: 1px solid #2e2e2e;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
   border-radius: 12px;
   min-width: 220px;
   z-index: 999;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  box-shadow: var(--shadow-soft);
   overflow: hidden;
 }
 
@@ -111,8 +111,8 @@ img {
 }
 
 .nav-secondary {
-  background: #111;
-  border-bottom: 1px solid #2e2e2e;
+  background: var(--color-surface-soft);
+  border-bottom: 1px solid var(--color-border);
   padding: 6px 0;
 }
 
@@ -124,7 +124,7 @@ img {
 }
 
 .nav-link-item {
-  color: #ccc;
+  color: var(--color-muted);
   text-decoration: none;
   font-size: 13px;
   font-weight: 400;
@@ -136,21 +136,19 @@ img {
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  padding: 7px 13px 6px;
-  border: 1px solid rgba(255, 140, 66, 0.35);
-  border-radius: 9px;
-  background: rgba(255, 140, 66, 0.1);
-  color: #fff;
-  font-weight: 600;
-  transition: background-color 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
+  padding: 6px 0 4px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: var(--color-muted);
+  font-weight: 400;
+  transition: color 0.18s ease, border-color 0.18s ease;
 }
 
 .catalogo-nav-link:hover,
 .catalogo-nav-link:focus-visible {
-  color: #fff;
-  background: #ff8c42;
-  border-color: #ff8c42;
-  transform: translateY(-1px);
+  color: var(--color-brand);
+  border-bottom-color: var(--color-brand);
 }
 
 .perfil-page {
@@ -224,6 +222,34 @@ img {
   color: #b85f25;
   font-size: 12px;
   font-weight: 600;
+}
+
+.perfil-photo-picker {
+  display: inline-flex;
+  align-items: center;
+  margin-top: 10px;
+  padding: 6px 11px;
+  border: 1px solid rgba(255, 140, 66, 0.35);
+  border-radius: 8px;
+  color: #b85f25;
+  background: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 0.18s ease, border-color 0.18s ease;
+}
+
+.perfil-photo-picker:hover {
+  background: #fff3e8;
+  border-color: #ff8c42;
+}
+
+.perfil-photo-picker input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
 }
 
 .perfil-form {

@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { register } from "../../services/authService";
 
 function Registro() {
   const nombreUsuarioRef = useRef(null);
@@ -38,36 +39,7 @@ function Registro() {
 
     setLoading(true);
     try {
-      // URL del backend configurable mediante Vite env var
-      const BACKEND = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000';
-
-      // Petición POST a /registro con JSON
-      const res = await fetch(`${BACKEND}/registro`, {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ nombre_usuario, email, password, confirmar_password }),
-      });
-
-      let data = {};
-      try {
-        data = await res.json();
-      } catch {
-        throw new Error('El servidor respondió con un formato no válido. Revisa la consola del backend.');
-      }
-      
-      if (!res.ok) {
-        // Manejar diferentes códigos de error
-        if (res.status === 409) {
-          throw new Error('El email o nombre de usuario ya está registrado.');
-        } else if (res.status === 400) {
-          throw new Error(data.error || 'Datos inválidos.');
-        } else if (res.status >= 500) {
-          throw new Error(data.error || 'No se pudo crear la cuenta. Revisa la conexión con MySQL.');
-        }
-        throw new Error(data.error || `Error en el registro (${res.status}).`);
-      }
+      const data = await register({ nombre_usuario, email, password, confirmar_password });
 
       // Validar que la respuesta tenga los datos esperados
       if (!data.token || !data.user) {
@@ -91,7 +63,7 @@ function Registro() {
       
     } catch (err) {
       const mensaje = err instanceof TypeError
-        ? 'No se pudo conectar con el backend. Comprueba que esté iniciado en http://localhost:3000.'
+        ? 'No se pudo conectar con el backend. Comprueba que esté iniciado y que VITE_BACKEND_URL esté configurada.'
         : err.message || "Error al registrar. Intenta de nuevo.";
       setError(mensaje);
       console.error('Error en registro:', err);

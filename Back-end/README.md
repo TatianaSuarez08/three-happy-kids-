@@ -6,10 +6,11 @@ Requisitos:
 - Node.js
 - MySQL y una base de datos con tabla `Usuarios` que contenga columnas `nombre, email, password, role`.
 
-Variables de entorno (.env):
+Variables de entorno (`.env`, no se versiona; usa `.env.example`):
 - `PORT` (opcional)
 - `DB_HOST`, `DB_USER`, `DB_PASSWORD`, `DB_DATABASE`
-- `JWT_SECRET` (recomendado)
+- `JWT_SECRET` (obligatorio; el servidor no inicia sin él)
+- `BCRYPT_ROUNDS` (opcional, por defecto `12`)
 
 Ejecutar en desarrollo:
 
@@ -41,4 +42,4 @@ npm install
 npm run dev
 ```
 
-El backend usa las rutas actuales `POST /registro`, `POST /login` y `GET /me`.
+El backend expone rutas versionadas bajo `/api/v1` y mantiene las rutas sin prefijo temporalmente por compatibilidad. Las contraseñas nuevas usan bcrypt; las antiguas `salt:hash` se migran al primer login correcto.

@@ -5,10 +5,10 @@ import { getOrders, updateOrderStatus } from "../../services/pedidoService";
 
 const estados = ["Pendiente", "En camino", "Entregado", "Cancelado"];
 const estadoColor = {
-  Pendiente: { bg: "#fff8e0", color: "#f0a500", emoji: "⏳" },
-  "En camino": { bg: "#e8f4ff", color: "#4a90d9", emoji: "🚚" },
-  Entregado: { bg: "#eafbea", color: "#3a7d44", emoji: "✅" },
-  Cancelado: { bg: "#fff0f0", color: "#e53935", emoji: "❌" },
+  Pendiente: { icon: "bi-hourglass-split", className: "status-warning" },
+  "En camino": { icon: "bi-truck", className: "status-info" },
+  Entregado: { icon: "bi-check-circle-fill", className: "status-success" },
+  Cancelado: { icon: "bi-x-circle-fill", className: "status-danger" },
 };
 const formatoPrecio = new Intl.NumberFormat("es-CO", {
   style: "currency",
@@ -83,7 +83,7 @@ function Pedidos() {
         <div className="admin-toolbar">
           {["todos", ...estados].map((estado) => (
             <button key={estado} type="button" onClick={() => setFiltroEstado(estado)} className={`admin-pill ${filtroEstado === estado ? "active" : ""}`}>
-              {estado === "todos" ? "Todos" : `${estadoColor[estado].emoji} ${estado}`}
+              {estado === "todos" ? "Todos" : <><i className={`bi ${estadoColor[estado].icon}`} aria-hidden="true" /> {estado}</>}
             </button>
           ))}
         </div>
@@ -108,7 +108,7 @@ function Pedidos() {
                       <h3 style={{ fontSize: "16px", color: "#1a1a1a", margin: 0 }}>Pedido #{pedido.id}</h3>
                       <p style={{ color: "#888", fontSize: "13px", margin: "5px 0 0" }}>{pedido.cliente} · {pedido.fecha}</p>
                     </div>
-                    <span className="status-badge" style={{ background: estado.bg, color: estado.color }}>{estado.emoji} {pedido.estado}</span>
+                    <span className={`status-badge ${estado.className}`}><i className={`bi ${estado.icon}`} aria-hidden="true" /> {pedido.estado}</span>
                   </div>
 
                   <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) 280px", gap: "1.5rem", alignItems: "start" }}>
@@ -136,7 +136,7 @@ function Pedidos() {
                     <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
                       {estados.filter((opcion) => opcion !== pedido.estado).map((opcion) => (
                         <button key={opcion} type="button" className="btn-admin-editar" onClick={() => { setPedidoSeleccionado(pedido); setEstadoNuevo(opcion); }}>
-                          {estadoColor[opcion].emoji} {opcion}
+                          <><i className={`bi ${estadoColor[opcion].icon}`} aria-hidden="true" /> {opcion}</>
                         </button>
                       ))}
                     </div>

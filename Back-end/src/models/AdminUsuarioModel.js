@@ -1,5 +1,5 @@
-import crypto from 'crypto';
 import pool from '../db.js';
+import { hashPassword } from '../utils/password.js';
 
 const rolesAdministrativos = ['Administrador', 'Bodeguero', 'Mensajero'];
 
@@ -10,8 +10,7 @@ export const createAdminUser = async ({ nombre, apellido, correo, telefono, foto
     throw error;
   }
 
-  const salt = crypto.randomBytes(16).toString('hex');
-  const hash = crypto.createHash('sha256').update(salt + password).digest('hex');
+  const hash = await hashPassword(password);
   const connection = await pool.getConnection();
 
   try {
@@ -19,7 +18,7 @@ export const createAdminUser = async ({ nombre, apellido, correo, telefono, foto
     const [userResult] = await connection.execute(
       `INSERT INTO usuario (nombre_usuario, contrasena, correo, telefono, foto_perfil, activo, idioma)
        VALUES (?, ?, ?, ?, ?, 1, 'es')`,
-      [nombre, `${salt}:${hash}`, correo, telefono, fotoPerfil]
+      [nombre, hash, correo, telefono, fotoPerfil]
     );
     const [roleRows] = await connection.execute(
       'SELECT id FROM rol WHERE LOWER(nombre_rol) = LOWER(?)',
@@ -113,10 +112,9 @@ export const updateAdminUser = async ({ id, nombre, apellido, correo, telefono, 
     const userValues = [nombre, correo, telefono || null];
     let userQuery = 'UPDATE usuario SET nombre_usuario = ?, correo = ?, telefono = ?';
     if (password) {
-      const salt = crypto.randomBytes(16).toString('hex');
-      const hash = crypto.createHash('sha256').update(salt + password).digest('hex');
+      const hash = await hashPassword(password);
       userQuery += ', contrasena = ?';
-      userValues.push(`${salt}:${hash}`);
+      userValues.push(hash);
     }
     userQuery += ' WHERE id = ?';
     userValues.push(id);

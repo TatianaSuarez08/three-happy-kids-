@@ -1,4 +1,5 @@
 import jwt from 'jsonwebtoken';
+import { env } from '../config/env.js';
 
 // Middleware que verifica el token JWT enviado en el header Authorization: Bearer <token>
 export default function auth(req, res, next) {
@@ -9,7 +10,7 @@ export default function auth(req, res, next) {
 
   const token = authHeader.split(' ')[1];
   try {
-    const payload = jwt.verify(token, process.env.JWT_SECRET || 'secretkey');
+    const payload = jwt.verify(token, env.JWT_SECRET);
     // Añade la información decodificada al request para uso posterior
     req.user = payload;
     next();

@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import "../../styles/style.css";
+import { getUsers, updateUser } from "../../services/usuarioService";
 
 const roles = ["Administrador", "Bodeguero", "Mensajero"];
 
 function EditarUsuario() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const backend = import.meta.env.VITE_BACKEND_URL || "http://localhost:3000";
   const [formulario, setFormulario] = useState({ nombre: "", apellido: "", correo: "", telefono: "", password: "", rol: "Administrador" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
@@ -16,10 +16,7 @@ function EditarUsuario() {
   useEffect(() => {
     const cargar = async () => {
       try {
-        const storage = localStorage.getItem("token") ? localStorage : sessionStorage;
-        const response = await fetch(`${backend}/usuarios`, { headers: { Authorization: `Bearer ${storage.getItem("token")}` } });
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.error || "No se pudieron cargar los usuarios");
+        const data = await getUsers();
         const usuario = data.users.find((item) => item.id === Number(id));
         if (!usuario) throw new Error("Usuario no encontrado");
         setFormulario({ nombre: usuario.nombre, apellido: usuario.apellido || "", correo: usuario.correo, telefono: usuario.telefono || "", password: "", rol: usuario.rol.split(", ")[0] });
@@ -30,17 +27,14 @@ function EditarUsuario() {
       }
     };
     cargar();
-  }, [backend, id]);
+  }, [id]);
 
   const guardar = async (event) => {
     event.preventDefault();
     setGuardando(true);
     setError("");
     try {
-      const storage = localStorage.getItem("token") ? localStorage : sessionStorage;
-      const response = await fetch(`${backend}/usuarios/${id}`, { method: "PUT", headers: { "Content-Type": "application/json", Authorization: `Bearer ${storage.getItem("token")}` }, body: JSON.stringify(formulario) });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || "No se pudo editar el usuario");
+      await updateUser(id, formulario);
       navigate("/admin/usuarios");
     } catch (err) {
       setError(err.message || "No se pudo editar el usuario");

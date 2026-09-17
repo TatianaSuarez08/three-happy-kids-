@@ -18,7 +18,7 @@ Por tanto, la base de datos está preparada como modelo, pero todavía falta cre
 
 ## 2. Revisión del script SQL
 
-El archivo revisado es `DOCUMENTACION/sql/DataBaseHappyKids.sql`.
+El archivo revisado es el esquema vigente `DOCUMENTACION/sql/DataBaseHappyKids_CORREGIDA.sql`.
 
 ### Elementos correctos
 
@@ -283,7 +283,7 @@ La decisión de no aplicar automáticamente los `ALTER TABLE` evita romper una b
 Desde MySQL Workbench o el cliente de consola:
 
 ```sql
-SOURCE DOCUMENTACION/sql/DataBaseHappyKids.sql;
+SOURCE DOCUMENTACION/sql/DataBaseHappyKids_CORREGIDA.sql;
 USE happykids;
 SHOW TABLES;
 ```

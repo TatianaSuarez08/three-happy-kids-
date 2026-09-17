@@ -1,0 +1,9 @@
+.ds-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: var(--space-4);
+  background: rgba(0, 0, 0, 0.48);
+  z-index: 1000;
+}

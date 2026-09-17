@@ -8,7 +8,7 @@ La nueva versión está en:
 DOCUMENTACION/sql/DataBaseHappyKids_CORREGIDA.sql
 ```
 
-Es un archivo independiente de `DataBaseHappyKids.sql`. No reemplaza automáticamente el archivo original ni elimina información existente.
+Es la fuente de verdad vigente. El esquema histórico fue archivado en `sql/legacy/DataBaseHappyKids.sql`; no debe utilizarse para instalaciones nuevas.
 
 ## Qué contiene
 
@@ -165,3 +165,15 @@ Para que el dashboard use estos datos reales todavía deben crearse las rutas y 
 ## Resultado
 
 La base corregida queda preparada para trabajar con el dashboard y reduce los errores de integridad más importantes sin borrar datos ni incluir información ficticia.
+
+## Fuente de verdad y auditoría
+
+`DataBaseHappyKids_CORREGIDA.sql` es el esquema vigente. `sql/legacy/DataBaseHappyKids.sql` se conserva únicamente como referencia histórica y no debe usarse para nuevas instalaciones.
+
+La migración `sql/MIGRACION_AUDITORIA_INDICES.sql` agrega, sin borrar información:
+
+- `creado_en` y `actualizado_en` en usuarios, productos, facturas y carritos.
+- `creado_en` en detalles de pedidos.
+- Índices explícitos para cliente de factura, producto de detalle, movimientos de inventario y carrito por cliente/estado.
+
+Los cambios permiten auditoría básica y aceleran las consultas que alimentan pedidos, historial, inventario y dashboard.

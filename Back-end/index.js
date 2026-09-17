@@ -2,7 +2,7 @@ import express from 'express'; // Importa el framework Express para crear el ser
 import cors from 'cors'; // Importa middleware para habilitar CORS (peticiones entre orígenes)
 import morgan from 'morgan'; // Importa logger HTTP para desarrollo
 
-import './src/db.js'; // Ejecuta la inicialización de la base de datos (conexión a MySQL)
+import { verifyDatabaseConnection } from './src/db.js';
 import userRoutes from './src/routes/UsuarioRoute.js'; // Importa las rutas relacionadas con usuarios
 import productRoutes from './src/routes/ProductoRoute.js'; // Importa las rutas relacionadas con productos
 import orderRoutes from './src/routes/PedidoRoute.js';
@@ -11,15 +11,17 @@ import dashboardRoutes from './src/routes/DashboardRoute.js';
 import catalogRoutes from './src/routes/CatalogoRoute.js';
 import inventarioRoutes from './src/routes/InventarioRoute.js';
 import logisticaRoutes from './src/routes/LogisticaRoute.js';
+import healthRoutes from './src/routes/HealthRoute.js';
 import { productImagesDirectory, profileImagesDirectory } from './src/middleware/subidaImagen.js';
+import { env } from './src/config/env.js';
 
 const app = express(); // Crea la instancia de la aplicación Express
 
-const PORT = process.env.PORT || 3000; // Define el puerto: usa la variable de entorno o 3000 por defecto
+const PORT = env.PORT; // Define el puerto desde la configuración validada
 
 // Configurar CORS para permitir credenciales desde localhost en desarrollo
 const corsOptions = {
-  origin: process.env.CORS_ORIGIN || 'http://localhost:5173', // Origen permitido (ajusta en producción)
+    origin: env.CORS_ORIGIN, // Origen permitido (ajusta en producción)
   credentials: true, // Permitir cookies y credenciales
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
@@ -41,18 +43,26 @@ app.get('/', (req, res) => {
     });
 });
 
-// Monta las rutas de usuario en la ruta base '/'
-app.use('/', userRoutes);
-app.use('/', productRoutes);
-app.use('/', orderRoutes);
-app.use('/', adminUserRoutes);
-app.use('/', dashboardRoutes);
-app.use('/', catalogRoutes);
-app.use('/', inventarioRoutes);
-app.use('/', logisticaRoutes);
+// API versionada; la capa pública real del sistema se mantiene bajo /api/v1.
+app.use('/api/v1', userRoutes);
+app.use('/api/v1', productRoutes);
+app.use('/api/v1', orderRoutes);
+app.use('/api/v1', adminUserRoutes);
+app.use('/api/v1', dashboardRoutes);
+app.use('/api/v1', catalogRoutes);
+app.use('/api/v1', inventarioRoutes);
+app.use('/api/v1', logisticaRoutes);
+app.use('/api/v1', healthRoutes);
 
 // Inicia el servidor escuchando en el puerto configurado
-app.listen(PORT, () => {
-    console.log(`Servidor escuchando en http://localhost:${PORT}`); // Log cuando el servidor arranca
+const server = app.listen(PORT, async () => {
+    try {
+        await verifyDatabaseConnection();
+        console.log(`Servidor escuchando en http://localhost:${PORT}`);
+        console.log(`Base de datos conectada: ${env.DB_HOST}/${env.DB_DATABASE}`);
+    } catch (error) {
+        console.error(`No se pudo conectar a MySQL en ${env.DB_HOST}/${env.DB_DATABASE}. Revisa Back-end/.env.`, error.message);
+        server.close(() => process.exitCode = 1);
+    }
 });
 

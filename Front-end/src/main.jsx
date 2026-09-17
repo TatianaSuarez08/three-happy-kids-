@@ -5,15 +5,20 @@ import "./styles/global.css";
 import "./styles/style.css";
 import "./styles/admin.css";
 import "bootstrap/dist/css/bootstrap.min.css";
-import { FavoritosProvider } from "./context/FavoritosContext";
-import { CarritoProvider } from "./context/CarritoContext";
+import "bootstrap-icons/font/bootstrap-icons.css";
+import { FavoritosProvider } from "./Context/FavoritosContext";
+import { CarritoProvider } from "./Context/CarritoContext";
+import { ThemeProvider } from "./Context/ThemeContext.jsx";
+import "./styles/app.css";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
-    <CarritoProvider>
-      <FavoritosProvider>
-        <App />
-      </FavoritosProvider>
-    </CarritoProvider>
+    <ThemeProvider>
+      <CarritoProvider>
+        <FavoritosProvider>
+          <App />
+        </FavoritosProvider>
+      </CarritoProvider>
+    </ThemeProvider>
   </React.StrictMode>
 );

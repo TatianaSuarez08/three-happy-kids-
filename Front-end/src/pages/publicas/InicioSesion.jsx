@@ -1,5 +1,6 @@
 import { useRef, useState, useEffect, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { login } from "../../services/authService";
 
 function InicioSesion() {
   // Referencias a los inputs (no controlados) para leer valores sin estado adicional
@@ -86,32 +87,8 @@ function InicioSesion() {
 
     setLoading(true);
     try {
-      // URL del backend configurable mediante Vite env var
-      const BACKEND = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000';
-
-      // Petición POST a /login con JSON
-      const res = await fetch(`${BACKEND}/login`, {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ email: correo, password: contraseña }),
-      });
-
-      const data = await res.json();
+      const data = await login({ email: correo, password: contraseña });
       
-      if (!res.ok) {
-        // Manejar diferentes códigos de error
-        if (res.status === 403) {
-          throw new Error('El usuario está inactivo. Contacta al administrador.');
-        } else if (res.status === 401) {
-          throw new Error('Correo o contraseña incorrectos.');
-        } else if (res.status === 400) {
-          throw new Error(data.error || 'Datos inválidos.');
-        }
-        throw new Error(data.error || 'Error en el login');
-      }
-
       // Validar que la respuesta tenga los datos esperados
       if (!data.token || !data.user) {
         throw new Error('Respuesta inválida del servidor');

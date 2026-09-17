@@ -2,6 +2,7 @@
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import "../../styles/style.css";
+import { getDashboard, getLogistica } from "../../services/dashboardService";
 
 const estadoColor = {
   "Entregado": { bg: "#eafbea", color: "#3a7d44" },
@@ -11,15 +12,14 @@ const estadoColor = {
 };
 
 const estadoEmoji = {
-  "Entregado": "✅",
-  "En camino": "🚚",
-  "Pendiente": "⏳",
-  "Cancelado": "❌",
+  "Entregado": "bi-check-circle-fill",
+  "En camino": "bi-truck",
+  "Pendiente": "bi-hourglass-split",
+  "Cancelado": "bi-x-circle-fill",
 };
 
 function Dashboard() {
   const navigate = useNavigate();
-  const backend = import.meta.env.VITE_BACKEND_URL || "http://localhost:3000";
   const [dashboard, setDashboard] = useState({ stats: {}, recentOrders: [], lowStock: [] });
   const [logistica, setLogistica] = useState({ summary: {}, tasks: [] });
   const [error, setError] = useState("");
@@ -28,25 +28,12 @@ function Dashboard() {
   useEffect(() => {
     const cargarDashboard = async () => {
       try {
-        const storage = localStorage.getItem("token") ? localStorage : sessionStorage;
-        const token = storage.getItem("token");
-
-        const response = await fetch(`${backend}/dashboard`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.error || "No se pudo cargar el dashboard");
+        const data = await getDashboard();
 
         setDashboard({ stats: data.stats || {}, recentOrders: data.recentOrders || [], lowStock: data.lowStock || [] });
 
-        const responseLogistica = await fetch(`${backend}/logistica`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        const dataLogistica = await responseLogistica.json();
-
-        if (responseLogistica.ok) {
-          setLogistica({ summary: dataLogistica.summary || {}, tasks: dataLogistica.tasks || [] });
-        }
+        const dataLogistica = await getLogistica();
+        setLogistica({ summary: dataLogistica.summary || {}, tasks: dataLogistica.tasks || [] });
       } catch (err) {
         setError(err.message || "No se pudo cargar el dashboard");
       } finally {
@@ -55,7 +42,7 @@ function Dashboard() {
     };
 
     cargarDashboard();
-  }, [backend]);
+  }, []);
 
   const stats = dashboard.stats;
   const pedidosRecientes = dashboard.recentOrders;
@@ -84,15 +71,15 @@ function Dashboard() {
         {/* Tarjetas de estadísticas */}
         <div className="admin-grid">
           {[
-            { label: "Ventas totales", valor: formatoPrecio.format(Number(stats.totalVentas) || 0), emoji: "💰", color: "#3a7d44", bg: "#eafbea" },
-            { label: "Total pedidos", valor: stats.totalPedidos, emoji: "📦", color: "#4a90d9", bg: "#e8f4ff" },
-            { label: "Clientes", valor: stats.totalClientes, emoji: "👥", color: "#ff8c42", bg: "#fff3e0" },
-            { label: "Inventario", valor: stats.totalProductos, emoji: "👕", color: "#7c3aed", bg: "#f5f0ff" },
+            { label: "Ventas totales", valor: formatoPrecio.format(Number(stats.totalVentas) || 0), icon: "bi-cash-coin", color: "#3a7d44", bg: "#eafbea" },
+            { label: "Total pedidos", valor: stats.totalPedidos, icon: "bi-box-seam", color: "#4a90d9", bg: "#e8f4ff" },
+            { label: "Clientes", valor: stats.totalClientes, icon: "bi-people-fill", color: "#ff8c42", bg: "#fff3e0" },
+            { label: "Inventario", valor: stats.totalProductos, icon: "bi-tag-fill", color: "#7c3aed", bg: "#f5f0ff" },
           ].map((stat) => (
             <div key={stat.label} className="stat-card">
               <div className="stat-header">
                 <span className="stat-label">{stat.label}</span>
-                <span className="stat-icon" style={{ background: stat.bg }}>{stat.emoji}</span>
+                <span className="stat-icon" style={{ background: stat.bg }}><i className={`bi ${stat.icon}`} aria-hidden="true" /></span>
               </div>
               <div className="stat-value" style={{ color: stat.color }}>{stat.valor}</div>
             </div>
@@ -102,9 +89,9 @@ function Dashboard() {
         {/* Estado de pedidos */}
         <div className="status-grid">
           {[
-            { label: "Pendientes", valor: stats.pedidosPendientes, emoji: "⏳", color: "#f0a500", bg: "#fff8e0" },
-            { label: "En camino", valor: stats.pedidosEnCamino, emoji: "🚚", color: "#4a90d9", bg: "#e8f4ff" },
-            { label: "Entregados", valor: stats.pedidosEntregados, emoji: "✅", color: "#3a7d44", bg: "#eafbea" },
+            { label: "Pendientes", valor: stats.pedidosPendientes, icon: "bi-hourglass-split", color: "#f0a500", bg: "#fff8e0" },
+            { label: "En camino", valor: stats.pedidosEnCamino, icon: "bi-truck", color: "#4a90d9", bg: "#e8f4ff" },
+            { label: "Entregados", valor: stats.pedidosEntregados, icon: "bi-check-circle-fill", color: "#3a7d44", bg: "#eafbea" },
           ].map((stat) => (
             <div
               key={stat.label}
@@ -112,7 +99,7 @@ function Dashboard() {
               style={{ background: stat.bg, borderColor: `${stat.color}30` }}
               onClick={() => navigate("/admin/pedidos")}
             >
-              <span className="status-card-icon" style={{ background: `${stat.color}20` }}>{stat.emoji}</span>
+              <span className="status-card-icon" style={{ background: `${stat.color}20` }}><i className={`bi ${stat.icon}`} aria-hidden="true" /></span>
               <div>
                 <div className="status-card-value" style={{ color: stat.color }}>{stat.valor}</div>
                 <div className="status-card-label" style={{ color: stat.color }}>{stat.label}</div>
@@ -141,7 +128,7 @@ function Dashboard() {
                       className="status-badge"
                       style={{ background: estadoColor[p.estado].bg, color: estadoColor[p.estado].color }}
                     >
-                      {estadoEmoji[p.estado]} {p.estado}
+                      <i className={`bi ${estadoEmoji[p.estado]}`} aria-hidden="true" /> {p.estado}
                     </span>
                     <span style={{ fontSize: "14px", fontWeight: 700, color: "#ff8c42" }}>{formatoPrecio.format(Number(p.total) || 0)}</span>
                   </div>
@@ -153,7 +140,7 @@ function Dashboard() {
           {/* Stock bajo */}
           <div className="section-panel">
             <div className="section-header">
-              <h3 className="section-title">⚠️ Stock bajo</h3>
+              <h3 className="section-title"><i className="bi bi-exclamation-triangle-fill" aria-hidden="true" /> Stock bajo</h3>
               <button className="btn-link" onClick={() => navigate("/admin/inventario")}>Ver inventario →</button>
             </div>
             <div className="list-body">
@@ -176,7 +163,7 @@ function Dashboard() {
         {/* Cadena operativa */}
         <div style={{ marginTop: "2rem", background: "#fff", border: "1px solid #eee", borderRadius: "12px", padding: "1.25rem", boxShadow: "0 12px 30px rgba(0,0,0,0.04)" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem", gap: "1rem", flexWrap: "wrap" }}>
-            <h3 style={{ fontSize: "16px", fontWeight: 700, color: "#1a1a1a", margin: 0 }}>📦 Cadena operativa</h3>
+            <h3 style={{ fontSize: "16px", fontWeight: 700, color: "#1a1a1a", margin: 0 }}><i className="bi bi-box-seam" aria-hidden="true" /> Cadena operativa</h3>
             <button className="btn-link" onClick={() => navigate("/admin/pedidos")}>Ver pedidos →</button>
           </div>
 
@@ -221,12 +208,12 @@ function Dashboard() {
           <h3 style={{ fontSize: "16px", fontWeight: 700, color: "#1a1a1a", marginBottom: "1rem" }}>Accesos rápidos</h3>
           <div className="quick-grid">
             {[
-              { label: "Usuarios", emoji: "👥", ruta: "/admin/usuarios" },
-              { label: "Pedidos", emoji: "📦", ruta: "/admin/pedidos" },
-              { label: "Inventario", emoji: "📋", ruta: "/admin/inventario" },
+              { label: "Usuarios", icon: "bi-people-fill", ruta: "/admin/usuarios" },
+              { label: "Pedidos", icon: "bi-box-seam", ruta: "/admin/pedidos" },
+              { label: "Inventario", icon: "bi-clipboard-check", ruta: "/admin/inventario" },
             ].map((acc) => (
               <button key={acc.label} className="quick-button" onClick={() => navigate(acc.ruta)}>
-                <span>{acc.emoji}</span>
+                <i className={`bi ${acc.icon}`} aria-hidden="true" />
                 <strong>{acc.label}</strong>
               </button>
             ))}

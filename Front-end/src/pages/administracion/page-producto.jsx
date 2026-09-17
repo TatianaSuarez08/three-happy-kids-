@@ -216,7 +216,7 @@ function Inventario() {
                           className="btn-admin-editar"
                           onClick={() => navigate(`/admin/editar-producto/${p.id}`)}
                         >
-                          📦 Actualizar stock
+                          <i className="bi bi-box-seam" aria-hidden="true" /> Actualizar stock
                         </button>
                         <button
                           className="btn-admin-editar"

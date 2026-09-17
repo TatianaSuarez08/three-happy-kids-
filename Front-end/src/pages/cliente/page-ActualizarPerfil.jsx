@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { API_BASE_URL, getSessionToken } from "../../services/httpClient";
+import { API_BASE_URL } from "../../services/httpClient";
+import { getMyProfile, updateMyProfilePhoto } from "../../services/usuarioService";
 import "../../styles/style.css";
 
 function ActualizarPerfil() {
@@ -18,15 +19,13 @@ function ActualizarPerfil() {
   const [modal, setModal] = useState(null);
   const [loading, setLoading] = useState(false);
   const [perfil, setPerfil] = useState(null);
+  const [fotoSeleccionada, setFotoSeleccionada] = useState(null);
+  const [vistaPrevia, setVistaPrevia] = useState("");
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetch(`${API_BASE_URL}/me`, { headers: { Authorization: `Bearer ${getSessionToken()}` } })
-      .then(async (response) => {
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.error || "No se pudo cargar el perfil");
-        setPerfil(data.user);
-      })
+    getMyProfile()
+      .then((data) => setPerfil(data.user))
       .catch((err) => setError(err.message));
   }, []);
 
@@ -43,7 +42,11 @@ function ActualizarPerfil() {
 
     setLoading(true);
     try {
-      await new Promise((r) => setTimeout(r, 1000));
+      if (fotoSeleccionada) {
+        const data = await updateMyProfilePhoto(fotoSeleccionada);
+        setPerfil((actual) => ({ ...actual, fotoPerfil: data.fotoPerfil }));
+        setFotoSeleccionada(null);
+      }
       setModal("exito");
     } catch {
       setError("No se pudo actualizar. Intenta de nuevo.");
@@ -59,12 +62,18 @@ function ActualizarPerfil() {
 
   const cancelar = () => navigate("/");
 
+  const seleccionarFoto = (event) => {
+    const archivo = event.target.files?.[0] || null;
+    setFotoSeleccionada(archivo);
+    setVistaPrevia(archivo ? URL.createObjectURL(archivo) : "");
+  };
+
   return (
     <div className="login-page perfil-page">
       <div className="login-card perfil-card">
 
         <div className="login-logo perfil-heading">
-          <div className="login-logo-icon">👤</div>
+          <div className="login-logo-icon"><i className="bi bi-person-circle" aria-hidden="true" /></div>
           <h1>Actualizar perfil</h1>
           <p>Modifica tus datos personales</p>
         </div>
@@ -73,9 +82,9 @@ function ActualizarPerfil() {
 
         {perfil && <div className="perfil-summary">
           <div className="perfil-avatar-wrap">
-            <img className="perfil-avatar" src={perfil.fotoPerfil ? `${API_BASE_URL}${perfil.fotoPerfil}` : ""} alt="Foto de perfil" />
+            <img className="perfil-avatar" src={vistaPrevia || (perfil.fotoPerfil ? `${API_BASE_URL}${perfil.fotoPerfil}` : "")} alt="Foto de perfil" />
           </div>
-          <div className="perfil-summary-info"><strong>{perfil.nombre}</strong><div>{perfil.email}</div><div>{perfil.telefono || "Sin teléfono registrado"}</div><div className="perfil-summary-meta"><span>{perfil.rol}</span><span>{perfil.estado}</span></div></div>
+          <div className="perfil-summary-info"><strong>{perfil.nombre}</strong><div>{perfil.email}</div><div>{perfil.telefono || "Sin teléfono registrado"}</div><div className="perfil-summary-meta"><span>{perfil.rol}</span><span>{perfil.estado}</span></div><label className="perfil-photo-picker">Cambiar foto<input type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={seleccionarFoto} /></label></div>
         </div>}
 
         <form className="perfil-form" onSubmit={handleSubmit}>

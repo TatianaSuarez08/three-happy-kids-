@@ -1,21 +1,8 @@
-import crypto from 'crypto'; // Para hashear con SHA2
 import jwt from 'jsonwebtoken'; // Librería para generar y verificar tokens JWT
 import { buildRolePermissions } from '../middleware/role.js';
-import { findUserByEmail, findUserProfile, createUser } from '../models/UsuarioModel.js'; // Funciones del modelo de usuario
-
-// Función para hashear contraseña con SHA2 + SALT
-const hashPassword = (password) => {
-  const salt = crypto.randomBytes(16).toString('hex'); // Generar salt aleatorio
-  const hash = crypto.createHash('sha256').update(salt + password).digest('hex'); // SHA2 del salt + contraseña
-  return `${salt}:${hash}`; // Guardar salt:hash juntos
-};
-
-// Función para verificar contraseña
-const verifyPassword = (password, storedHash) => {
-  const [salt, hash] = storedHash.split(':'); // Separar salt del hash
-  const computedHash = crypto.createHash('sha256').update(salt + password).digest('hex'); // Calcular hash con el salt
-  return hash === computedHash; // Comparar hashes
-};
+import { env } from '../config/env.js';
+import { hashPassword, verifyPassword } from '../utils/password.js';
+import { findUserByEmail, findUserProfile, updatePassword, updateUserProfilePhoto, createUser } from '../models/UsuarioModel.js'; // Funciones del modelo de usuario
 
 // Genera un token JWT con información pública del usuario y expiración
 const generateToken = (user) => {
@@ -29,7 +16,7 @@ const generateToken = (user) => {
       roles: user.roles || [],
       permissions
     },
-    process.env.JWT_SECRET || 'secretkey',
+    env.JWT_SECRET,
     { expiresIn: '8h' }
   );
 };
@@ -69,7 +56,7 @@ export const registerUser = async (req, res) => {
     }
 
     // Hashear la contraseña con SHA2 + SALT
-    const hashedPassword = hashPassword(password);
+    const hashedPassword = await hashPassword(password);
 
     // Crear el usuario en la base de datos
     const nuevoUsuario = await createUser({
@@ -130,10 +117,13 @@ export const loginUser = async (req, res) => {
       return res.status(401).json({ error: 'Credenciales inválidas' });
     }
 
-    // Verificar contraseña con SHA2
-    const isValidPassword = verifyPassword(password, user.password);
-    if (!isValidPassword) {
+    const passwordResult = await verifyPassword(password, user.password);
+    if (!passwordResult.valid) {
       return res.status(401).json({ error: 'Credenciales inválidas' });
+    }
+
+    if (passwordResult.legacy) {
+      await updatePassword(user.id, await hashPassword(password));
     }
 
     const token = generateToken(user);
@@ -171,5 +161,19 @@ export const getMyProfile = async (req, res) => {
   } catch (error) {
     console.error('Error al consultar el perfil:', error);
     res.status(500).json({ error: 'No se pudo consultar el perfil' });
+  }
+};
+
+export const updateMyProfilePhoto = async (req, res) => {
+  if (!req.file) return res.status(400).json({ error: 'Selecciona una imagen de perfil' });
+
+  try {
+    const photoPath = `/assets/foto_de_perfil/${req.file.filename}`;
+    const updated = await updateUserProfilePhoto(req.user.id, photoPath);
+    if (!updated) return res.status(404).json({ error: 'Usuario no encontrado' });
+    res.json({ success: true, message: 'Foto de perfil actualizada correctamente', fotoPerfil: photoPath });
+  } catch (error) {
+    console.error('Error al actualizar la foto de perfil:', error);
+    res.status(500).json({ error: 'No se pudo actualizar la foto de perfil' });
   }
 };

@@ -1,3 +1,8 @@
+# Conexión a base de datos
+
+La configuración local real vive en la raíz del proyecto en [.env](../.env). El backend carga ese archivo mediante `src/config/env.js` y el frontend usa la misma raíz como `envDir` en Vite.
+
+La ruta `GET /api/v1/health` ejecuta `SELECT 1` y devuelve `{ "ok": true }` cuando MySQL está disponible. Al iniciar, el backend verifica la conexión y muestra el host y la base configurados; si falla, termina con un mensaje que indica revisar el archivo `.env` raíz.
 # Error de conexión del backend con MySQL
 
 ## Problema identificado

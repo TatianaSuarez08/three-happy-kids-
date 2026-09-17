@@ -65,7 +65,7 @@ function ConfirmarCompra() {
           <div className="carrito-lista">
             <form onSubmit={handleSubmit}>
 
-              <h3 className="confirmar-subtitulo">📍 Dirección de envío</h3>
+              <h3 className="confirmar-subtitulo"><i className="bi bi-geo-alt" aria-hidden="true" /> Dirección de envío</h3>
 
               <div className="confirmar-field">
                 <label>Dirección</label>
@@ -132,7 +132,7 @@ function ConfirmarCompra() {
 
               <div className="confirmar-botones">
                 <button type="submit" className="btn-ingresar" disabled={guardando}>
-                  {guardando ? "Guardando pedido..." : "✅ Realizar pedido"}
+                  {guardando ? "Guardando pedido..." : <><i className="bi bi-check-circle-fill" aria-hidden="true" /> Realizar pedido</>}
                 </button>
                 <button
                   type="button"

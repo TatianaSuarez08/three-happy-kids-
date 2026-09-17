@@ -1,5 +1,5 @@
 -- Esquema corregido de Three Happy Kids
--- Este archivo es independiente de DataBaseHappyKids.sql.
+-- Este archivo es la fuente de verdad vigente. El esquema histórico está en sql/legacy/.
 -- No elimina la base de datos ni incluye consultas de lectura ni datos de prueba.
 -- Usar en una base de datos nueva o después de realizar una copia de seguridad.
 
@@ -21,6 +21,8 @@ CREATE TABLE IF NOT EXISTS usuario (
     correo VARCHAR(100) NOT NULL UNIQUE,
     telefono VARCHAR(20),
     foto_perfil VARCHAR(255),
+    creado_en TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    actualizado_en TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     activo BOOLEAN NOT NULL DEFAULT TRUE,
     idioma VARCHAR(10) NOT NULL DEFAULT 'es'
 ) ENGINE=InnoDB;
@@ -81,6 +83,8 @@ CREATE TABLE IF NOT EXISTS producto (
     id_talla INT NOT NULL,
     id_color INT NOT NULL,
     estado ENUM('Activo', 'Inactivo') NOT NULL DEFAULT 'Activo',
+    creado_en TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    actualizado_en TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT fk_producto_categoria
         FOREIGN KEY (id_categoria) REFERENCES categoria(id),
     CONSTRAINT fk_producto_talla
@@ -90,7 +94,8 @@ CREATE TABLE IF NOT EXISTS producto (
     CONSTRAINT chk_producto_precio_compra
         CHECK (precio_compra IS NULL OR precio_compra >= 0),
     CONSTRAINT chk_producto_precio_venta
-        CHECK (precio_venta >= 0)
+        CHECK (precio_venta >= 0),
+    INDEX idx_producto_categoria (id_categoria)
 ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS cliente (
@@ -155,7 +160,8 @@ CREATE TABLE IF NOT EXISTS inventario_movimiento (
     CONSTRAINT chk_inventario_movimiento_cantidad
         CHECK (cantidad >= 0),
     CONSTRAINT chk_inventario_movimiento_delta
-        CHECK (delta <> 0)
+        CHECK (delta <> 0),
+    INDEX idx_inventario_movimiento_producto (id_producto)
 ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS carrito (
@@ -163,9 +169,12 @@ CREATE TABLE IF NOT EXISTS carrito (
     fecha_creacion DATE NOT NULL DEFAULT (CURRENT_DATE),
     fecha_actualizacion DATE NOT NULL DEFAULT (CURRENT_DATE),
     estado ENUM('Activo', 'Finalizado', 'Cancelado') NOT NULL DEFAULT 'Activo',
+    creado_en TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    actualizado_en TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     id_cliente INT NOT NULL,
     CONSTRAINT fk_carrito_cliente
-        FOREIGN KEY (id_cliente) REFERENCES cliente(id)
+        FOREIGN KEY (id_cliente) REFERENCES cliente(id),
+    INDEX idx_carrito_cliente_estado (id_cliente, estado)
 ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS detalle_carrito (
@@ -238,12 +247,15 @@ CREATE TABLE IF NOT EXISTS factura (
     estado ENUM('Pendiente', 'Pagada', 'Anulada') NOT NULL DEFAULT 'Pendiente',
     id_cliente INT NOT NULL,
     id_empleado INT NULL,
+    creado_en TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    actualizado_en TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT fk_factura_cliente
         FOREIGN KEY (id_cliente) REFERENCES cliente(id),
     CONSTRAINT fk_factura_empleado
         FOREIGN KEY (id_empleado) REFERENCES empleado(id),
     CONSTRAINT chk_factura_total
-        CHECK (total >= 0)
+        CHECK (total >= 0),
+    INDEX idx_factura_cliente (id_cliente)
 ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS detalle_pedido (
@@ -252,6 +264,7 @@ CREATE TABLE IF NOT EXISTS detalle_pedido (
     cantidad INT NOT NULL,
     precio_unitario DECIMAL(10,2) NOT NULL DEFAULT 0,
     subtotal DECIMAL(10,2) NOT NULL DEFAULT 0,
+    creado_en TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id_factura, id_producto),
     CONSTRAINT fk_detalle_pedido_factura
         FOREIGN KEY (id_factura) REFERENCES factura(id),
@@ -262,7 +275,8 @@ CREATE TABLE IF NOT EXISTS detalle_pedido (
     CONSTRAINT chk_detalle_pedido_precio
         CHECK (precio_unitario >= 0),
     CONSTRAINT chk_detalle_pedido_subtotal
-        CHECK (subtotal >= 0)
+        CHECK (subtotal >= 0),
+    INDEX idx_detalle_pedido_producto (id_producto)
 ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS pago (

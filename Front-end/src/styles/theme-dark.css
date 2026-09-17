@@ -1,0 +1,83 @@
+[data-theme="dark"] html {
+  color-scheme: dark;
+}
+
+[data-theme="dark"] body {
+  background: linear-gradient(180deg, var(--color-page-soft) 0%, var(--color-page) 100%);
+  color: var(--color-ink);
+}
+
+[data-theme="dark"] .login-card,
+[data-theme="dark"] .admin-card,
+[data-theme="dark"] .section-panel,
+[data-theme="dark"] .panel-box,
+[data-theme="dark"] .carrito-lista > *,
+[data-theme="dark"] .carrito-resumen,
+[data-theme="dark"] .mensajeria-panel,
+[data-theme="dark"] .mensajeria-stat-card,
+[data-theme="dark"] .mensajeria-entrega-card,
+[data-theme="dark"] .admin-tabla-wrap {
+  background: var(--color-surface);
+  border-color: var(--color-border);
+  color: var(--color-ink);
+}
+
+[data-theme="dark"] input,
+[data-theme="dark"] select,
+[data-theme="dark"] textarea,
+[data-theme="dark"] .search-shell,
+[data-theme="dark"] .admin-search {
+  background: var(--color-surface-soft);
+  color: var(--color-ink);
+  border-color: var(--color-border);
+}
+
+[data-theme="dark"] .admin-page,
+[data-theme="dark"] .carrito-page,
+[data-theme="dark"] .perfil-page,
+[data-theme="dark"] main {
+  background: var(--color-page);
+}
+
+[data-theme="dark"] .topbar-shell,
+[data-theme="dark"] .nav-secondary {
+  background: var(--color-surface);
+  border-color: var(--color-border);
+}
+
+[data-theme="dark"] .admin-tabla thead,
+[data-theme="dark"] .admin-tabla tbody tr:hover {
+  background: var(--color-surface-soft);
+}
+
+[data-theme="dark"] .admin-tabla td,
+[data-theme="dark"] .admin-tabla th,
+[data-theme="dark"] .section-header,
+[data-theme="dark"] .admin-order-action {
+  border-color: var(--color-border);
+}
+
+[data-theme="dark"] .catalogo-categorias-menu,
+[data-theme="dark"] .nav-dropdown-menu {
+  background: var(--color-surface);
+  border-color: var(--color-border);
+}
+
+[data-theme="dark"] .catalogo-option:hover,
+[data-theme="dark"] .catalogo-option:focus-visible,
+[data-theme="dark"] .nav-link-item:hover,
+[data-theme="dark"] .nav-link-item:focus-visible {
+  background: var(--color-brand-soft);
+}
+
+[data-theme="dark"] ::placeholder {
+  color: var(--color-subtle);
+}
+
+[data-theme="dark"] a,
+[data-theme="dark"] .nav-link-item,
+[data-theme="dark"] .catalogo-nav-link,
+[data-theme="dark"] .nav-dropdown-menu,
+[data-theme="dark"] .catalogo-option {
+  color: var(--color-ink);
+}

@@ -48,6 +48,18 @@ export const findUserProfile = async (id) => {
   return rows[0] ? { ...rows[0], estado: rows[0].activo ? 'Activo' : 'Inactivo' } : null;
 };
 
+export const updateUserProfilePhoto = async (id, photoPath) => {
+  const [result] = await pool.execute(
+    'UPDATE usuario SET foto_perfil = ? WHERE id = ?',
+    [photoPath, id]
+  );
+  return result.affectedRows > 0;
+};
+
+export const updatePassword = async (id, passwordHash) => {
+  await pool.execute('UPDATE usuario SET contrasena = ? WHERE id = ?', [passwordHash, id]);
+};
+
 // Crea un nuevo usuario en la base de datos con rol 'cliente' por defecto
 export const createUser = async (userData) => {
   const { nombre_usuario, email, contrasena, idioma = 'es' } = userData;

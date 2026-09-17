@@ -1,0 +1,31 @@
+.app-container {
+  width: min(100% - 1.5rem, 1280px);
+  margin-inline: auto;
+}
+
+.app-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+main,
+.page-shell,
+.login-page,
+.admin-page,
+.carrito-page,
+.perfil-page {
+  min-height: calc(100vh - 120px);
+}
+
+@media (min-width: 768px) {
+  .app-container {
+    width: min(100% - 3rem, 1280px);
+  }
+}
+
+@media (max-width: 767px) {
+  .app-container {
+    width: min(100% - 1rem, 1280px);
+  }
+}

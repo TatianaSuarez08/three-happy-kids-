@@ -65,6 +65,29 @@ Pruebas realizadas:
 
 ## Impacto
 
+## Historial de compras por usuario
+
+- Se reutilizan las tablas existentes `factura`, `detalle_pedido`, `cliente`, `usuario`, `producto`, `pago` y `entrega`; no se creó una tabla duplicada de historial.
+- El endpoint existente `GET /mis-pedidos` consulta los pedidos mediante `req.user.id` y la relación `cliente.id_usuario`, por lo que no acepta un identificador de usuario enviado por el frontend.
+- `detalle_pedido.precio_unitario` y `subtotal` conservan el valor de la compra, aunque el precio actual del producto cambie posteriormente.
+- La pantalla existente `page-MisPedidosBD.jsx` ahora se presenta como `Historial de compras`, conserva filtros por estado y permite desplegar productos, cantidades, precios, total, entrega y método de pago.
+- Administración mantiene su consulta separada mediante `GET /pedidos`, con sus permisos actuales.
+- La navegación conserva la ruta `/mis-pedidos`; únicamente se actualizó la etiqueta visible del enlace.
+
+## Menú de catálogo
+
+- Se conserva el dropdown existente de categorías y todas sus rutas `/catalogo?categoria=...`.
+- El menú utiliza la misma barra oscura, tipografía, naranja de marca, bordes y estados hover de la navegación HappyKids.
+- No se agregaron opciones funcionales nuevas ni se creó un segundo sistema de navegación.
+
+## Refactorización de seguridad y API
+
+- Se unificó la configuración en un único `.env` raíz para backend y frontend, eliminando ejemplos duplicados. El `JWT_SECRET` que pudo estar expuesto debe rotarse fuera de desarrollo.
+- El backend falla al iniciar si `JWT_SECRET` no está configurado; se eliminó el fallback público `secretkey`.
+- Las contraseñas nuevas y administrativas usan `bcryptjs`. Los hashes heredados `salt:hash` se verifican una última vez y se convierten a bcrypt después de un login válido.
+- El frontend concentra las llamadas en `src/services/`; las páginas ya no construyen peticiones `fetch` directamente.
+- Se añadió el prefijo `/api/v1` y se conservaron las rutas heredadas para compatibilidad durante la transición.
+
 ## Perfil, usuarios y carrito por sesión
 
 - La tabla `usuario` incorpora `telefono` y `foto_perfil`; para instalaciones existentes se incluye `sql/MIGRACION_PERFIL_USUARIOS.sql`.

@@ -12,13 +12,13 @@ Sí, la base de datos permite construir un dashboard administrativo real. Tiene 
 - Entregas: `entrega`.
 - Compras a proveedores: `compra`, `detalle_compra` y `proveedor`.
 
-Sin embargo, el dashboard actual no usa todavía MySQL. En `Front-end/src/admin/page-Dashboard.jsx`, las estadísticas y los pedidos recientes están definidos como constantes de ejemplo. Lo mismo ocurre con las pantallas de productos, inventario, pedidos y usuarios: permiten interactuar con datos locales del navegador, pero no guardan cambios en el backend.
+Sin embargo, el dashboard actual no usa todavía MySQL. En `frontend/src/admin/page-Dashboard.jsx`, las estadísticas y los pedidos recientes están definidos como constantes de ejemplo. Lo mismo ocurre con las pantallas de productos, inventario, pedidos y usuarios: permiten interactuar con datos locales del navegador, pero no guardan cambios en el backend.
 
 Por tanto, la base de datos está preparada como modelo, pero todavía falta crear la API administrativa que conecte ese modelo con React.
 
 ## 2. Revisión del script SQL
 
-El archivo revisado es el esquema vigente `DOCUMENTACION/sql/DataBaseHappyKids_CORREGIDA.sql`.
+El archivo revisado es el esquema vigente `documentacion/sql/DataBaseHappyKids_CORREGIDA.sql`.
 
 ### Elementos correctos
 
@@ -283,7 +283,7 @@ La decisión de no aplicar automáticamente los `ALTER TABLE` evita romper una b
 Desde MySQL Workbench o el cliente de consola:
 
 ```sql
-SOURCE DOCUMENTACION/sql/DataBaseHappyKids_CORREGIDA.sql;
+SOURCE documentacion/sql/DataBaseHappyKids_CORREGIDA.sql;
 USE happykids;
 SHOW TABLES;
 ```

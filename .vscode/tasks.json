@@ -2,11 +2,11 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "Happy Kids: Front-end",
+      "label": "Happy Kids: frontend",
       "type": "shell",
       "command": "npm run dev",
       "options": {
-        "cwd": "${workspaceFolder}/Front-end"
+        "cwd": "${workspaceFolder}/frontend"
       },
       "isBackground": true,
       "runOptions": {
@@ -23,11 +23,11 @@
       "problemMatcher": []
     },
     {
-      "label": "Happy Kids: Back-end",
+      "label": "Happy Kids: backend",
       "type": "shell",
       "command": "npm run dev",
       "options": {
-        "cwd": "${workspaceFolder}/Back-end"
+        "cwd": "${workspaceFolder}/backend"
       },
       "isBackground": true,
       "runOptions": {
@@ -38,6 +38,42 @@
         "focus": false,
         "panel": "dedicated",
         "group": "happy-kids-back-end",
+        "showReuseMessage": false,
+        "clear": false
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Happy Kids: api gateway",
+      "type": "shell",
+      "command": "npm run dev",
+      "options": {
+        "cwd": "${workspaceFolder}/api"
+      },
+      "isBackground": true,
+      "presentation": {
+        "reveal": "always",
+        "focus": false,
+        "panel": "dedicated",
+        "group": "happy-kids-services",
+        "showReuseMessage": false,
+        "clear": false
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Happy Kids: users service",
+      "type": "shell",
+      "command": "npm run dev",
+      "options": {
+        "cwd": "${workspaceFolder}/backend/services/users-service"
+      },
+      "isBackground": true,
+      "presentation": {
+        "reveal": "always",
+        "focus": false,
+        "panel": "dedicated",
+        "group": "happy-kids-services",
         "showReuseMessage": false,
         "clear": false
       },

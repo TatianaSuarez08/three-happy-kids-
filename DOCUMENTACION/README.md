@@ -1,5 +1,23 @@
 # Documentación de Three Happy Kids
 
+## Arquitectura actual
+
+La raíz del monorepo se organiza en cuatro carpetas principales:
+
+- `backend/`: lógica de negocio, MySQL, autenticación, autorización y servicios internos.
+- `frontend/`: aplicación React/Vite y experiencia de usuario.
+- `api/`: API Gateway y único punto público de comunicación del frontend.
+- `documentacion/`: guías, arquitectura, SQL, seguridad, módulos y cambios.
+
+El servicio de usuarios vive en `backend/services/users-service/` y mantiene su propio `package.json`; se ejecuta en el puerto `4001` y se alcanza públicamente mediante `api`.
+
+Flujo principal:
+
+```text
+frontend -> api:3001 -> backend:3000 -> MySQL
+				   -> backend/services/users-service:4001
+```
+
 Esta carpeta contiene la documentación consolidada del proyecto. Cada tema tiene una sola guía para evitar información repetida.
 
 ## Orden recomendado
@@ -17,7 +35,7 @@ Esta carpeta contiene la documentación consolidada del proyecto. Cada tema tien
 11. `sql/USUARIOS_SHA2_SETUP.sql`: crea roles y usuarios de prueba.
 12. `sql/sql_insert_test_users.sql`: script adicional de datos de prueba.
 
-La documentación describe el código actual. Para configurar el proyecto se necesita editar `Back-end/.env` y ejecutar los comandos indicados en la primera guía.
+La documentación describe el código actual. La configuración local compartida vive en el `.env` raíz; los archivos `.env.example` de cada aplicación muestran las variables requeridas.
 
 ## Estado actual
 

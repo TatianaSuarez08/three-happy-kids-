@@ -41,10 +41,10 @@ Motivo:
 La lógica real del negocio exige que todos los usuarios autorizados puedan comprar sin perder sus permisos específicos de administración, bodega o mensajería.
 
 Archivos afectados:
-- Back-end/src/middleware/role.js
-- Back-end/src/routes/PedidoRoute.js
-- Front-end/src/App.jsx
-- Front-end/src/Componentes/Nav.jsx
+- backend/src/middleware/role.js
+- backend/src/routes/PedidoRoute.js
+- frontend/src/App.jsx
+- frontend/src/Componentes/Nav.jsx
 
 Base de datos afectada:
 No requiere cambios de esquema; se reutiliza la estructura actual de usuarios, roles y pedidos.
@@ -93,7 +93,7 @@ Pruebas realizadas:
 - La tabla `usuario` incorpora `telefono` y `foto_perfil`; para instalaciones existentes se incluye `sql/MIGRACION_PERFIL_USUARIOS.sql`.
 - El alta administrativa conserva la ruta `/usuarios`, recibe `multipart/form-data`, valida imágenes JPG, PNG, WEBP o GIF de hasta 5 MB y guarda únicamente una ruta como `/assets/foto_de_perfil/perfil-<uuid>.<ext>`.
 - El backend publica `GET /me` con autenticación JWT y el apartado `Todos los usuarios` reutiliza `GET /usuarios`, mostrando teléfono, estado, rol y foto.
-- Las fotos se almacenan en `Front-end/src/assets/foto_de_perfil` y se sirven mediante `/assets/foto_de_perfil`.
+- Las fotos se almacenan en `backend/storage/assets/foto_de_perfil` y se sirven mediante `/assets/foto_de_perfil`.
 - El carrito permanece en `localStorage`, pero usa `carrito_usuario_<id>` con el `id` del JWT/sesión. Al iniciar o cerrar sesión se cambia el estado cargado, evitando compartir productos entre usuarios; la clave histórica `carrito` se migra una sola vez al usuario activo.
 - El backend de pedidos continúa tomando el usuario de `req.user.id`; el cliente no puede seleccionar otro propietario del pedido.
 
@@ -104,8 +104,8 @@ Pruebas realizadas:
 
 ### Validación
 
-- `Front-end`: `npm run lint` y `npm run build` completados correctamente.
-- `Back-end`: comprobación sintáctica con `node --check` completada correctamente.
+- `frontend`: `npm run lint` y `npm run build` completados correctamente.
+- `backend`: comprobación sintáctica con `node --check` completada correctamente.
 - La prueba manual pendiente requiere una base MySQL con la migración aplicada y dos sesiones autenticadas para comprobar el aislamiento del carrito, subida de imagen y lectura del perfil.
 
 Los recursos afectados fueron:

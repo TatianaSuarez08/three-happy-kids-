@@ -6,11 +6,11 @@ El módulo mensajero está funcional y está conectado a rutas protegidas para e
 
 ## Archivos relevantes
 
-- [Front-end/src/App.jsx](../Front-end/src/App.jsx)
-- [Front-end/src/mensajeria/MensajeriaUI.jsx](../Front-end/src/mensajeria/MensajeriaUI.jsx)
-- [Front-end/src/mensajeria/page-EntregasMensajeria.jsx](../Front-end/src/mensajeria/page-EntregasMensajeria.jsx)
-- [Front-end/src/mensajeria/page-RutaMensajeria.jsx](../Front-end/src/mensajeria/page-RutaMensajeria.jsx)
-- [Back-end/src/routes/PedidoRoute.js](../Back-end/src/routes/PedidoRoute.js)
+- [frontend/src/App.jsx](../frontend/src/App.jsx)
+- [frontend/src/components/mensajeria/MensajeriaUI.jsx](../frontend/src/components/mensajeria/MensajeriaUI.jsx)
+- [frontend/src/pages/mensajeria/page-EntregasMensajeria.jsx](../frontend/src/pages/mensajeria/page-EntregasMensajeria.jsx)
+- [frontend/src/pages/mensajeria/page-RutaMensajeria.jsx](../frontend/src/pages/mensajeria/page-RutaMensajeria.jsx)
+- [backend/src/routes/PedidoRoute.js](../backend/src/routes/PedidoRoute.js)
 
 ## Observaciones
 

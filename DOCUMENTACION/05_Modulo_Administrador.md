@@ -13,12 +13,12 @@ El módulo administrativo está bastante avanzado. La lógica principal incluye:
 
 ## Archivos clave
 
-- [Front-end/src/admin/page-Dashboard.jsx](../Front-end/src/admin/page-Dashboard.jsx)
-- [Front-end/src/admin/page-producto.jsx](../Front-end/src/admin/page-producto.jsx)
-- [Front-end/src/admin/page-PedidosBD.jsx](../Front-end/src/admin/page-PedidosBD.jsx)
-- [Front-end/src/admin/page-UsuariosBD.jsx](../Front-end/src/admin/page-UsuariosBD.jsx)
-- [Back-end/src/controllers/AdminUsuarioController.js](../Back-end/src/controllers/AdminUsuarioController.js)
-- [Back-end/src/models/AdminUsuarioModel.js](../Back-end/src/models/AdminUsuarioModel.js)
+- [frontend/src/pages/administracion/page-Dashboard.jsx](../frontend/src/pages/administracion/page-Dashboard.jsx)
+- [frontend/src/pages/administracion/page-producto.jsx](../frontend/src/pages/administracion/page-producto.jsx)
+- [frontend/src/pages/administracion/page-PedidosBD.jsx](../frontend/src/pages/administracion/page-PedidosBD.jsx)
+- [frontend/src/pages/administracion/page-UsuariosBD.jsx](../frontend/src/pages/administracion/page-UsuariosBD.jsx)
+- [backend/src/controllers/AdminUsuarioController.js](../backend/src/controllers/AdminUsuarioController.js)
+- [backend/src/models/AdminUsuarioModel.js](../backend/src/models/AdminUsuarioModel.js)
 
 ## Lo que funciona
 

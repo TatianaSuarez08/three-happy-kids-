@@ -37,7 +37,7 @@ producto-1f6d8d2c-7b39-4d1a-a4db-123456789abc.jpg
 6. El archivo se guarda en:
 
 ```text
-Front-end/src/assets/productos/
+backend/storage/assets/productos/
 ```
 
 7. MySQL guarda esta ruta en `producto.imagen_producto`:
@@ -54,13 +54,13 @@ http://localhost:3000/assets/productos/nombre-del-archivo.jpg
 
 ## 3. Archivos modificados o creados
 
-- `Front-end/src/admin/page-AgregarProducto.jsx`: cambia el campo de URL por un selector de archivos y envía `FormData`.
-- `Back-end/src/middleware/subidaImagen.js`: configura `multer`, valida formatos, limita el tamaño y define la carpeta destino.
-- `Back-end/src/controllers/ProductoController.js`: exige la imagen y guarda su ruta en el producto.
-- `Back-end/src/routes/UsuarioRoute.js`: aplica `uploadProductImage.single('imagen')` al endpoint de productos.
-- `Back-end/index.js`: publica `/assets/productos` mediante Express.
-- `Back-end/package.json`: añade la dependencia `multer`.
-- `Back-end/src/models/ProductoModel.js`: ya insertaba el valor recibido en `imagen_producto`, por lo que no necesitó cambiar sus columnas.
+- `frontend/src/admin/page-AgregarProducto.jsx`: cambia el campo de URL por un selector de archivos y envía `FormData`.
+- `backend/src/middleware/subidaImagen.js`: configura `multer`, valida formatos, limita el tamaño y define la carpeta destino.
+- `backend/src/controllers/ProductoController.js`: exige la imagen y guarda su ruta en el producto.
+- `backend/src/routes/UsuarioRoute.js`: aplica `uploadProductImage.single('imagen')` al endpoint de productos.
+- `backend/index.js`: publica `/assets/productos` mediante Express.
+- `backend/package.json`: añade la dependencia `multer`.
+- `backend/src/models/ProductoModel.js`: ya insertaba el valor recibido en `imagen_producto`, por lo que no necesitó cambiar sus columnas.
 
 ## 4. Formatos permitidos
 
@@ -75,7 +75,7 @@ El tamaño máximo es de 5 MB. El nombre final no conserva directamente el nombr
 
 ## 5. Requisitos para que funcione
 
-- Ejecutar `npm install` dentro de `Back-end` para instalar `multer`.
+- Ejecutar `npm install` dentro de `backend` para instalar `multer`.
 - Tener iniciados el backend y el frontend.
 - Tener un token válido de administrador.
 - Tener existentes los IDs enviados para categoría, talla y color.

@@ -1,0 +1,14 @@
+{
+  "name": "three-happy-kids-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Monorepo de Three Happy Kids: frontend, API Gateway y servicios backend",
+  "scripts": {
+    "install:all": "npm --prefix api install && npm --prefix backend install && npm --prefix backend/services/users-service install && npm --prefix frontend install",
+    "verify:api": "npm --prefix api run check",
+    "verify:backend": "npm --prefix backend test",
+    "verify:users": "npm --prefix backend/services/users-service run check",
+    "verify:frontend": "npm --prefix frontend run lint && npm --prefix frontend run build",
+    "verify:all": "npm run verify:api && npm run verify:backend && npm run verify:users && npm run verify:frontend"
+  }
+}

@@ -6,14 +6,14 @@ El backend está compuesto por Express, rutas, controladores, modelos y middlewa
 
 ## Archivos principales
 
-- [Back-end/index.js](../Back-end/index.js)
-- [Back-end/src/db.js](../Back-end/src/db.js)
-- [Back-end/src/controllers/UsuarioController.js](../Back-end/src/controllers/UsuarioController.js)
-- [Back-end/src/controllers/ProductoController.js](../Back-end/src/controllers/ProductoController.js)
-- [Back-end/src/controllers/PedidoController.js](../Back-end/src/controllers/PedidoController.js)
-- [Back-end/src/models/UsuarioModel.js](../Back-end/src/models/UsuarioModel.js)
-- [Back-end/src/models/ProductoModel.js](../Back-end/src/models/ProductoModel.js)
-- [Back-end/src/models/PedidoModel.js](../Back-end/src/models/PedidoModel.js)
+- [backend/index.js](../backend/index.js)
+- [backend/src/db.js](../backend/src/db.js)
+- [backend/src/controllers/UsuarioController.js](../backend/src/controllers/UsuarioController.js)
+- [backend/src/controllers/ProductoController.js](../backend/src/controllers/ProductoController.js)
+- [backend/src/controllers/PedidoController.js](../backend/src/controllers/PedidoController.js)
+- [backend/src/models/UsuarioModel.js](../backend/src/models/UsuarioModel.js)
+- [backend/src/models/ProductoModel.js](../backend/src/models/ProductoModel.js)
+- [backend/src/models/PedidoModel.js](../backend/src/models/PedidoModel.js)
 
 ## Observaciones
 

@@ -6,12 +6,12 @@ El frontend usa React + Vite y cuenta con vistas para cliente, administrador y m
 
 ## Archivos principales
 
-- [Front-end/src/App.jsx](../Front-end/src/App.jsx)
-- [Front-end/src/Componentes/Nav.jsx](../Front-end/src/Componentes/Nav.jsx)
-- [Front-end/src/Componentes/ProtectedRoute.jsx](../Front-end/src/Componentes/ProtectedRoute.jsx)
-- [Front-end/src/Index.jsx](../Front-end/src/Index.jsx)
-- [Front-end/src/Iniciosesion.jsx](../Front-end/src/Iniciosesion.jsx)
-- [Front-end/src/Registro.jsx](../Front-end/src/Registro.jsx)
+- [frontend/src/App.jsx](../frontend/src/App.jsx)
+- [frontend/src/components/Nav.jsx](../frontend/src/components/Nav.jsx)
+- [frontend/src/components/ProtectedRoute.jsx](../frontend/src/components/ProtectedRoute.jsx)
+- [frontend/src/pages/publicas/Index.jsx](../frontend/src/pages/publicas/Index.jsx)
+- [frontend/src/pages/publicas/InicioSesion.jsx](../frontend/src/pages/publicas/InicioSesion.jsx)
+- [frontend/src/pages/publicas/Registro.jsx](../frontend/src/pages/publicas/Registro.jsx)
 
 ## Observaciones
 

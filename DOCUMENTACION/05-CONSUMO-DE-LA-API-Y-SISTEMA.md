@@ -29,12 +29,12 @@ Si la variable no existe, el código utiliza automáticamente:
 http://localhost:3000
 ```
 
-La variable debe configurarse en el entorno del frontend, normalmente en `Front-end/.env`. No debe incluirse una barra final si se quieren evitar URLs como `//login`.
+La variable debe configurarse en el entorno del frontend, normalmente en `frontend/.env`. No debe incluirse una barra final si se quieren evitar URLs como `//login`.
 
 Para iniciar el sistema:
 
 ```bash
-cd Back-end
+cd backend
 npm install
 npm run dev
 ```
@@ -42,7 +42,7 @@ npm run dev
 En otra terminal:
 
 ```bash
-cd Front-end
+cd frontend
 npm install
 npm run dev
 ```
@@ -376,7 +376,7 @@ El diseño de navegación cambia según los datos recibidos en `data.user.roles`
 
 ### Estilos utilizados en autenticación
 
-Las pantallas de login y registro se construyen con las clases definidas en `Front-end/src/styles/global.css`:
+Las pantallas de login y registro se construyen con las clases definidas en `frontend/src/styles/global.css`:
 
 - `.login-page`: centra la pantalla y aplica el fondo degradado claro.
 - `.login-card`: crea el panel principal del formulario.

@@ -2,11 +2,11 @@
 
 ## Motor y conexión
 
-El backend usa MySQL con `mysql2/promise` desde [Back-end/src/db.js](../Back-end/src/db.js).
+El backend usa MySQL con `mysql2/promise` desde [backend/src/db.js](../backend/src/db.js).
 
 ## Esquema principal que existe
 
-El esquema real documentado se encuentra en [DOCUMENTACION/sql/DataBaseHappyKids_CORREGIDA.sql](../DOCUMENTACION/sql/DataBaseHappyKids_CORREGIDA.sql) y contempla las tablas principales:
+El esquema real documentado se encuentra en [documentacion/sql/DataBaseHappyKids_CORREGIDA.sql](../documentacion/sql/DataBaseHappyKids_CORREGIDA.sql) y contempla las tablas principales:
 
 - rol
 - usuario

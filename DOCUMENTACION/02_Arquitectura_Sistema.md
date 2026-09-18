@@ -6,8 +6,8 @@ El frontend está construido con React y Vite. La aplicación gestiona rutas con
 
 Archivo principal:
 
-- [Front-end/src/App.jsx](../Front-end/src/App.jsx)
-- [Front-end/src/Componentes/ProtectedRoute.jsx](../Front-end/src/Componentes/ProtectedRoute.jsx)
+- [frontend/src/App.jsx](../frontend/src/App.jsx)
+- [frontend/src/components/ProtectedRoute.jsx](../frontend/src/components/ProtectedRoute.jsx)
 
 ## Capa de autenticación
 
@@ -15,8 +15,8 @@ La autenticación se realiza con JWT. El backend valida el token en el middlewar
 
 Archivos:
 
-- [Back-end/src/middleware/autenticacion.js](../Back-end/src/middleware/autenticacion.js)
-- [Back-end/src/middleware/role.js](../Back-end/src/middleware/role.js)
+- [backend/src/middleware/autenticacion.js](../backend/src/middleware/autenticacion.js)
+- [backend/src/middleware/role.js](../backend/src/middleware/role.js)
 
 ## Capa de negocio
 
@@ -24,16 +24,16 @@ El backend separa la lógica en rutas, controladores y modelos. Las rutas se mon
 
 Archivos relevantes:
 
-- [Back-end/index.js](../Back-end/index.js)
-- [Back-end/src/routes/UsuarioRoute.js](../Back-end/src/routes/UsuarioRoute.js)
-- [Back-end/src/routes/ProductoRoute.js](../Back-end/src/routes/ProductoRoute.js)
-- [Back-end/src/routes/PedidoRoute.js](../Back-end/src/routes/PedidoRoute.js)
-- [Back-end/src/routes/AdminUsuarioRoute.js](../Back-end/src/routes/AdminUsuarioRoute.js)
-- [Back-end/src/routes/DashboardRoute.js](../Back-end/src/routes/DashboardRoute.js)
+- [backend/index.js](../backend/index.js)
+- [backend/src/routes/UsuarioRoute.js](../backend/src/routes/UsuarioRoute.js)
+- [backend/src/routes/ProductoRoute.js](../backend/src/routes/ProductoRoute.js)
+- [backend/src/routes/PedidoRoute.js](../backend/src/routes/PedidoRoute.js)
+- [backend/src/routes/AdminUsuarioRoute.js](../backend/src/routes/AdminUsuarioRoute.js)
+- [backend/src/routes/DashboardRoute.js](../backend/src/routes/DashboardRoute.js)
 
 ## Capa de base de datos
 
-La base de datos es MySQL y se conecta mediante un pool definido en [Back-end/src/db.js](../Back-end/src/db.js). El esquema real disponible se encuentra en [DOCUMENTACION/sql/DataBaseHappyKids_CORREGIDA.sql](../DOCUMENTACION/sql/DataBaseHappyKids_CORREGIDA.sql).
+La base de datos es MySQL y se conecta mediante un pool definido en [backend/src/db.js](../backend/src/db.js). El esquema real disponible se encuentra en [documentacion/sql/DataBaseHappyKids_CORREGIDA.sql](../documentacion/sql/DataBaseHappyKids_CORREGIDA.sql).
 
 ## Diagnóstico de arquitectura
 

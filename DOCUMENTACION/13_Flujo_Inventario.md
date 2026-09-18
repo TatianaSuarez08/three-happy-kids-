@@ -6,9 +6,9 @@ La tabla `inventario` almacena la cantidad disponible y la cantidad mínima por 
 
 ## Archivos clave
 
-- [DOCUMENTACION/sql/DataBaseHappyKids_CORREGIDA.sql](../DOCUMENTACION/sql/DataBaseHappyKids_CORREGIDA.sql)
-- [Back-end/src/models/DashboardModel.js](../Back-end/src/models/DashboardModel.js)
-- [Back-end/src/models/ProductoModel.js](../Back-end/src/models/ProductoModel.js)
+- [documentacion/sql/DataBaseHappyKids_CORREGIDA.sql](../documentacion/sql/DataBaseHappyKids_CORREGIDA.sql)
+- [backend/src/models/DashboardModel.js](../backend/src/models/DashboardModel.js)
+- [backend/src/models/ProductoModel.js](../backend/src/models/ProductoModel.js)
 
 ## Problema principal
 

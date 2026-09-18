@@ -1,23 +1,59 @@
-# API layer
+# API Gateway
 
-Capa centralizada de integración entre frontend y backend.
+Punto de entrada público entre el frontend y el Backend Service.
+
+## Estructura
+
+```text
+API/
+├── src/
+│   ├── clients/       # Proxies hacia servicios internos
+│   ├── config/        # Entorno y CORS
+│   ├── middlewares/   # Seguridad, request ID y errores
+│   ├── routes/        # Rutas públicas versionadas
+│   ├── app.js         # Composición de Express, sin listen()
+│   └── server.js      # Punto de arranque del proceso
+├── .env.example
+├── package.json
+└── index.js           # Fachada de compatibilidad
+```
 
 ## Configuración
 
-- La URL base se toma desde `VITE_BACKEND_URL` en el entorno raíz del proyecto.
-- La ruta base para la API es `/api/v1`.
-- Las peticiones usan `fetch` y manejan automáticamente el token del usuario.
+- `GATEWAY_PORT`: puerto público, por defecto `3001`.
+- `BACKEND_URL`: URL interna del Backend, por defecto `http://localhost:3000`.
+- `USERS_SERVICE_URL`: servicio simulado de usuarios/autenticación, por defecto `http://localhost:4001`.
+- `INTERNAL_API_KEY`: clave compartida con el Backend.
+- `FRONTEND_ORIGINS`: orígenes permitidos separados por comas.
+- `PROXY_TIMEOUT_MS`: timeout de comunicación interna.
+- `NODE_ENV`: entorno de ejecución.
 
 ## Uso
 
-```js
-import { apiClient } from './services/apiClient.js';
+El Gateway expone rutas versionadas bajo `/api/v1`:
 
-const data = await apiClient('/usuarios');
-```
+- `GET /api/v1/health`: salud del Gateway.
+- `GET /api/v1/users/health`: salud del Users Service mediante proxy.
+- `/assets/*`: proxy hacia las imágenes servidas por Backend.
+- `/api/v1/auth/*`: proxy al servicio `USERS_SERVICE_URL`.
+- El resto de `/api/v1/*`: proxy al `BACKEND_URL` existente.
+
+Por ejemplo, `POST /api/v1/auth/login` se entrega al servicio de usuarios como `POST /api/v1/auth/login`.
 
 ## Reglas
 
-- No duplicar lógica de conexión por módulo.
-- Respetar permisos y roles del backend.
-- Mantener la API en un único punto de entrada.
+- No agregar consultas SQL ni reglas de negocio al Gateway.
+- El Backend conserva la validación JWT y permisos definitivos.
+- Las subidas multipart se reenvían sin analizar el cuerpo en el Gateway.
+- El Frontend solo debe conocer la URL pública del Gateway.
+
+## Puesta en marcha
+
+```bash
+cd API
+npm install
+copy .env.example .env
+npm run dev
+```
+
+El servicio queda disponible en `http://localhost:3001`. Para probar el arranque sin servicios internos, consulta `GET /`; las rutas proxy requieren que el servicio correspondiente esté escuchando.

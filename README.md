@@ -6,7 +6,7 @@ Monorepo del ecommerce Three Happy Kids.
 
 - Node.js 20+
 - MySQL activo
-- Base `happykids` creada desde `DOCUMENTACION/sql/DataBaseHappyKids_CORREGIDA.sql`
+- Base `happykids` creada desde `documentacion/sql/DataBaseHappyKids_CORREGIDA.sql`
 
 ## Configuración universal
 
@@ -16,44 +16,63 @@ Variables principales:
 
 ```env
 PORT=3000
+GATEWAY_PORT=3001
+BACKEND_URL=http://localhost:3000
+USERS_SERVICE_URL=http://localhost:4001
+USERS_SERVICE_PORT=4001
 DB_HOST=localhost
 DB_USER=root
 DB_PASSWORD=
 DB_DATABASE=happykids
 CORS_ORIGIN=http://localhost:5173
+FRONTEND_ORIGINS=http://localhost:5173
+INTERNAL_API_KEY=replace-with-a-long-random-value
 JWT_SECRET=three-happy-kids-dev-secret-2026-change-me
-VITE_BACKEND_URL=http://localhost:3000
+VITE_API_URL=http://localhost:3001
 ```
 
 ## Backend
 
 ```bash
-cd Back-end
+cd backend
 npm install
-node index.js
+npm start
 ```
 
-La API quedará disponible en `http://localhost:3000/api/v1`; comprueba la salud de la BD con `GET /api/v1/health`.
+El Backend interno escucha en `http://localhost:3000`. La entrada pública es el Gateway.
+
+## API Gateway
+
+En otra terminal:
+
+```bash
+cd api
+npm install
+npm start
+```
+
+El Gateway queda disponible en `http://localhost:3001/api/v1` y reenvía las solicitudes al Backend. Comprueba la salud mediante `GET http://localhost:3001/api/v1/health`.
+
+## Users Service
+
+En otra terminal:
+
+```bash
+cd backend/services/users-service
+npm install
+npm start
+```
+
+El servicio escucha en `http://localhost:4001`. Su endpoint público a través de la Gateway es `GET http://localhost:3001/api/v1/users/health`.
 
 ## Frontend
 
 En otra terminal:
 
 ```bash
-cd Front-end
+cd frontend
 npm install
 npm run dev
 ```
 
-La app frontend consume el backend a través de la variable `VITE_BACKEND_URL` y usa la capa central definida en [API](API).
-
-## Capa API
-
-La integración está centralizada en la carpeta [API](API), con:
-
-- [API/config/index.js](API/config/index.js)
-- [API/services/apiClient.js](API/services/apiClient.js)
-- [API/auth/auth.js](API/auth/auth.js)
-- [API/index.js](API/index.js)
-
-Esto evita repetir URLs, headers y manejo de errores por módulo.
+La app frontend consume únicamente el Gateway mediante `VITE_API_URL`. El cliente HTTP central está en `frontend/src/services/`.

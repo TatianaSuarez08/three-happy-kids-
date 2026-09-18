@@ -9,16 +9,16 @@
 ## Instalar dependencias
 
 ```bash
-cd Back-end
+cd backend
 npm install
 
-cd ../Front-end
+cd ../frontend
 npm install
 ```
 
 ## Variables de entorno
 
-Edita `Back-end/.env`:
+Edita `backend/.env`:
 
 ```env
 PORT=3000
@@ -40,14 +40,14 @@ El frontend usa `VITE_BACKEND_URL` si existe; de lo contrario utiliza `http://lo
 Terminal 1:
 
 ```bash
-cd Back-end
+cd backend
 npm run dev
 ```
 
 Terminal 2:
 
 ```bash
-cd Front-end
+cd frontend
 npm run dev
 ```
 
@@ -62,20 +62,20 @@ URLs de desarrollo:
 El frontend se valida con:
 
 ```bash
-cd Front-end
+cd frontend
 npm.cmd run build
 ```
 
 El backend puede comprobar sus imports con:
 
 ```bash
-cd Back-end
+cd backend
 node src/tmp_import_check.mjs
 ```
 
 ## Archivos principales
 
-- `Back-end/index.js`: servidor Express, CORS y rutas.
-- `Back-end/src/db.js`: conexión MySQL mediante `mysql2`.
-- `Front-end/src/App.jsx`: rutas de React.
-- `Front-end/src/Componentes/Nav.jsx`: navegación según rol.
+- `backend/index.js`: servidor Express, CORS y rutas.
+- `backend/src/db.js`: conexión MySQL mediante `mysql2`.
+- `frontend/src/App.jsx`: rutas de React.
+- `frontend/src/Componentes/Nav.jsx`: navegación según rol.

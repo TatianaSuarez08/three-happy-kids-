@@ -12,10 +12,10 @@ Las peticiones que necesitaban consultar la base de datos fallaban porque el bac
 El archivo `.env` se encuentra en:
 
 ```text
-Back-end/.env
+backend/.env
 ```
 
-Pero `Back-end/src/db.js` utilizaba esta ruta:
+Pero `backend/src/db.js` utilizaba esta ruta:
 
 ```js
 dotenv.config({ path: path.resolve(currentDirectory, '../../.env') });
@@ -25,13 +25,13 @@ Desde `src`, `../../.env` apunta a la raíz del proyecto. Como allí no existe e
 
 ## Solución aplicada
 
-Se cambió la ruta para subir solamente desde `src` hasta `Back-end`:
+Se cambió la ruta para subir solamente desde `src` hasta `backend`:
 
 ```js
 dotenv.config({ path: path.resolve(currentDirectory, '../.env') });
 ```
 
-Después de este cambio, el pool de MySQL recibe la configuración definida en `Back-end/.env` y las rutas pueden ejecutar sus consultas.
+Después de este cambio, el pool de MySQL recibe la configuración definida en `backend/.env` y las rutas pueden ejecutar sus consultas.
 
 ## Requisitos
 
@@ -45,7 +45,7 @@ Después de este cambio, el pool de MySQL recibe la configuración definida en `
 El archivo debe estar en:
 
 ```text
-Back-end/.env
+backend/.env
 ```
 
 Contenido mínimo:
@@ -64,20 +64,20 @@ JWT_SECRET=change_this_secret_in_production
 
 ## Carga de la configuración
 
-La conexión se define en `Back-end/src/db.js`. Como el archivo está dentro de `Back-end/src`, la ruta correcta para cargar el archivo de entorno es:
+La conexión se define en `backend/src/db.js`. Como el archivo está dentro de `backend/src`, la ruta correcta para cargar el archivo de entorno es:
 
 ```js
 dotenv.config({ path: path.resolve(currentDirectory, '../.env') });
 ```
 
-La ruta `../../.env` buscaría el archivo en la raíz del proyecto y no encontraría `Back-end/.env`. En ese caso, las variables de conexión quedarían sin valor y las peticiones que consultan MySQL fallarían.
+La ruta `../../.env` buscaría el archivo en la raíz del proyecto y no encontraría `backend/.env`. En ese caso, las variables de conexión quedarían sin valor y las peticiones que consultan MySQL fallarían.
 
 ## Iniciar el backend
 
 Desde la raíz del proyecto:
 
 ```powershell
-cd Back-end
+cd backend
 npm.cmd start
 ```
 
@@ -97,7 +97,7 @@ Si PowerShell informa que `npm.ps1` está bloqueado por la política de ejecuci�
 
 ## Comprobar la conexión directamente
 
-Desde `Back-end`, ejecuta una consulta mínima:
+Desde `backend`, ejecuta una consulta mínima:
 
 ```powershell
 node --input-type=module -e "import { pool } from './src/db.js'; const [rows] = await pool.query('SELECT 1 AS conectado'); console.log(rows); await pool.end();"

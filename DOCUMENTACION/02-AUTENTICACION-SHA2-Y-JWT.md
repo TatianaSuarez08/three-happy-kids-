@@ -45,7 +45,7 @@ El backend busca el usuario, verifica que esté activo, comprueba SHA-256 y gene
 
 ## Perfiles de prueba
 
-Estos perfiles se crean con `DOCUMENTACION/sql/USUARIOS_SHA2_SETUP.sql` y sirven únicamente para probar el sistema en desarrollo:
+Estos perfiles se crean con `documentacion/sql/USUARIOS_SHA2_SETUP.sql` y sirven únicamente para probar el sistema en desarrollo:
 
 | Perfil | Nombre de usuario | Correo | Contraseña | Rol |
 |---|---|---|---|---|

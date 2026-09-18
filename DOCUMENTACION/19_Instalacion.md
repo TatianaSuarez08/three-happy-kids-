@@ -9,14 +9,14 @@
 
 ## Backend
 
-1. Entrar a [Back-end](../Back-end)
+1. Entrar a [backend](../backend)
 2. Ejecutar `npm install`
 3. Crear variables de entorno necesarias para la conexión a MySQL
 4. Iniciar con `npm start` o `npm run dev`
 
 ## Frontend
 
-1. Entrar a [Front-end](../Front-end)
+1. Entrar a [frontend](../frontend)
 2. Ejecutar `npm install`
 3. Iniciar con `npm run dev`
 
@@ -32,4 +32,4 @@
 
 ## Importante
 
-El proyecto requiere que la base de datos creada coincida con el esquema actual. El SQL de referencia se documenta en [DOCUMENTACION/sql/DataBaseHappyKids_CORREGIDA.sql](../DOCUMENTACION/sql/DataBaseHappyKids_CORREGIDA.sql).
+El proyecto requiere que la base de datos creada coincida con el esquema actual. El SQL de referencia se documenta en [documentacion/sql/DataBaseHappyKids_CORREGIDA.sql](../documentacion/sql/DataBaseHappyKids_CORREGIDA.sql).

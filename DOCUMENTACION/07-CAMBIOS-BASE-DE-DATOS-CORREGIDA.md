@@ -5,7 +5,7 @@
 La nueva versión está en:
 
 ```text
-DOCUMENTACION/sql/DataBaseHappyKids_CORREGIDA.sql
+documentacion/sql/DataBaseHappyKids_CORREGIDA.sql
 ```
 
 Es la fuente de verdad vigente. El esquema histórico fue archivado en `sql/legacy/DataBaseHappyKids.sql`; no debe utilizarse para instalaciones nuevas.

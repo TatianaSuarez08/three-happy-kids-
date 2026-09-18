@@ -46,12 +46,12 @@ La API nueva se consume bajo `/api/v1`. Las rutas sin prefijo se mantienen tempo
 
 ## Archivos de implementación
 
-- [Back-end/index.js](../Back-end/index.js)
-- [Back-end/src/routes/UsuarioRoute.js](../Back-end/src/routes/UsuarioRoute.js)
-- [Back-end/src/routes/ProductoRoute.js](../Back-end/src/routes/ProductoRoute.js)
-- [Back-end/src/routes/PedidoRoute.js](../Back-end/src/routes/PedidoRoute.js)
-- [Back-end/src/routes/AdminUsuarioRoute.js](../Back-end/src/routes/AdminUsuarioRoute.js)
-- [Back-end/src/routes/DashboardRoute.js](../Back-end/src/routes/DashboardRoute.js)
+- [backend/index.js](../backend/index.js)
+- [backend/src/routes/UsuarioRoute.js](../backend/src/routes/UsuarioRoute.js)
+- [backend/src/routes/ProductoRoute.js](../backend/src/routes/ProductoRoute.js)
+- [backend/src/routes/PedidoRoute.js](../backend/src/routes/PedidoRoute.js)
+- [backend/src/routes/AdminUsuarioRoute.js](../backend/src/routes/AdminUsuarioRoute.js)
+- [backend/src/routes/DashboardRoute.js](../backend/src/routes/DashboardRoute.js)
 
 ## Separación frontend/backend
 

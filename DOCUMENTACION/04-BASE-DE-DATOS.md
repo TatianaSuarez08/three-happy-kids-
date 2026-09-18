@@ -6,7 +6,7 @@
 - `rol`: `id`, `nombre_rol`.
 - `usuario_rol`: relación entre usuarios y roles.
 
-La consulta de usuario está en `Back-end/src/models/UsuarioModel.js`. Obtiene la contraseña almacenada como `salt:hash` y consulta los roles asociados.
+La consulta de usuario está en `backend/src/models/UsuarioModel.js`. Obtiene la contraseña almacenada como `salt:hash` y consulta los roles asociados.
 
 ## Preparar usuarios de prueba
 
@@ -18,7 +18,7 @@ USE happykids;
 ```
 
 2. Asegúrate de que existan las tablas requeridas.
-3. Ejecuta `DOCUMENTACION/sql/USUARIOS_SHA2_SETUP.sql`.
+3. Ejecuta `documentacion/sql/USUARIOS_SHA2_SETUP.sql`.
 
 Usuarios de prueba definidos por el script:
 
@@ -41,7 +41,7 @@ GROUP BY u.id;
 
 ## Problemas frecuentes
 
-- `Access denied`: revisa `DB_USER` y `DB_PASSWORD` en `Back-end/.env`.
+- `Access denied`: revisa `DB_USER` y `DB_PASSWORD` en `backend/.env`.
 - `No database selected`: usa `USE happykids;`.
 - `Cannot connect to database`: inicia MySQL y revisa host, usuario y base.
 - `Credenciales inválidas`: comprueba que el usuario esté activo, tenga rol y que la contraseña corresponda al hash.

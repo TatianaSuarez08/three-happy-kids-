@@ -14,5 +14,5 @@ Las cuentas existentes con formato heredado `salt:hash` siguen funcionando: desp
 
 1. Crear o ajustar el archivo `.env` raíz del proyecto con las variables reales de backend y frontend.
 2. Definir un `JWT_SECRET` aleatorio y rotarlo si el valor anterior estuvo publicado.
-3. Mantener `Back-end/.env` fuera del repositorio.
+3. Mantener `backend/.env` fuera del repositorio.
 4. Permitir que los usuarios existentes inicien sesión una vez para completar la migración de su hash.

@@ -1,31 +1,21 @@
 import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
-dotenv.config({ path: new URL('../../../.env', import.meta.url) });
-dotenv.config({ path: new URL('../../.env', import.meta.url) });
+const currentFile = fileURLToPath(import.meta.url);
+const currentDirectory = path.dirname(currentFile);
+dotenv.config({ path: path.resolve(currentDirectory, '../../../.env') });
 
-const parseOrigins = (value) => value
-  .split(',')
-  .map((origin) => origin.trim())
-  .filter(Boolean);
-
-const required = (name, value) => {
-  if (!value) {
-    throw new Error(`${name} es obligatorio para iniciar la API Gateway.`);
-  }
-  return value;
-};
+if (!process.env.JWT_SECRET) {
+  throw new Error('JWT_SECRET es obligatorio. Configúralo en el archivo .env raíz antes de iniciar el servidor.');
+}
 
 export const env = {
-  PORT: Number(process.env.GATEWAY_PORT || 3001),
-  BACKEND_URL: required('BACKEND_URL', process.env.BACKEND_URL || 'http://localhost:3000'),
-  USERS_SERVICE_URL: required(
-    'USERS_SERVICE_URL',
-    process.env.USERS_SERVICE_URL || 'http://localhost:4001',
-  ),
-  INTERNAL_API_KEY: process.env.INTERNAL_API_KEY || '',
-  FRONTEND_ORIGINS: parseOrigins(
-    process.env.FRONTEND_ORIGINS || process.env.CORS_ORIGIN || 'http://localhost:5173',
-  ),
-  PROXY_TIMEOUT_MS: Number(process.env.PROXY_TIMEOUT_MS || 20000),
-  NODE_ENV: process.env.NODE_ENV || 'development',
+  PORT: process.env.API_PORT || process.env.PORT || '3000',
+  JWT_SECRET: process.env.JWT_SECRET,
+  DB_HOST: process.env.DB_HOST,
+  DB_USER: process.env.DB_USER,
+  DB_PASSWORD: process.env.DB_PASSWORD || '',
+  DB_DATABASE: process.env.DB_DATABASE,
+  CORS_ORIGIN: process.env.CORS_ORIGIN || 'http://localhost:5173'
 };

@@ -70,7 +70,7 @@ El backend puede comprobar sus imports con:
 
 ```bash
 cd backend
-node src/tmp_import_check.mjs
+npm test
 ```
 
 ## Archivos principales

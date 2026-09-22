@@ -1,8 +1,10 @@
 import { useNavigate } from "react-router-dom";
+import { useFavoritos } from "../../context/useFavoritos";
+import { API_BASE_URL } from "../../services/httpClient";
 
 function Favoritos() {
   const navigate = useNavigate();
-  const favoritos = JSON.parse(localStorage.getItem("favoritos") || "[]");
+  const { favoritos } = useFavoritos();
 
   return (
     <div style={{ minHeight: "100vh", background: "#f5f5f5", padding: "2rem 1rem" }}>
@@ -22,11 +24,11 @@ function Favoritos() {
             {favoritos.map((p) => (
               <div key={p.id} style={{ background: "#fff", borderRadius: "14px", border: "1px solid #eee", overflow: "hidden" }}>
                 <div style={{ height: "200px", overflow: "hidden" }}>
-                  <img src={p.img} alt={p.nombre} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  <img src={p.imagen ? `${API_BASE_URL}${p.imagen.startsWith("/assets/") ? p.imagen : `/assets/productos/${p.imagen}`}` : ""} alt={p.nombre} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                 </div>
                 <div style={{ padding: "1rem" }}>
                   <div style={{ fontWeight: 600, color: "#1a1a1a", marginBottom: "4px" }}>{p.nombre}</div>
-                  <div style={{ color: "#ff8c42", fontWeight: 700, marginBottom: "8px" }}>{p.precio}</div>
+                  <div style={{ color: "#ff8c42", fontWeight: 700, marginBottom: "8px" }}>{p.precioVenta}</div>
                   <button onClick={() => navigate(`/producto/${p.id}`)} style={{ width: "100%", padding: "8px", borderRadius: "8px", border: "1px solid #ff8c42", background: "none", color: "#ff8c42", cursor: "pointer", fontWeight: 600 }}>
                     Ver producto
                   </button>

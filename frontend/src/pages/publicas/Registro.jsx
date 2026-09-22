@@ -51,6 +51,7 @@ function Registro() {
       localStorage.setItem('user', JSON.stringify(data.user));
       localStorage.setItem('usuario', JSON.stringify(data.user));
       localStorage.setItem('userRoles', JSON.stringify(data.user.roles || []));
+      window.dispatchEvent(new Event('happykids:session-changed'));
 
       // Limpiar formulario
       nombreUsuarioRef.current.value = '';
@@ -63,7 +64,7 @@ function Registro() {
       
     } catch (err) {
       const mensaje = err instanceof TypeError
-        ? 'No se pudo conectar con el backend. Comprueba que el Gateway esté iniciado y que VITE_API_URL esté configurada.'
+        ? 'No se pudo conectar con el backend. Comprueba que el servidor esté iniciado y que VITE_BACKEND_URL esté configurada.'
         : err.message || "Error al registrar. Intenta de nuevo.";
       setError(mensaje);
       console.error('Error en registro:', err);

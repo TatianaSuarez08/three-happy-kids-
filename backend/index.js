@@ -12,9 +12,11 @@ import catalogRoutes from './src/routes/CatalogoRoute.js';
 import inventarioRoutes from './src/routes/InventarioRoute.js';
 import logisticaRoutes from './src/routes/LogisticaRoute.js';
 import healthRoutes from './src/routes/HealthRoute.js';
+import favoriteRoutes from './src/routes/FavoritoRoute.js';
+import cartRoutes from './src/routes/CarritoRoute.js';
 import { productImagesDirectory, profileImagesDirectory } from './src/middleware/subidaImagen.js';
 import { env } from './src/config/env.js';
-import requireGateway from './src/middleware/gateway.js';
+import idempotencia from './src/middleware/idempotencia.js';
 
 const app = express(); // Crea la instancia de la aplicación Express
 
@@ -25,14 +27,14 @@ const corsOptions = {
     origin: env.CORS_ORIGIN, // Origen permitido (ajusta en producción)
   credentials: true, // Permitir cookies y credenciales
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+    allowedHeaders: ['Content-Type', 'Authorization', 'Idempotency-Key']
 };
 
 app.use(cors(corsOptions)); // Activa CORS con opciones configuradas
-app.use(requireGateway);
 app.use(express.json()); // Middleware para parsear bodies en formato JSON
 app.use(express.urlencoded({ extended: true })); // Middleware para parsear bodies URL-encoded (formularios)
 app.use(morgan('dev')); // Activa el logger en modo 'dev' para ver peticiones en consola
+app.use(idempotencia);
 app.use('/assets/productos', express.static(productImagesDirectory));
 app.use('/assets/foto_de_perfil', express.static(profileImagesDirectory));
 
@@ -46,15 +48,17 @@ app.get('/', (req, res) => {
 });
 
 // API versionada; la capa pública real del sistema se mantiene bajo /api/v1.
-app.use('/api/v1', userRoutes);
-app.use('/api/v1', productRoutes);
-app.use('/api/v1', orderRoutes);
-app.use('/api/v1', adminUserRoutes);
-app.use('/api/v1', dashboardRoutes);
-app.use('/api/v1', catalogRoutes);
-app.use('/api/v1', inventarioRoutes);
-app.use('/api/v1', logisticaRoutes);
-app.use('/api/v1', healthRoutes);
+app.use('/', userRoutes);
+app.use('/', productRoutes);
+app.use('/', orderRoutes);
+app.use('/', adminUserRoutes);
+app.use('/', dashboardRoutes);
+app.use('/', catalogRoutes);
+app.use('/', inventarioRoutes);
+app.use('/', logisticaRoutes);
+app.use('/', favoriteRoutes);
+app.use('/', cartRoutes);
+app.use('/', healthRoutes);
 
 // Inicia el servidor escuchando en el puerto configurado
 const server = app.listen(PORT, async () => {

@@ -1,59 +1,45 @@
-# API Gateway
+# Backend (Three Happy Kids)
 
-Punto de entrada público entre el frontend y el Backend Service.
+Instalación y uso mínimo para el backend de inicio de sesión.
 
-## Estructura
+Requisitos:
+- Node.js
+- MySQL y una base de datos con tabla `Usuarios` que contenga columnas `nombre, email, password, role`.
 
-```text
-API/
-├── src/
-│   ├── clients/       # Proxies hacia servicios internos
-│   ├── config/        # Entorno y CORS
-│   ├── middlewares/   # Seguridad, request ID y errores
-│   ├── routes/        # Rutas públicas versionadas
-│   ├── app.js         # Composición de Express, sin listen()
-│   └── server.js      # Punto de arranque del proceso
-├── .env.example
-├── package.json
-└── index.js           # Fachada de compatibilidad
-```
+Variables de entorno (`.env`, no se versiona; usa `.env.example`):
+- `PORT` (opcional)
+- `DB_HOST`, `DB_USER`, `DB_PASSWORD`, `DB_DATABASE`
+- `JWT_SECRET` (obligatorio; el servidor no inicia sin él)
+- `BCRYPT_ROUNDS` (opcional, por defecto `12`)
 
-## Configuración
-
-- `GATEWAY_PORT`: puerto público, por defecto `3001`.
-- `BACKEND_URL`: URL interna del Backend, por defecto `http://localhost:3000`.
-- `USERS_SERVICE_URL`: servicio simulado de usuarios/autenticación, por defecto `http://localhost:4001`.
-- `INTERNAL_API_KEY`: clave compartida con el Backend.
-- `FRONTEND_ORIGINS`: orígenes permitidos separados por comas.
-- `PROXY_TIMEOUT_MS`: timeout de comunicación interna.
-- `NODE_ENV`: entorno de ejecución.
-
-## Uso
-
-El Gateway expone rutas versionadas bajo `/api/v1`:
-
-- `GET /api/v1/health`: salud del Gateway.
-- `GET /api/v1/users/health`: salud del Users Service mediante proxy.
-- `/assets/*`: proxy hacia las imágenes servidas por Backend.
-- `/api/v1/auth/*`: proxy al servicio `USERS_SERVICE_URL`.
-- El resto de `/api/v1/*`: proxy al `BACKEND_URL` existente.
-
-Por ejemplo, `POST /api/v1/auth/login` se entrega al servicio de usuarios como `POST /api/v1/auth/login`.
-
-## Reglas
-
-- No agregar consultas SQL ni reglas de negocio al Gateway.
-- El Backend conserva la validación JWT y permisos definitivos.
-- Las subidas multipart se reenvían sin analizar el cuerpo en el Gateway.
-- El Frontend solo debe conocer la URL pública del Gateway.
-
-## Puesta en marcha
+Ejecutar en desarrollo:
 
 ```bash
-cd API
+cd backend
 npm install
-copy .env.example .env
 npm run dev
 ```
 
-El servicio queda disponible en `http://localhost:3001`. Para probar el arranque sin servicios internos, consulta `GET /`; las rutas proxy requieren que el servicio correspondiente esté escuchando.
+Endpoints relevantes:
+- `POST /login` — body: `{ "email": "...", "password": "..." }` — devuelve `token` y `user`.
+- `GET /me` — header `Authorization: Bearer <token>` — devuelve `user` (payload del token).
+
+Si la tabla `Usuarios` no contiene la columna `role`, aplica la migración en `db-migrations/001-add-role-to-usuarios.sql`.
+# Backend Three Happy Kids
+
+La guía única del proyecto está en [documentacion/README.md](../documentacion/README.md).
+
+Para configurar y ejecutar el backend, consulta:
+
+- `documentacion/01-INICIO-Y-CONFIGURACION.md`
+- `documentacion/02-AUTENTICACION-SHA2-Y-JWT.md`
+- `documentacion/04-BASE-DE-DATOS.md`
+
+Inicio rápido:
+
+```bash
+npm install
+npm run dev
+```
+
+El backend expone rutas versionadas bajo `/api/v1` y mantiene las rutas sin prefijo temporalmente por compatibilidad. Las contraseñas nuevas usan bcrypt; las antiguas `salt:hash` se migran al primer login correcto.

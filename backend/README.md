@@ -1,4 +1,4 @@
-# Backend (Three Happy Kids)
+# Back-end (Three Happy Kids)
 
 Instalación y uso mínimo para el backend de inicio de sesión.
 
@@ -6,16 +6,15 @@ Requisitos:
 - Node.js
 - MySQL y una base de datos con tabla `Usuarios` que contenga columnas `nombre, email, password, role`.
 
-Variables de entorno (`.env`, no se versiona; usa `.env.example`):
+Variables de entorno (.env):
 - `PORT` (opcional)
 - `DB_HOST`, `DB_USER`, `DB_PASSWORD`, `DB_DATABASE`
-- `JWT_SECRET` (obligatorio; el servidor no inicia sin él)
-- `BCRYPT_ROUNDS` (opcional, por defecto `12`)
+- `JWT_SECRET` (recomendado)
 
 Ejecutar en desarrollo:
 
 ```bash
-cd backend
+cd Back-end
 npm install
 npm run dev
 ```
@@ -27,13 +26,13 @@ Endpoints relevantes:
 Si la tabla `Usuarios` no contiene la columna `role`, aplica la migración en `db-migrations/001-add-role-to-usuarios.sql`.
 # Backend Three Happy Kids
 
-La guía única del proyecto está en [documentacion/README.md](../documentacion/README.md).
+La guía única del proyecto está en [DOCUMENTACION/README.md](../DOCUMENTACION/README.md).
 
 Para configurar y ejecutar el backend, consulta:
 
-- `documentacion/01-INICIO-Y-CONFIGURACION.md`
-- `documentacion/02-AUTENTICACION-SHA2-Y-JWT.md`
-- `documentacion/04-BASE-DE-DATOS.md`
+- `DOCUMENTACION/01-INICIO-Y-CONFIGURACION.md`
+- `DOCUMENTACION/02-AUTENTICACION-SHA2-Y-JWT.md`
+- `DOCUMENTACION/04-BASE-DE-DATOS.md`
 
 Inicio rápido:
 
@@ -42,4 +41,4 @@ npm install
 npm run dev
 ```
 
-El backend expone rutas versionadas bajo `/api/v1` y mantiene las rutas sin prefijo temporalmente por compatibilidad. Las contraseñas nuevas usan bcrypt; las antiguas `salt:hash` se migran al primer login correcto.
+El backend usa las rutas actuales `POST /registro`, `POST /login` y `GET /me`.

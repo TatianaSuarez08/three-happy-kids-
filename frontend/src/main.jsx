@@ -1,15 +1,17 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
+import "./styles/variables.css";
+import "./styles/reset.css";
+import "bootstrap/dist/css/bootstrap.min.css";
 import "./styles/global.css";
 import "./styles/style.css";
 import "./styles/admin.css";
-import "bootstrap/dist/css/bootstrap.min.css";
+import "./styles/theme.css";
 import "bootstrap-icons/font/bootstrap-icons.css";
-import { FavoritosProvider } from "./context/FavoritosContext";
-import { CarritoProvider } from "./context/CarritoContext";
-import { ThemeProvider } from "./context/ThemeContext.jsx";
-import "./styles/app.css";
+import { FavoritosProvider } from "./Context/FavoritosContext";
+import { CarritoProvider } from "./Context/CarritoContext";
+import { ThemeProvider } from "./Context/ThemeContext";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>

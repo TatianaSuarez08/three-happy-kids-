@@ -1,3 +1,8 @@
+-- Datos de ejemplo de Three Happy Kids.
+-- Ejecutar después de DataBaseHappyKids_CORREGIDA.sql y solo en una base vacía.
+-- Los IDs se asumen consecutivos desde 1, como corresponde a la carga inicial.
+USE happykids;
+
 -- ===========================================
 -- ROLES
 -- ===========================================
@@ -73,26 +78,26 @@ INSERT INTO categoria (nombre_categoria, descripcion) VALUES
 
 -- ===========================================
 -- USUARIOS
--- Contraseña temporal para pruebas
+-- Contraseñas temporales de prueba almacenadas con bcrypt
 -- ===========================================
 
 INSERT INTO usuario (nombre_usuario, contrasena, correo) VALUES
-('admin','Admin123*','admin@happykids.com'),
-('bodega01','Bodega123*','bodega01@happykids.com'),
-('bodega02','Bodega123*','bodega02@happykids.com'),
-('mensajero01','Mensajero123*','mensajero01@happykids.com'),
-('mensajero02','Mensajero123*','mensajero02@happykids.com'),
+('admin','$2b$12$Ftqqf13FHr/8Ds/Sh/fdyOs8gaw0.fRN4TK6xHEU9AoYt.NNxGPD.','admin@happykids.com'),
+('bodega01','$2b$12$ejcYg0Ch5euhPFuI2Xq4zOSCwkA7gl54C.MauDQgAEhZyXjEcesfC','bodega01@happykids.com'),
+('bodega02','$2b$12$wKnw8n6hdUR16WmJCLmYLO8YEv4oWestFTlvm8rKlPNJS0jKu9RVy','bodega02@happykids.com'),
+('mensajero01','$2b$12$b6vDKLmw8ubUtUrRCy0NP.epThhis0MQJ.9Th7Dp/D6tW88eCiEBa','mensajero01@happykids.com'),
+('mensajero02','$2b$12$tFWTbnWvpqIM4LeY5zKFdOR/4kBK0P.e8nx7KvzW1hMgsdsZSThMC','mensajero02@happykids.com'),
 
-('juan.rodriguez','Cliente123*','juan.rodriguez@gmail.com'),
-('maria.gomez','Cliente123*','maria.gomez@gmail.com'),
-('carlos.perez','Cliente123*','carlos.perez@gmail.com'),
-('laura.martinez','Cliente123*','laura.martinez@gmail.com'),
-('andres.sanchez','Cliente123*','andres.sanchez@gmail.com'),
-('valentina.rojas','Cliente123*','valentina.rojas@gmail.com'),
-('camila.torres','Cliente123*','camila.torres@gmail.com'),
-('sebastian.ruiz','Cliente123*','sebastian.ruiz@gmail.com'),
-('isabella.moreno','Cliente123*','isabella.moreno@gmail.com'),
-('daniel.castro','Cliente123*','daniel.castro@gmail.com');
+('juan.rodriguez','$2b$12$jAtpTAwg7EzbMIZxJRLJ3uqcooHMgM/6OJEfMa6ZdTRI1ZLkAYwAK','juan.rodriguez@gmail.com'),
+('maria.gomez','$2b$12$tg1M1/2Mxttg2m11o8yeXurSQdMM7OOZjP/GFcu2pJi.Dw1tZQRv.','maria.gomez@gmail.com'),
+('carlos.perez','$2b$12$RQ79NU6KSeVmp3ydeBe9W.Az9CGz48MiO8ZMz6TrVaNUcujsmsxCm','carlos.perez@gmail.com'),
+('laura.martinez','$2b$12$jF5egr3E.0lHjuCxlRAF7O7GpDLiVK/Fx6Ier8nzJfU00hA3qSS8m','laura.martinez@gmail.com'),
+('andres.sanchez','$2b$12$gO1OB..Fwcp4IUI6EVukc.P3qZAexVP0k2VXZIUyB/HkS4r3TdhE2','andres.sanchez@gmail.com'),
+('valentina.rojas','$2b$12$bF1YRDMd2u87iCyJWyuR.epYqlJMQAE1QWI2FhJhGrRiBP4uqlzo6','valentina.rojas@gmail.com'),
+('camila.torres','$2b$12$vWMAy6vdA9duljwZ2Kv8s.u0mDSj51wTXr79CyYagPVscKsAnUica','camila.torres@gmail.com'),
+('sebastian.ruiz','$2b$12$O0NX4i9t4RM2xOpW4sJkHuyqymm8MctxYYM1im1mR2ZO3qwsmIR9a','sebastian.ruiz@gmail.com'),
+('isabella.moreno','$2b$12$Ie0YqCQcn7JSld3A9Y0Z8uVI3Z.HxQTriGwxCLPkKXgvy/3xsjQ2C','isabella.moreno@gmail.com'),
+('daniel.castro','$2b$12$z4qCMxQgNZPiYNOfVv7QSuGx2CJ.wIu91ZKqZml9Ujl1ePBc6CEp.','daniel.castro@gmail.com');
 
 -- ===========================================
 -- 1 = Administrador
@@ -550,12 +555,151 @@ VALUES
 ('2026-06-28','En camino','Coordinadora','GUIA1012',12),
 ('2026-06-29','Pendiente','Servientrega','GUIA1013',13),
 ('2026-07-01','Pendiente','Interrapidísimo','GUIA1014',14),
-('2026-07-02','Pendiente','Coordinadora','GUIA1015',15);
+('2026-07-02','Por recoger','Coordinadora','GUIA1015',15);
 
+-- ===========================================
+-- EJEMPLOS DE PREPARACIÓN, ENVÍO E HISTORIAL
+-- Entrega 15 queda lista y disponible para Mensajería.
+-- Entregas 11 y 12 representan pedidos ya asignados y en camino.
+-- Entrega 14 conserva un faltante y no se libera.
+-- ===========================================
+
+INSERT INTO alistamiento_pedido
+(id_entrega, id_usuario, resultado, observaciones, fecha_hora)
+SELECT e.id, 2, 'Completo', 'Alistamiento de ejemplo completado',
+       DATE_ADD(DATE_SUB(e.fecha_entrega, INTERVAL 1 DAY), INTERVAL 9 HOUR)
+FROM entrega e
+WHERE e.id IN (11, 12, 15);
+
+INSERT INTO detalle_alistamiento_pedido
+(id_alistamiento, id_factura, id_producto, cantidad_solicitada, cantidad_preparada, observaciones)
+SELECT ap.id, dp.id_factura, dp.id_producto, dp.cantidad, dp.cantidad, NULL
+FROM alistamiento_pedido ap
+JOIN entrega e ON e.id = ap.id_entrega
+JOIN detalle_pedido dp ON dp.id_factura = e.id_factura
+WHERE ap.id_entrega IN (11, 12, 15)
+  AND ap.resultado = 'Completo';
+
+INSERT INTO alistamiento_pedido
+(id_entrega, id_usuario, resultado, observaciones, fecha_hora)
+SELECT e.id, 2, 'Incompleto', 'Faltante de ejemplo; resolver antes de liberar',
+       DATE_ADD(DATE_SUB(e.fecha_entrega, INTERVAL 1 DAY), INTERVAL 9 HOUR)
+FROM entrega e
+WHERE e.id = 14;
+
+INSERT INTO detalle_alistamiento_pedido
+(id_alistamiento, id_factura, id_producto, cantidad_solicitada, cantidad_preparada, observaciones)
+SELECT ap.id, dp.id_factura, dp.id_producto, dp.cantidad,
+       CASE
+         WHEN dp.id_producto = (
+           SELECT MIN(missing.id_producto)
+           FROM detalle_pedido missing
+           WHERE missing.id_factura = dp.id_factura
+         ) THEN 0
+         ELSE dp.cantidad
+       END,
+       NULL
+FROM alistamiento_pedido ap
+JOIN entrega e ON e.id = ap.id_entrega
+JOIN detalle_pedido dp ON dp.id_factura = e.id_factura
+WHERE ap.id_entrega = 14
+  AND ap.resultado = 'Incompleto';
+
+INSERT INTO asignacion_preparacion
+(id_entrega, id_bodeguero, fecha_asignacion, fecha_finalizacion, estado)
+SELECT ap.id_entrega, ap.id_usuario,
+       DATE_SUB(ap.fecha_hora, INTERVAL 30 MINUTE),
+       CASE WHEN ap.resultado = 'Completo' THEN ap.fecha_hora ELSE NULL END,
+       CASE WHEN ap.resultado = 'Completo' THEN 'Finalizada' ELSE 'Activa' END
+FROM alistamiento_pedido ap
+WHERE ap.id_entrega IN (11, 12, 14, 15);
+
+INSERT INTO novedad_bodega
+(id_entrega, id_alistamiento, id_producto, id_bodeguero, tipo, descripcion)
+SELECT ap.id_entrega, ap.id, dp.id_producto, ap.id_usuario, 'No encontrado',
+       'Producto de ejemplo no encontrado durante la verificación física'
+FROM alistamiento_pedido ap
+JOIN entrega e ON e.id = ap.id_entrega
+JOIN detalle_pedido dp ON dp.id_factura = e.id_factura
+WHERE ap.id_entrega = 14
+  AND ap.resultado = 'Incompleto'
+ORDER BY dp.id_producto
+LIMIT 1;
+
+INSERT INTO pedido_historial_operacion
+(id_entrega, operacion, estado_anterior, estado_nuevo, id_usuario, fecha_hora, observaciones)
+SELECT ap.id_entrega, 'PreparacionIniciada', 'Pendiente', 'En preparación',
+       ap.id_usuario, DATE_SUB(ap.fecha_hora, INTERVAL 30 MINUTE), NULL
+FROM alistamiento_pedido ap
+WHERE ap.id_entrega IN (11, 12, 15)
+  AND ap.resultado = 'Completo';
+
+INSERT INTO pedido_historial_operacion
+(id_entrega, operacion, estado_anterior, estado_nuevo, id_usuario, fecha_hora, observaciones)
+SELECT ap.id_entrega, 'AlistamientoCompleto', 'En preparación', 'Alistamiento completo',
+       ap.id_usuario, ap.fecha_hora, ap.observaciones
+FROM alistamiento_pedido ap
+WHERE ap.id_entrega IN (11, 12, 15)
+  AND ap.resultado = 'Completo';
+
+INSERT INTO pedido_historial_operacion
+(id_entrega, operacion, estado_anterior, estado_nuevo, id_usuario, fecha_hora, observaciones)
+SELECT ap.id_entrega, 'PedidoLiberado', 'Alistamiento completo', 'Por recoger',
+       ap.id_usuario, DATE_ADD(ap.fecha_hora, INTERVAL 1 MINUTE),
+       'Ejemplo liberado para asignación por Mensajería'
+FROM alistamiento_pedido ap
+WHERE ap.id_entrega IN (11, 12, 15)
+  AND ap.resultado = 'Completo';
+
+INSERT INTO pedido_historial_operacion
+(id_entrega, operacion, estado_anterior, estado_nuevo, id_usuario, fecha_hora, observaciones)
+SELECT ap.id_entrega, 'PreparacionIniciada', 'Pendiente', 'En preparación',
+       ap.id_usuario, DATE_SUB(ap.fecha_hora, INTERVAL 30 MINUTE), NULL
+FROM alistamiento_pedido ap
+WHERE ap.id_entrega = 14
+  AND ap.resultado = 'Incompleto';
+
+INSERT INTO pedido_historial_operacion
+(id_entrega, operacion, estado_anterior, estado_nuevo, id_usuario, fecha_hora, observaciones)
+SELECT ap.id_entrega, 'AlistamientoIncompleto', 'En preparación', 'Pendiente',
+       ap.id_usuario, ap.fecha_hora,
+       CONCAT('Novedad reportada a Administración: ', ap.observaciones)
+FROM alistamiento_pedido ap
+WHERE ap.id_entrega = 14
+  AND ap.resultado = 'Incompleto';
+
+INSERT INTO asignacion_entrega
+(id_entrega, id_mensajero, fecha_asignacion, estado)
+SELECT ap.id_entrega,
+       CASE ap.id_entrega WHEN 11 THEN 4 ELSE 5 END,
+       DATE_ADD(ap.fecha_hora, INTERVAL 30 MINUTE),
+       'Activa'
+FROM alistamiento_pedido ap
+WHERE ap.id_entrega IN (11, 12)
+  AND ap.resultado = 'Completo';
+
+INSERT INTO pedido_historial_operacion
+(id_entrega, operacion, estado_anterior, estado_nuevo, id_usuario, fecha_hora, observaciones)
+SELECT a.id_entrega, 'PedidoAsignado', 'Por recoger', 'Asignado a Mensajería',
+       a.id_mensajero, a.fecha_asignacion, 'Asignación de ejemplo'
+FROM asignacion_entrega a
+WHERE a.id_entrega IN (11, 12)
+  AND a.estado = 'Activa';
+
+INSERT INTO pedido_historial_operacion
+(id_entrega, operacion, estado_anterior, estado_nuevo, id_usuario, fecha_hora, observaciones)
+SELECT a.id_entrega, 'EstadoActualizado', 'Por recoger', 'En camino',
+       a.id_mensajero, DATE_ADD(a.fecha_asignacion, INTERVAL 1 HOUR),
+       'Inicio de recorrido de ejemplo'
+FROM asignacion_entrega a
+WHERE a.id_entrega IN (11, 12)
+  AND a.estado = 'Activa';
+
+-- No se insertan filas de ejemplo en evidencia_entrega: cada registro debe
+-- apuntar a una imagen real almacenada en el directorio persistente configurado.
 
 -- Usuarios de prueba para Three Happy Kids.
 -- Ejecutar después de crear las tablas usuario, rol y usuario_rol.
-USE happykids;
 
 INSERT INTO rol (nombre_rol) VALUES
 ('Administrador'),

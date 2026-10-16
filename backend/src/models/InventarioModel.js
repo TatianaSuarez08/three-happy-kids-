@@ -74,8 +74,14 @@ export const adjustInventory = async ({ productId, tipo, cantidad, delta, motivo
       throw error;
     }
 
+    await connection.execute(
+      `INSERT INTO inventario (id_producto, cantidad_disponible, cantidad_minima, fecha_actualizacion)
+       VALUES (?, 0, 0, CURRENT_DATE)
+       ON DUPLICATE KEY UPDATE id_producto = VALUES(id_producto)`,
+      [productId]
+    );
     const [inventoryRows] = await connection.execute(
-      'SELECT cantidad_disponible FROM inventario WHERE id_producto = ?',
+      'SELECT cantidad_disponible FROM inventario WHERE id_producto = ? FOR UPDATE',
       [productId]
     );
 

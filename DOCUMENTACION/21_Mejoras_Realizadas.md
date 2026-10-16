@@ -41,10 +41,10 @@ Motivo:
 La lógica real del negocio exige que todos los usuarios autorizados puedan comprar sin perder sus permisos específicos de administración, bodega o mensajería.
 
 Archivos afectados:
-- backend/src/middleware/role.js
-- backend/src/routes/PedidoRoute.js
-- frontend/src/App.jsx
-- frontend/src/Componentes/Nav.jsx
+- Back-end/src/middleware/role.js
+- Back-end/src/routes/PedidoRoute.js
+- Front-end/src/App.jsx
+- Front-end/src/Componentes/Nav.jsx
 
 Base de datos afectada:
 No requiere cambios de esquema; se reutiliza la estructura actual de usuarios, roles y pedidos.
@@ -65,35 +65,12 @@ Pruebas realizadas:
 
 ## Impacto
 
-## Historial de compras por usuario
-
-- Se reutilizan las tablas existentes `factura`, `detalle_pedido`, `cliente`, `usuario`, `producto`, `pago` y `entrega`; no se creó una tabla duplicada de historial.
-- El endpoint existente `GET /mis-pedidos` consulta los pedidos mediante `req.user.id` y la relación `cliente.id_usuario`, por lo que no acepta un identificador de usuario enviado por el frontend.
-- `detalle_pedido.precio_unitario` y `subtotal` conservan el valor de la compra, aunque el precio actual del producto cambie posteriormente.
-- La pantalla existente `page-MisPedidosBD.jsx` ahora se presenta como `Historial de compras`, conserva filtros por estado y permite desplegar productos, cantidades, precios, total, entrega y método de pago.
-- Administración mantiene su consulta separada mediante `GET /pedidos`, con sus permisos actuales.
-- La navegación conserva la ruta `/mis-pedidos`; únicamente se actualizó la etiqueta visible del enlace.
-
-## Menú de catálogo
-
-- Se conserva el dropdown existente de categorías y todas sus rutas `/catalogo?categoria=...`.
-- El menú utiliza la misma barra oscura, tipografía, naranja de marca, bordes y estados hover de la navegación HappyKids.
-- No se agregaron opciones funcionales nuevas ni se creó un segundo sistema de navegación.
-
-## Refactorización de seguridad y API
-
-- Se unificó la configuración en un único `.env` raíz para backend y frontend, eliminando ejemplos duplicados. El `JWT_SECRET` que pudo estar expuesto debe rotarse fuera de desarrollo.
-- El backend falla al iniciar si `JWT_SECRET` no está configurado; se eliminó el fallback público `secretkey`.
-- Las contraseñas nuevas y administrativas usan `bcryptjs`. Los hashes heredados `salt:hash` se verifican una última vez y se convierten a bcrypt después de un login válido.
-- El frontend concentra las llamadas en `src/services/`; las páginas ya no construyen peticiones `fetch` directamente.
-- Se añadió el prefijo `/api/v1` y se conservaron las rutas heredadas para compatibilidad durante la transición.
-
 ## Perfil, usuarios y carrito por sesión
 
 - La tabla `usuario` incorpora `telefono` y `foto_perfil`; para instalaciones existentes se incluye `sql/MIGRACION_PERFIL_USUARIOS.sql`.
 - El alta administrativa conserva la ruta `/usuarios`, recibe `multipart/form-data`, valida imágenes JPG, PNG, WEBP o GIF de hasta 5 MB y guarda únicamente una ruta como `/assets/foto_de_perfil/perfil-<uuid>.<ext>`.
 - El backend publica `GET /me` con autenticación JWT y el apartado `Todos los usuarios` reutiliza `GET /usuarios`, mostrando teléfono, estado, rol y foto.
-- Las fotos se almacenan en `backend/storage/assets/foto_de_perfil` y se sirven mediante `/assets/foto_de_perfil`.
+- Las fotos se almacenan en `Front-end/src/assets/foto_de_perfil` y se sirven mediante `/assets/foto_de_perfil`.
 - El carrito permanece en `localStorage`, pero usa `carrito_usuario_<id>` con el `id` del JWT/sesión. Al iniciar o cerrar sesión se cambia el estado cargado, evitando compartir productos entre usuarios; la clave histórica `carrito` se migra una sola vez al usuario activo.
 - El backend de pedidos continúa tomando el usuario de `req.user.id`; el cliente no puede seleccionar otro propietario del pedido.
 
@@ -104,8 +81,8 @@ Pruebas realizadas:
 
 ### Validación
 
-- `frontend`: `npm run lint` y `npm run build` completados correctamente.
-- `backend`: comprobación sintáctica con `node --check` completada correctamente.
+- `Front-end`: `npm run lint` y `npm run build` completados correctamente.
+- `Back-end`: comprobación sintáctica con `node --check` completada correctamente.
 - La prueba manual pendiente requiere una base MySQL con la migración aplicada y dos sesiones autenticadas para comprobar el aislamiento del carrito, subida de imagen y lectura del perfil.
 
 Los recursos afectados fueron:

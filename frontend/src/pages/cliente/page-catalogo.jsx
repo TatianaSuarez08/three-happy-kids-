@@ -1,13 +1,16 @@
-import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { getPublicProducts } from "../../services/productoService";
-import { API_BASE_URL } from "../../services/httpClient";
+import ProductoCard from "../../components/ProductoCard";
 import "../../styles/style.css";
+
+const PRODUCTOS_POR_PAGINA = 20;
 
 function Catalogo() {
   const [productos, setProductos] = useState([]);
+  const [visibleCount, setVisibleCount] = useState(PRODUCTOS_POR_PAGINA);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState("");
+  const [hoverId, setHoverId] = useState(null);
   const formatoPrecio = new Intl.NumberFormat("es-CO", {
     style: "currency",
     currency: "COP",
@@ -17,7 +20,9 @@ function Catalogo() {
   useEffect(() => {
     const cargarProductos = async () => {
       try {
-        setProductos(await getPublicProducts());
+        const productosObtenidos = await getPublicProducts();
+        setProductos(productosObtenidos);
+        setVisibleCount(Math.min(PRODUCTOS_POR_PAGINA, productosObtenidos.length || PRODUCTOS_POR_PAGINA));
       } catch (err) {
         setError(err.message || "Base de datos no disponible.");
       } finally {
@@ -28,48 +33,54 @@ function Catalogo() {
     cargarProductos();
   }, []);
 
-  return (
-    <div className="home-page">
+  const productosVisibles = productos.slice(0, visibleCount);
+  const hayMasProductos = visibleCount < productos.length;
 
-      <section className="home-section" style={{ paddingTop: "2rem" }}>
+  return (
+    <div className="page-hero">
+      <section className="hk-section" style={{ paddingTop: "2rem" }}>
         {cargando ? (
-          <div className="home-no-results">
-            <p>Esperando datos del servidor...</p>
-          </div>
+          <div className="page-empty-state">Esperando datos del servidor...</div>
         ) : error ? (
-          <div className="home-no-results">
-            <p>{error}</p>
-          </div>
+          <div className="page-empty-state page-empty-state--error">{error}</div>
         ) : productos.length === 0 ? (
-          <div className="home-no-results">
-            <span>😕</span>
+          <div className="page-empty-state">
+            <span className="page-empty-state__emoji">😕</span>
             <p>No hay productos disponibles.</p>
           </div>
         ) : (
-          <div className="home-productos">
-            {productos.map((p) => (
-              <div key={p.id} className="home-producto-card">
-                <div className="home-producto-img">
-                  <img
-                    src={p.imagen_producto
-                      ? `${API_BASE_URL}${p.imagen_producto.startsWith("/assets/") ? p.imagen_producto : `/assets/productos/${p.imagen_producto}`}`
-                      : ""}
-                    alt={p.nombre}
-                  />
-                </div>
-                <div className="home-producto-info">
-                  <span className="home-producto-nombre">{p.nombre}</span>
-                  <span className="home-producto-precio">{formatoPrecio.format(Number(p.precio) || 0)}</span>
-                  <Link to={`/producto/${p.id}`} className="home-producto-btn">
-                    Ver producto
-                  </Link>
-                </div>
+          <>
+            <div className="hk-productos-grid">
+              {productosVisibles.map((p) => (
+                <ProductoCard
+                  key={p.id}
+                  producto={p}
+                  formatoPrecio={formatoPrecio}
+                  hoverId={hoverId}
+                  setHoverId={setHoverId}
+                />
+              ))}
+            </div>
+
+            {hayMasProductos ? (
+              <div style={{ display: "flex", justifyContent: "center", marginTop: "1.5rem" }}>
+                <button
+                  type="button"
+                  className="product-card-link"
+                  onClick={() => setVisibleCount((prev) => Math.min(prev + PRODUCTOS_POR_PAGINA, productos.length))}
+                  style={{ maxWidth: "360px", width: "100%", cursor: "pointer" }}
+                >
+                  Mostrar más productos
+                </button>
               </div>
-            ))}
-          </div>
+            ) : (
+              <div className="page-empty-state" style={{ paddingTop: "1.5rem", paddingBottom: "0.75rem" }}>
+                <p>Has visto todos los productos.</p>
+              </div>
+            )}
+          </>
         )}
       </section>
-
     </div>
   );
 }

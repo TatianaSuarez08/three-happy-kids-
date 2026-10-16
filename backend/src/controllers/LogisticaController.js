@@ -1,8 +1,10 @@
 import { getLogisticaResumen } from '../models/LogisticaModel.js';
 
-export const getLogistica = async (_req, res) => {
+export const getLogistica = async (req, res) => {
   try {
-    const data = await getLogisticaResumen();
+    const roles = (req.user.roles || []).map((role) => String(role).trim().toLowerCase());
+    const isCourier = roles.includes('mensajero');
+    const data = await getLogisticaResumen({ userId: req.user.id, isCourier });
     res.json({ success: true, ...data });
   } catch (error) {
     console.error('Error al consultar logística:', error);

@@ -2,6 +2,7 @@
   max-width: 1200px;
   margin: 0 auto;
   padding: 2rem 1rem 3rem;
+  background: transparent;
 }
 
 .bodeguero-header {
@@ -10,11 +11,11 @@
   align-items: center;
   gap: 1rem;
   flex-wrap: wrap;
-  background: rgba(255, 255, 255, 0.9);
-  border: 1px solid rgba(255, 140, 66, 0.12);
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border);
   border-radius: 18px;
   padding: 1.4rem 1.5rem;
-  box-shadow: 0 12px 24px rgba(31, 36, 48, 0.04);
+  box-shadow: 0 12px 22px var(--color-shadow);
   margin-bottom: 1rem;
 }
 
@@ -30,7 +31,7 @@
 .bodeguero-header h1 {
   margin: 0;
   font-size: clamp(1.8rem, 2.2vw, 2.4rem);
-  color: #1a1a1a;
+  color: var(--color-text-primary);
   font-weight: 800;
 }
 
@@ -56,9 +57,9 @@
 
 .bodeguero-tab {
   text-decoration: none;
-  color: #555;
-  background: rgba(255, 255, 255, 0.8);
-  border: 1px solid #eee;
+  color: var(--color-text-secondary);
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border);
   border-radius: 12px;
   padding: 0.8rem 1rem;
   font-weight: 700;
@@ -86,16 +87,16 @@
 }
 
 .bodeguero-card {
-  background: #fff;
-  border: 1px solid #eee;
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border);
   border-radius: 16px;
-  box-shadow: 0 12px 22px rgba(31, 36, 48, 0.04);
+  box-shadow: 0 12px 22px var(--color-shadow);
   padding: 1.2rem 1.25rem;
 }
 
 .bodeguero-card .label {
   display: block;
-  color: #888;
+  color: var(--color-text-muted);
   font-size: 0.78rem;
   margin-bottom: 0.7rem;
   text-transform: uppercase;
@@ -106,24 +107,24 @@
   display: block;
   font-size: clamp(1.7rem, 2vw, 2.1rem);
   font-weight: 800;
-  color: #1a1a1a;
+  color: var(--color-text-primary);
 }
 
 .bodeguero-card .meta {
   margin-top: 0.5rem;
-  color: #666;
+  color: var(--color-text-secondary);
   font-size: 0.8rem;
 }
 
 .bodeguero-card.warning {
-  background: linear-gradient(180deg, #fff8f1 0%, #fff 100%);
+  background: linear-gradient(180deg, var(--color-primary-soft) 0%, var(--color-bg-surface) 100%);
 }
 
 .bodeguero-panel {
-  background: rgba(255, 255, 255, 0.96);
-  border: 1px solid #eee;
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border);
   border-radius: 18px;
-  box-shadow: 0 12px 24px rgba(31, 36, 48, 0.04);
+  box-shadow: 0 12px 24px var(--color-shadow);
   padding: 1.2rem 1.25rem;
 }
 
@@ -140,7 +141,7 @@
 .bodeguero-panel-header h3 {
   margin: 0;
   font-size: 1.15rem;
-  color: #1a1a1a;
+  color: var(--color-text-primary);
 }
 
 .bodeguero-search {
@@ -229,20 +230,20 @@
   justify-content: space-between;
   align-items: center;
   gap: 1rem;
-  background: #fafafa;
-  border: 1px solid #eee;
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border);
   border-radius: 12px;
   padding: 0.8rem 1rem;
 }
 
 .bodeguero-item strong {
   display: block;
-  color: #1a1a1a;
+  color: var(--color-text-primary);
   font-size: 0.94rem;
 }
 
 .bodeguero-item small {
-  color: #777;
+  color: var(--color-text-muted);
 }
 
 .bodeguero-order-card {
@@ -267,7 +268,7 @@
 }
 
 .bodeguero-order-meta {
-  color: #555;
+  color: var(--color-text-secondary);
 }
 
 .bodeguero-actions {
@@ -301,9 +302,15 @@
 }
 
 .bodeguero-button-secondary {
-  background: #fff;
-  border: 1px solid #ddd;
-  color: #333;
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-primary);
+}
+
+.bodeguero-button-secondary.active {
+  background: var(--color-primary-soft);
+  border-color: var(--color-primary);
+  color: var(--color-primary-hover);
 }
 
 .bodeguero-button-danger {
@@ -315,9 +322,9 @@
 .bodeguero-empty {
   padding: 2rem 1rem;
   text-align: center;
-  color: #777;
-  background: #fafafa;
-  border: 1px dashed #e7e7e7;
+  color: var(--color-text-muted);
+  background: var(--color-bg-elevated);
+  border: 1px dashed var(--color-border);
   border-radius: 12px;
 }
 
@@ -370,6 +377,115 @@
   border: 1px solid #f5d4d4;
 }
 
+.bodeguero-message.warning {
+  background: var(--color-bg-elevated);
+  color: var(--color-warning);
+  border: 1px solid var(--color-border);
+}
+
+.bodeguero-pick-product {
+  display: grid;
+  gap: 0.3rem;
+  min-width: 0;
+}
+
+.bodeguero-checklist {
+  display: grid;
+  gap: 0.7rem;
+  margin-top: 0.5rem;
+  padding: 0.85rem;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: var(--color-bg-elevated);
+  color: var(--color-text-primary);
+}
+
+.bodeguero-checklist > label {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.6rem;
+  font-weight: 600;
+}
+
+.bodeguero-checklist input[type="checkbox"] {
+  width: 1.1rem;
+  height: 1.1rem;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  accent-color: var(--color-primary);
+}
+
+.bodeguero-issue-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.bodeguero-issue-fields .bodeguero-pick-field {
+  max-width: none;
+  color: var(--color-text-secondary);
+}
+
+.bodeguero-issue-fields select,
+.bodeguero-issue-fields textarea {
+  border-color: var(--color-border);
+  background: var(--color-bg-surface);
+  color: var(--color-text-primary);
+}
+
+.bodeguero-checklist input:focus-visible,
+.bodeguero-issue-fields select:focus-visible,
+.bodeguero-issue-fields textarea:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--color-primary) 35%, transparent);
+  outline-offset: 2px;
+}
+
+.bodeguero-pick-field {
+  display: grid;
+  gap: 0.35rem;
+  max-width: 360px;
+  margin-top: 0.35rem;
+  color: #555;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.bodeguero-pick-field input {
+  width: 100%;
+  min-height: 40px;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  color: var(--color-text-primary);
+  background: var(--color-bg-surface);
+}
+
+.bodeguero-pick-field input:focus-visible,
+.bodeguero-tab:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--color-primary) 35%, transparent);
+  outline-offset: 2px;
+}
+
+.bodeguero-preparation-history {
+  display: grid;
+  gap: 0.45rem;
+  margin-top: 0.9rem;
+  padding: 0.8rem;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  color: var(--color-text-secondary);
+  overflow-wrap: anywhere;
+}
+
+.bodeguero-stock-note {
+  margin: 0.8rem 0 0;
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+}
+
 @media (max-width: 900px) {
   .bodeguero-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -387,6 +503,10 @@
   }
 
   .bodeguero-form {
+    grid-template-columns: 1fr;
+  }
+
+  .bodeguero-issue-fields {
     grid-template-columns: 1fr;
   }
 

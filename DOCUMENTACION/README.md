@@ -1,49 +1,30 @@
-# Documentación técnica de Three Happy Kids
+# Documentación de Three Happy Kids
 
-## Estado de la documentación
+Esta carpeta contiene la documentación consolidada del proyecto. Cada tema tiene una sola guía para evitar información repetida.
 
-Esta carpeta contiene la documentación técnica activa del sistema y la referencia histórica que se conservó por seguridad. La versión vigente está orientada a producción y se basó en el código real del proyecto.
+## Orden recomendado
 
-## Documentación activa
+1. `01-INICIO-Y-CONFIGURACION.md`: instalación, `.env` y ejecución.
+2. `02-AUTENTICACION-SHA2-Y-JWT.md`: registro, login, bcrypt, roles y tokens.
+3. `03-FRONTEND-RUTAS-Y-COMPRAS.md`: rutas, panel admin, sesión, menú, carrito y pedidos.
+4. `04-BASE-DE-DATOS.md`: estructura MySQL, usuarios de prueba y consultas.
+5. `05-CONSUMO-DE-LA-API-Y-SISTEMA.md`: endpoints, consumo desde React, JWT, roles y estado actual de la API.
+6. `06-DIAGNOSTICO-BASE-DE-DATOS-Y-DASHBOARD.md`: revisión del esquema, riesgos, consultas y API necesaria para el dashboard.
+7. `07-CAMBIOS-BASE-DE-DATOS-CORREGIDA.md`: explicación de los cambios aplicados al nuevo esquema SQL y sus motivos.
+8. `sql/DataBaseHappyKids_CORREGIDA.sql`: esquema completo corregido, incluidas selección y novedades de Bodega, preparación, asignaciones, evidencias e historial.
+9. `08-COMPARACION-PRODUCTO-Y-SUBIDA-DE-IMAGEN.md`: correspondencia de campos y flujo para guardar imágenes de productos.
+10. `09-CONEXION-BD.md`: configuración, pruebas y diagnóstico de la conexión del backend con MySQL.
+11. `sql/dml.sql`: datos de ejemplo del catálogo, pedidos y flujo Bodega → Mensajería; ejecutar solo tras crear el esquema en una base vacía.
+12. `sql/sql_insert_test_users.sql`: script independiente para usuarios de prueba.
 
-1. [01_INTRODUCCION.md](01_INTRODUCCION.md)
-2. [02_ARQUITECTURA.md](02_ARQUITECTURA.md)
-3. [03_INSTALACION.md](03_INSTALACION.md)
-4. [04_FRONTEND.md](04_FRONTEND.md)
-5. [05_BACKEND.md](05_BACKEND.md)
-6. [06_API.md](06_API.md)
-7. [07_BASE_DE_DATOS.md](07_BASE_DE_DATOS.md)
-8. [08_AUTENTICACION_Y_SEGURIDAD.md](08_AUTENTICACION_Y_SEGURIDAD.md)
-9. [09_FUNCIONALIDADES.md](09_FUNCIONALIDADES.md)
-10. [10_API_ENDPOINTS.md](10_API_ENDPOINTS.md)
-11. [11_DESPLIEGUE.md](11_DESPLIEGUE.md)
-12. [12_MANTENIMIENTO.md](12_MANTENIMIENTO.md)
+La documentación describe el código actual. Para configurar el proyecto se necesita editar `Back-end/.env` y ejecutar los comandos indicados en la primera guía.
 
-## Documentación histórica conservada
+## Estado actual
 
-Los archivos con nombres antiguos y numeración en formato legacy se dejaron en la carpeta como referencia técnica histórica y de diagnóstico. No reemplazan la documentación actual, pero no se eliminaron por ser útil para auditoría de cambios.
-
-## Fuente de verdad
-
-La documentación actual se sustentó en:
-
-- `backend/index.js`
-- `api/index.js`
-- `backend/src/**`
-- `api/src/**`
-- `frontend/src/**`
-- `documentacion/sql/DataBaseHappyKids_CORREGIDA.sql`
-- `.env` raíz
-
-## Convenciones
-
-- El backend principal es la instancia de negocio principal.
-- La API es la instancia redundante / de respaldo.
-- El frontend intenta backend y API por orden configurable.
-- La autenticación real es JWT con `Authorization: Bearer <token>`.
-- La base de datos real es MySQL `happykids`.
-- La prevención de duplicados se realiza con `Idempotency-Key` y `api_idempotency`.
-
-## Nota de seguridad
-
-No se documentan secretos reales ni valores privativos. Los ejemplos de variables sensibles usan placeholders seguros y deben sustituirse por valores del entorno de despliegue.
+- Autenticación con bcryptjs y JWT.
+- Sesión opcional: `localStorage` con “Recordarme” o `sessionStorage` para sesión temporal.
+- Rutas administrativas protegidas por el rol `administrador`.
+- El administrador también puede comprar desde el catálogo, usar el carrito y consultar sus pedidos.
+- Menú adaptado para clientes y administradores.
+- `Mis pedidos` con filtros por estado y detalles expandibles.
+- Documentación antigua consolidada en esta carpeta para evitar versiones repetidas.

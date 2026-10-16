@@ -14,6 +14,7 @@ const ROLE_PERMISSIONS = {
     'pedidos:own:write',
     'catalogo:read',
     'comprar',
+    'entregas:reassign',
     'dashboard:read'
   ],
   bodeguero: [

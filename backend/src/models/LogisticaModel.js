@@ -1,10 +1,10 @@
 import pool from '../db.js';
 
-export const getLogisticaResumen = async () => {
+export const getLogisticaResumen = async ({ userId, isCourier = false } = {}) => {
   const [summary] = await pool.execute(`
     SELECT
       (SELECT COUNT(*) FROM factura WHERE estado = 'Pendiente') AS pedidosPendientes,
-      (SELECT COUNT(*) FROM entrega WHERE estado = 'Pendiente') AS entregasPendientes,
+      (SELECT COUNT(*) FROM entrega WHERE estado IN ('Pendiente', 'Por recoger')) AS entregasPendientes,
       (SELECT COUNT(*)
        FROM inventario i
        JOIN producto p ON p.id = i.id_producto
@@ -16,6 +16,7 @@ export const getLogisticaResumen = async () => {
     SELECT
       f.id AS idPedido,
       CONCAT(c.primer_nombre, ' ', c.primer_apellido) AS cliente,
+      c.telefono,
       c.direccion,
       c.ciudad,
       COALESCE(e.estado, 'Pendiente') AS estadoEntrega,
@@ -25,15 +26,23 @@ export const getLogisticaResumen = async () => {
         SELECT COUNT(*)
         FROM detalle_pedido dp
         WHERE dp.id_factura = f.id
-      ) AS cantidadProductos
+      ) AS cantidadProductos,
+      a.id_mensajero AS idMensajero,
+      a.fecha_asignacion AS fechaAsignacion
     FROM factura f
     JOIN cliente c ON c.id = f.id_cliente
     LEFT JOIN entrega e ON e.id_factura = f.id
-    WHERE f.estado IN ('Pendiente', 'Pagada')
-       OR e.estado IN ('Pendiente', 'En camino')
+    LEFT JOIN asignacion_entrega a
+      ON a.id_entrega = e.id AND a.estado = 'Activa'
+    WHERE f.estado <> 'Anulada'
+      AND e.estado IN ('Por recoger', 'En camino')
+      AND (
+        (? = 1 AND a.id_mensajero = ?)
+        OR (? = 0 AND e.estado IN ('Por recoger', 'En camino'))
+      )
     ORDER BY f.fecha DESC, f.id DESC
     LIMIT 12
-  `);
+  `, [isCourier ? 1 : 0, userId || null, isCourier ? 1 : 0]);
 
   return {
     summary: summary[0] || {

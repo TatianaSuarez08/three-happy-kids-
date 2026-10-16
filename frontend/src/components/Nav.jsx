@@ -1,8 +1,16 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
-import { getCategorias } from "../services/catalogoService";
+import { API_BASE_URL } from "../services/httpClient";
+import Icon from "./Icon";
 import ThemeToggle from "./ThemeToggle";
+
+const roleLabel = (roles) => {
+  if (roles.includes("administrador")) return "Administrador";
+  if (roles.includes("bodeguero")) return "Bodeguero";
+  if (roles.includes("mensajero")) return "Mensajero";
+  return "Cliente";
+};
 
 function Nav() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -14,24 +22,43 @@ function Nav() {
   const location = useLocation();
   const storage = localStorage.getItem("user") ? localStorage : sessionStorage;
   const usuario = JSON.parse(storage.getItem("user") || storage.getItem("usuario") || "null");
-  const roles = Array.isArray(usuario?.roles) ? usuario.roles : [];
-  const esAdministrador = roles.some((role) => ["admin", "administrador"].includes(String(role).trim().toLowerCase()));
-  const esMensajero = roles.some((role) => String(role).trim().toLowerCase() === "mensajero");
-  const esBodeguero = roles.some((role) => String(role).trim().toLowerCase() === "bodeguero");
-  const esCliente = roles.some((role) => String(role).trim().toLowerCase() === "cliente");
-  const rolPrincipal = esAdministrador ? "Administrador" : esBodeguero ? "Bodeguero" : esMensajero ? "Mensajero" : "Cliente";
+  const roles = Array.isArray(usuario?.roles)
+    ? usuario.roles.map((role) => String(role).trim().toLowerCase())
+    : [];
+  const esAdministrador = roles.includes("admin") || roles.includes("administrador");
+  const esMensajero = roles.includes("mensajero");
+  const esBodeguero = roles.includes("bodeguero");
+  const esCliente = roles.includes("cliente");
 
-  const estaActivo = (ruta) => ruta === "/" ? location.pathname === "/" : location.pathname === ruta || location.pathname.startsWith(`${ruta}/`);
-  const estiloDropdown = (ruta) => ({ display: "flex", alignItems: "center", gap: "10px", padding: "10px 16px", color: estaActivo(ruta) ? "#ff8c42" : "#ccc", background: estaActivo(ruta) ? "#2a2a2a" : "transparent", borderLeft: estaActivo(ruta) ? "3px solid #ff8c42" : "3px solid transparent", textDecoration: "none", fontSize: "14px" });
+  const estaActivo = (ruta) => ruta === "/"
+    ? location.pathname === "/"
+    : location.pathname === ruta || location.pathname.startsWith(`${ruta}/`);
+
+  const estiloDropdown = (ruta) => ({
+    display: "flex",
+    alignItems: "center",
+    gap: "10px",
+    padding: "10px 16px",
+    color: estaActivo(ruta) ? "var(--color-primary)" : "var(--color-text-secondary)",
+    background: estaActivo(ruta) ? "var(--color-primary-soft)" : "transparent",
+    borderLeft: estaActivo(ruta) ? "3px solid var(--color-primary)" : "3px solid transparent",
+    textDecoration: "none",
+    fontSize: "14px",
+  });
 
   useEffect(() => {
-    const close = (event) => { if (dropdownRef.current && !dropdownRef.current.contains(event.target)) setDropdownOpen(false); };
+    const close = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) setDropdownOpen(false);
+    };
     document.addEventListener("mousedown", close);
     return () => document.removeEventListener("mousedown", close);
   }, []);
 
   useEffect(() => {
-    getCategorias().then((data) => setCategorias(data.categories || [])).catch(() => setCategorias([]));
+    fetch(`${API_BASE_URL}/categorias`)
+      .then((response) => response.json())
+      .then((data) => setCategorias(data.categories || []))
+      .catch(() => setCategorias([]));
   }, []);
 
   const cerrarSesion = () => {
@@ -41,39 +68,66 @@ function Nav() {
     navigate("/login", { replace: true });
   };
 
-  const menuLink = (to, label, icon = "") => <Link to={to} onClick={() => setDropdownOpen(false)} style={estiloDropdown(to)}><i className={`bi ${icon}`} aria-hidden="true" />{label}</Link>;
+  const menuLink = (to, label, icon) => (
+    <Link to={to} onClick={() => setDropdownOpen(false)} style={estiloDropdown(to)}>
+      <Icon name={icon} size={18} />
+      {label}
+    </Link>
+  );
+
+  const primaryLink = (to, label, icon) => (
+    <Link to={to} className="nav-link-item">
+      <Icon name={icon} size={18} />
+      {label}
+    </Link>
+  );
 
   return (
     <>
       <nav className="topbar-shell" style={{ padding: "10px 0" }}>
         <div className="container d-flex align-items-center gap-3">
-          <Link to="/" className="brand-wordmark"><span>Happy kids<span className="brand-accent">.</span></span></Link>
+          <Link to="/" className="brand-wordmark">Happy kids<span className="brand-accent">.</span></Link>
           <form onSubmit={(event) => { event.preventDefault(); if (busqueda.trim()) navigate(`/?buscar=${busqueda}`); }} className="search-shell">
             <input value={busqueda} onChange={(event) => setBusqueda(event.target.value)} placeholder="Buscar productos..." className="search-input" />
-            <button type="submit" className="search-button" aria-label="Buscar">⌕</button>
+            <button type="submit" className="search-button" aria-label="Buscar" title="Buscar"><Icon name="search" size={18} /></button>
           </form>
           <div className="d-flex align-items-center gap-2">
             <ThemeToggle />
-            {(esCliente || esAdministrador || esBodeguero || esMensajero) && <><button className="btn text-white border-0 p-2" onClick={() => navigate("/favoritos")} aria-label="Favoritos"><i className="bi bi-heart" aria-hidden="true" /></button><button className="btn text-white border-0 p-2" onClick={() => navigate("/carrito")} aria-label="Carrito"><i className="bi bi-cart3" aria-hidden="true" /></button></>}
+            {(esCliente || esAdministrador || esBodeguero || esMensajero) && <>
+              <button className="icon-button nav-icon-button" onClick={() => navigate("/favoritos")} aria-label="Favoritos" title="Favoritos"><Icon name="heart" size={20} /></button>
+              <button className="icon-button nav-icon-button" onClick={() => navigate("/carrito")} aria-label="Carrito" title="Carrito"><Icon name="cart" size={20} /></button>
+            </>}
             <div className="position-relative" ref={dropdownRef}>
-              <button className="btn nav-icon-button" onClick={() => setDropdownOpen(!dropdownOpen)} aria-label="Cuenta"><i className="bi bi-person-circle" aria-hidden="true" /></button>
+              <button className="icon-button nav-icon-button" onClick={() => setDropdownOpen(!dropdownOpen)} aria-label="Cuenta" title="Cuenta"><Icon name="person" size={20} /></button>
               {dropdownOpen && <div className="nav-dropdown-menu">
-                <div style={{ padding: "14px 16px", borderBottom: "1px solid #2e2e2e" }}><div style={{ color: "#fff", fontWeight: 600 }}>{usuario ? usuario.correo : "Invitado"}</div><div style={{ color: "#666", fontSize: "12px" }}>{usuario ? `${rolPrincipal} · Sesión activa` : "No has iniciado sesión"}</div></div>
+                <div style={{ padding: "14px 16px", borderBottom: "1px solid var(--color-border)" }}>
+                  <div style={{ color: "var(--color-text-primary)", fontWeight: 600 }}>{usuario ? usuario.email || usuario.correo : "Invitado"}</div>
+                  <div style={{ color: "var(--color-text-muted)", fontSize: "12px" }}>{usuario ? `${roleLabel(roles)} · Sesión activa` : "No has iniciado sesión"}</div>
+                </div>
                 {usuario ? <>
-                  {esAdministrador && <div style={{ borderBottom: "1px solid #2e2e2e", padding: "6px 0" }}>{menuLink("/admin/dashboard", "Dashboard", "bi-speedometer2")}{menuLink("/admin/inventario", "Inventario", "bi-boxes")}{menuLink("/admin/pedidos", "Pedidos", "bi-box-seam")}{menuLink("/admin/usuarios", "Usuarios", "bi-people")}</div>}
-                  {esBodeguero && <div style={{ borderBottom: "1px solid #2e2e2e", padding: "6px 0" }}>{menuLink("/bodeguero", "Inicio bodeguero", "bi-house")}{menuLink("/bodeguero/inventario", "Inventario", "bi-boxes")}{menuLink("/bodeguero/pedidos", "Pedidos", "bi-box-seam")}{menuLink("/bodeguero/movimientos", "Movimientos", "bi-list-check")}</div>}
-                  {esMensajero && menuLink("/mensajeria", "Mensajería", "bi-truck")}
-                  {menuLink("/perfil", "Actualizar perfil", "bi-person-circle")}
-                  <button onClick={cerrarSesion} style={{ width: "100%", padding: "12px 16px", color: "#e53935", background: "none", border: "none", borderTop: "1px solid #2e2e2e", textAlign: "left" }}><i className="bi bi-box-arrow-right" aria-hidden="true" /> Cerrar sesión</button>
-                </> : <>{menuLink("/login", "Iniciar sesión", "bi-box-arrow-in-right")}{menuLink("/registro", "Registrarse", "bi-pencil-square")}</>}
+                  {esAdministrador && <div style={{ borderBottom: "1px solid var(--color-border)", padding: "6px 0" }}>{menuLink("/admin/dashboard", "Dashboard", "dashboard")}{menuLink("/admin/inventario", "Inventario", "package")}{menuLink("/admin/pedidos", "Pedidos", "receipt")}{menuLink("/admin/novedades-bodega", "Novedades de Bodega", "activity")}{menuLink("/admin/usuarios", "Usuarios", "people")}</div>}
+                  {esBodeguero && <div style={{ borderBottom: "1px solid var(--color-border)", padding: "6px 0" }}>{menuLink("/bodeguero", "Inicio bodeguero", "dashboard")}{menuLink("/bodeguero/inventario", "Inventario", "package")}{menuLink("/bodeguero/pedidos", "Pedidos", "receipt")}{menuLink("/bodeguero/envio", "Envío", "truck")}{menuLink("/bodeguero/movimientos", "Movimientos", "activity")}</div>}
+                  {esMensajero && menuLink("/mensajeria", "Mensajería", "truck")}
+                  {menuLink("/perfil", "Actualizar perfil", "person")}
+                  <button onClick={cerrarSesion} aria-label="Cerrar sesión" title="Cerrar sesión" style={{ width: "100%", padding: "12px 16px", color: "var(--color-danger)", background: "transparent", border: "none", borderTop: "1px solid var(--color-border)", textAlign: "left", display: "flex", alignItems: "center", gap: "10px" }}><Icon name="logout" size={18} />Cerrar sesión</button>
+                </> : <>{menuLink("/login", "Iniciar sesión", "person")}{menuLink("/registro", "Registrarse", "plus")}</>}
               </div>}
             </div>
           </div>
         </div>
       </nav>
-      <div className="nav-secondary"><div className="container nav-links-bar">
-        {esAdministrador ? <><Link to="/admin/dashboard" className="nav-link-item">Dashboard</Link><Link to="/admin/inventario" className="nav-link-item">Inventario</Link><Link to="/admin/pedidos" className="nav-link-item">Pedidos</Link><Link to="/admin/usuarios" className="nav-link-item">Usuarios</Link></> : esBodeguero ? <><Link to="/bodeguero" className="nav-link-item">Inicio</Link><Link to="/bodeguero/inventario" className="nav-link-item">Inventario</Link><Link to="/bodeguero/pedidos" className="nav-link-item">Pedidos</Link><Link to="/bodeguero/movimientos" className="nav-link-item">Movimientos</Link></> : esMensajero ? <><Link to="/mensajeria" className="nav-link-item">Inicio</Link><Link to="/mensajeria/entregas" className="nav-link-item">Mis entregas</Link><Link to="/mensajeria/ruta" className="nav-link-item">Ruta / Mapa</Link><Link to="/mensajeria/historial" className="nav-link-item">Historial</Link></> : <><Link to="/" className="nav-link-item">Inicio</Link><div style={{ position: "relative" }}><button type="button" className="nav-link-item catalogo-nav-link" onClick={() => setCategoriasOpen(!categoriasOpen)}><i className="bi bi-grid-3x3-gap" aria-hidden="true" /> Catálogo ▾</button>{categoriasOpen && <div className="catalogo-categorias-menu">{categorias.map((categoria) => <Link className="catalogo-option" key={categoria.id_categoria} to={`/catalogo?categoria=${categoria.id_categoria}`} onClick={() => setCategoriasOpen(false)}><span className="catalogo-option-icon" aria-hidden="true"><i className="bi bi-tag-fill" /></span><span>{categoria.nombre}</span><span className="catalogo-option-arrow" aria-hidden="true">›</span></Link>)}</div>}</div>{usuario && <Link to="/mis-pedidos" className="nav-link-item">Historial de compras</Link>}</>}
-      </div></div>
+      <div className="nav-secondary">
+        <div className="container nav-links-bar">
+          {esAdministrador ? <>{primaryLink("/admin/dashboard", "Dashboard", "dashboard")}{primaryLink("/admin/inventario", "Inventario", "package")}{primaryLink("/admin/pedidos", "Pedidos", "receipt")}{primaryLink("/admin/novedades-bodega", "Novedades de Bodega", "activity")}{primaryLink("/admin/usuarios", "Usuarios", "people")}</> : esBodeguero ? <>{primaryLink("/bodeguero", "Inicio", "dashboard")}{primaryLink("/bodeguero/inventario", "Inventario", "package")}{primaryLink("/bodeguero/pedidos", "Pedidos", "receipt")}{primaryLink("/bodeguero/envio", "Envío", "truck")}{primaryLink("/bodeguero/movimientos", "Movimientos", "activity")}</> : esMensajero ? <>{primaryLink("/mensajeria", "Inicio", "dashboard")}{primaryLink("/mensajeria/entregas", "Mis pedidos", "truck")}{primaryLink("/mensajeria/ruta", "Ruta / Mapa", "mapPin")}{primaryLink("/mensajeria/historial", "Historial", "receipt")}</> : <>
+            {primaryLink("/", "Inicio", "dashboard")}
+            <div style={{ position: "relative" }}>
+              <button type="button" className="nav-link-item catalogo-nav-link" onClick={() => setCategoriasOpen(!categoriasOpen)}><Icon name="tags" size={18} />Catálogo <Icon name="arrowDown" size={16} /></button>
+              {categoriasOpen && <div className="catalogo-categorias-menu">{categorias.map((categoria) => <Link className="catalogo-option" key={categoria.id_categoria} to={`/catalogo?categoria=${categoria.id_categoria}`} onClick={() => setCategoriasOpen(false)}><Icon name="tags" size={16} /><span>{categoria.nombre}</span><Icon name="chevronRight" size={16} /></Link>)}</div>}
+            </div>
+            {usuario && primaryLink("/mis-pedidos", "Mis pedidos", "receipt")}
+          </>}
+        </div>
+      </div>
     </>
   );
 }

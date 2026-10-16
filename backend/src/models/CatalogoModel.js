@@ -10,3 +10,14 @@ export const findActiveCategories = async () => {
 
   return rows;
 };
+
+export const findActiveDocumentTypes = async () => {
+  const [rows] = await pool.query(
+    `SELECT id, sigla, nombre_documento
+     FROM tipo_documento
+     WHERE estado = 'Activo'
+     ORDER BY nombre_documento`
+  );
+
+  return rows;
+};

@@ -25,6 +25,7 @@ import Registro from './pages/publicas/Registro';
 // Vistas de Admin (SIN .jsx al final)
 import Dashboard from './pages/administracion/page-Dashboard';
 import Pedidos from './pages/administracion/page-PedidosBD';
+import NovedadesBodega from './pages/administracion/page-NovedadesBodega';
 import Inventario from './pages/administracion/page-producto';
 import AgregarProducto from './pages/administracion/page-AgregarProducto';
 import EditarProducto from './pages/administracion/page-EditarProducto';
@@ -69,122 +70,134 @@ function EntradaPrincipal() {
 function App() {
   return (
     <BrowserRouter>
-      <Nav />
-      <Routes>
+      <div className="app-shell">
+        <Nav />
+        <main className="app-content">
+          <Routes>
 
+            {/* Rutas Cliente */}
+            <Route path="/" element={<EntradaPrincipal />} />
+            <Route path="/cliente/catalogo" element={<ProtectedRoute allowedRoles={["cliente", "administrador", "bodeguero", "mensajero"]}><Catalogo /></ProtectedRoute>} />
+            <Route path="/catalogo" element={<ProtectedRoute allowedRoles={["cliente", "administrador", "bodeguero", "mensajero"]}><Catalogo /></ProtectedRoute>} />
+            <Route path="/producto/:id" element={<ProtectedRoute allowedRoles={["cliente", "administrador", "bodeguero", "mensajero"]}><DetalleProducto /></ProtectedRoute>} />
+            <Route path="/carrito" element={<ProtectedRoute allowedRoles={["cliente", "administrador", "bodeguero", "mensajero"]}><Carrito /></ProtectedRoute>} />
+            <Route path="/confirmar-compra" element={<ProtectedRoute allowedRoles={["cliente", "administrador", "bodeguero", "mensajero"]}><ConfirmarCompra /></ProtectedRoute>} />
+            <Route path="/favoritos" element={<ProtectedRoute allowedRoles={["cliente", "administrador", "bodeguero", "mensajero"]}><Favoritos /></ProtectedRoute>} />
+            <Route path="/mis-pedidos" element={<ProtectedRoute allowedRoles={["cliente", "administrador", "bodeguero", "mensajero"]}><MisPedidos /></ProtectedRoute>} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/registro" element={<Registro />} />
+            <Route path="/recuperar-pass" element={<RecuperarPass />} />
+            <Route path="/perfil" element={<ProtectedRoute allowedRoles={["cliente", "administrador", "bodeguero", "mensajero"]}><ActualizarPerfil /></ProtectedRoute>} />
 
-        {/* Rutas Cliente */}
-        <Route path="/" element={<EntradaPrincipal />} />
-        <Route path="/cliente/catalogo" element={<ProtectedRoute allowedRoles={["cliente", "administrador", "bodeguero", "mensajero"]}><Catalogo /></ProtectedRoute>} />
-        <Route path="/catalogo" element={<ProtectedRoute allowedRoles={["cliente", "administrador", "bodeguero", "mensajero"]}><Catalogo /></ProtectedRoute>} />
-        <Route path="/producto/:id" element={<ProtectedRoute allowedRoles={["cliente", "administrador", "bodeguero", "mensajero"]}><DetalleProducto /></ProtectedRoute>} />
-        <Route path="/carrito" element={<ProtectedRoute allowedRoles={["cliente", "administrador", "bodeguero", "mensajero"]}><Carrito /></ProtectedRoute>} />
-        <Route path="/confirmar-compra" element={<ProtectedRoute allowedRoles={["cliente", "administrador", "bodeguero", "mensajero"]}><ConfirmarCompra /></ProtectedRoute>} />
-        <Route path="/favoritos" element={<ProtectedRoute allowedRoles={["cliente", "administrador", "bodeguero", "mensajero"]}><Favoritos /></ProtectedRoute>} />
-        <Route path="/mis-pedidos" element={<ProtectedRoute allowedRoles={["cliente", "administrador", "bodeguero", "mensajero"]}><MisPedidos /></ProtectedRoute>} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/registro" element={<Registro />} />
-        <Route path="/recuperar-pass" element={<RecuperarPass />} />
-        <Route path="/perfil" element={<ProtectedRoute allowedRoles={["cliente", "administrador", "bodeguero", "mensajero"]}><ActualizarPerfil /></ProtectedRoute>} />
+            {/* Ruta protegida para usuarios mensajeros */}
+            <Route
+              path="/mensajeria"
+              element={
+                <ProtectedRoute allowedRoles={["mensajero"]}>
+                  <Mensajeria />
+                </ProtectedRoute>
+              }
+            />
+            <Route path="/mensajeria/entregas" element={<ProtectedRoute allowedRoles={['mensajero']}><EntregasMensajeria /></ProtectedRoute>} />
+            <Route path="/mensajeria/ruta" element={<ProtectedRoute allowedRoles={['mensajero']}><RutaMensajeria /></ProtectedRoute>} />
+            <Route path="/mensajeria/evidencias" element={<ProtectedRoute allowedRoles={['mensajero']}><EvidenciasMensajeria /></ProtectedRoute>} />
+            <Route path="/mensajeria/novedades" element={<ProtectedRoute allowedRoles={['mensajero']}><NovedadesMensajeria /></ProtectedRoute>} />
+            <Route path="/mensajeria/historial" element={<ProtectedRoute allowedRoles={['mensajero']}><HistorialMensajeria /></ProtectedRoute>} />
+            <Route path="/mensajeria/perfil" element={<ProtectedRoute allowedRoles={['mensajero']}><PerfilMensajeria /></ProtectedRoute>} />
 
-        {/* Ruta protegida para usuarios mensajeros */}
-        <Route
-          path="/mensajeria"
-          element={
-            <ProtectedRoute allowedRoles={["mensajero"]}>
-              <Mensajeria />
-            </ProtectedRoute>
-          }
-        />
-        <Route path="/mensajeria/entregas" element={<ProtectedRoute allowedRoles={['mensajero']}><EntregasMensajeria /></ProtectedRoute>} />
-        <Route path="/mensajeria/ruta" element={<ProtectedRoute allowedRoles={['mensajero']}><RutaMensajeria /></ProtectedRoute>} />
-        <Route path="/mensajeria/evidencias" element={<ProtectedRoute allowedRoles={['mensajero']}><EvidenciasMensajeria /></ProtectedRoute>} />
-        <Route path="/mensajeria/novedades" element={<ProtectedRoute allowedRoles={['mensajero']}><NovedadesMensajeria /></ProtectedRoute>} />
-        <Route path="/mensajeria/historial" element={<ProtectedRoute allowedRoles={['mensajero']}><HistorialMensajeria /></ProtectedRoute>} />
-        <Route path="/mensajeria/perfil" element={<ProtectedRoute allowedRoles={['mensajero']}><PerfilMensajeria /></ProtectedRoute>} />
+            {/* Página para cuando el usuario no tiene permisos */}
+            <Route path="/no-autorizado" element={<NoAutorizado />} />
 
-        {/* Página para cuando el usuario no tiene permisos */}
-        <Route path="/no-autorizado" element={<NoAutorizado />} />
-
-        {/* Rutas Admin protegidas por role 'administrador' */}
-        <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
-        <Route
-          path="/admin/dashboard"
-          element={
-            <ProtectedRoute allowedRoles={["administrador"]}>
-              <Dashboard />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/admin/inventario"
-          element={
-            <ProtectedRoute allowedRoles={["administrador"]}>
-              <Inventario />
-            </ProtectedRoute>
-          }
-        />
-        <Route path="/bodeguero" element={<ProtectedRoute allowedRoles={["bodeguero"]}><BodegueroLayout><BodegueroDashboard /></BodegueroLayout></ProtectedRoute>} />
-        <Route path="/bodeguero/inventario" element={<ProtectedRoute allowedRoles={["bodeguero"]}><BodegueroLayout><BodegueroInventario /></BodegueroLayout></ProtectedRoute>} />
-        <Route path="/bodeguero/pedidos" element={<ProtectedRoute allowedRoles={["bodeguero"]}><BodegueroLayout><BodegueroPedidos /></BodegueroLayout></ProtectedRoute>} />
-        <Route path="/bodeguero/movimientos" element={<ProtectedRoute allowedRoles={["bodeguero"]}><BodegueroLayout><BodegueroMovimientos /></BodegueroLayout></ProtectedRoute>} />
-        <Route
-          path="/bodega"
-          element={
-            <ProtectedRoute allowedRoles={["administrador"]}>
-              <Inventario />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/admin/pedidos"
-          element={
-            <ProtectedRoute allowedRoles={["administrador"]}>
-              <Pedidos />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/admin/agregar-producto"
-          element={
-            <ProtectedRoute allowedRoles={["administrador"]}>
-              <AgregarProducto />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/admin/editar-producto/:id"
-          element={
-            <ProtectedRoute allowedRoles={["administrador"]}>
-              <EditarProducto />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/admin/usuarios"
-          element={
-            <ProtectedRoute allowedRoles={["administrador"]}>
-              <Usuarios />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/admin/crear-usuario"
-          element={
-            <ProtectedRoute allowedRoles={["administrador"]}>
-              <CrearUsuario />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/admin/editar-usuario/:id"
-          element={
-            <ProtectedRoute allowedRoles={["administrador"]}>
-              <EditarUsuario />
-            </ProtectedRoute>
-          }
-        />
-      </Routes>
+            {/* Rutas Admin protegidas por role 'administrador' */}
+            <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
+            <Route
+              path="/admin/dashboard"
+              element={
+                <ProtectedRoute allowedRoles={["administrador"]}>
+                  <Dashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/inventario"
+              element={
+                <ProtectedRoute allowedRoles={["administrador"]}>
+                  <Inventario />
+                </ProtectedRoute>
+              }
+            />
+            <Route path="/bodeguero" element={<ProtectedRoute allowedRoles={["bodeguero"]}><BodegueroLayout><BodegueroDashboard /></BodegueroLayout></ProtectedRoute>} />
+            <Route path="/bodeguero/inventario" element={<ProtectedRoute allowedRoles={["bodeguero"]}><BodegueroLayout><BodegueroInventario /></BodegueroLayout></ProtectedRoute>} />
+            <Route path="/bodeguero/pedidos" element={<ProtectedRoute allowedRoles={["bodeguero"]}><BodegueroLayout><BodegueroPedidos /></BodegueroLayout></ProtectedRoute>} />
+            <Route path="/bodeguero/envio" element={<ProtectedRoute allowedRoles={["bodeguero"]}><BodegueroLayout><BodegueroPedidos section="envio" /></BodegueroLayout></ProtectedRoute>} />
+            <Route path="/bodeguero/movimientos" element={<ProtectedRoute allowedRoles={["bodeguero"]}><BodegueroLayout><BodegueroMovimientos /></BodegueroLayout></ProtectedRoute>} />
+            <Route
+              path="/bodega"
+              element={
+                <ProtectedRoute allowedRoles={["administrador"]}>
+                  <Inventario />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/pedidos"
+              element={
+                <ProtectedRoute allowedRoles={["administrador"]}>
+                  <Pedidos />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/novedades-bodega"
+              element={
+                <ProtectedRoute allowedRoles={["administrador"]}>
+                  <NovedadesBodega />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/agregar-producto"
+              element={
+                <ProtectedRoute allowedRoles={["administrador"]}>
+                  <AgregarProducto />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/editar-producto/:id"
+              element={
+                <ProtectedRoute allowedRoles={["administrador"]}>
+                  <EditarProducto />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/usuarios"
+              element={
+                <ProtectedRoute allowedRoles={["administrador"]}>
+                  <Usuarios />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/crear-usuario"
+              element={
+                <ProtectedRoute allowedRoles={["administrador"]}>
+                  <CrearUsuario />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/editar-usuario/:id"
+              element={
+                <ProtectedRoute allowedRoles={["administrador"]}>
+                  <EditarUsuario />
+                </ProtectedRoute>
+              }
+            />
+          </Routes>
+        </main>
+      </div>
     </BrowserRouter>
   );
 }

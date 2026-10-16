@@ -1,11 +1,12 @@
 import { useState } from "react";
+import { API_BASE_URL } from "../../services/httpClient";
 import { useNavigate } from "react-router-dom";
-import { createUser } from "../../services/usuarioService";
 import "../../styles/style.css";
 
 const roles = ["Administrador", "Bodeguero", "Mensajero"];
 
 function CrearUsuario() {
+  const backend = API_BASE_URL;
   const navigate = useNavigate();
   const [formulario, setFormulario] = useState({ nombre: "", apellido: "", correo: "", telefono: "", password: "", rol: "Administrador", foto: null });
   const [vistaPrevia, setVistaPrevia] = useState("");
@@ -28,11 +29,18 @@ function CrearUsuario() {
     setError("");
     setGuardando(true);
     try {
+      const storage = localStorage.getItem("token") ? localStorage : sessionStorage;
       const datos = new FormData();
       Object.entries(formulario).forEach(([campo, valor]) => {
         if (valor !== null && valor !== "") datos.append(campo, valor);
       });
-      await createUser(datos);
+      const response = await fetch(`${backend}/usuarios`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${storage.getItem("token")}` },
+        body: datos,
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "No se pudo crear el usuario");
       navigate("/admin/usuarios");
     } catch (err) {
       setError(err.message || "No se pudo crear el usuario");

@@ -1,4 +1,4 @@
-# Autenticación, SHA-2 y JWT
+# Autenticación, bcrypt y JWT
 
 ## Registro
 
@@ -15,20 +15,17 @@ El frontend envía `POST /registro` con:
 
 `UsuarioController.js` valida los datos, genera el hash y crea el usuario. Los registros nuevos reciben el rol `cliente` por defecto.
 
-## SHA-256 con salt
+## bcrypt
 
-SHA-256 pertenece a la familia SHA-2 y se usa mediante el módulo nativo `crypto` de Node.js:
+Las contraseñas se procesan mediante `bcryptjs` en el servicio central:
 
 ```js
-const salt = crypto.randomBytes(16).toString('hex');
-const hash = crypto.createHash('sha256')
-  .update(salt + password)
-  .digest('hex');
+const hash = await bcrypt.hash(password, 12);
 ```
 
-La base de datos guarda `salt:hash`. En el login, `verifyPassword` separa ambos valores, calcula de nuevo el hash con el mismo salt y compara el resultado. La contraseña original nunca se guarda.
+La base de datos guarda el hash bcrypt completo, que ya contiene su salt. En el login se utiliza `bcrypt.compare(password, hash)`. La contraseña original nunca se guarda.
 
-No se necesita instalar una librería adicional para SHA-2. `mysql2`, `dotenv`, `express`, `cors` y `jsonwebtoken` complementan el flujo.
+El número de rondas se configura con `BCRYPT_SALT_ROUNDS` y usa 12 por defecto.
 
 ## Inicio de sesión
 
@@ -41,11 +38,11 @@ El frontend envía `POST /login`:
 }
 ```
 
-El backend busca el usuario, verifica que esté activo, comprueba SHA-256 y genera un JWT válido durante 8 horas. La respuesta incluye `token` y los datos públicos del usuario con `roles`.
+El backend busca el usuario, verifica que esté activo, comprueba bcrypt y genera un JWT válido durante 8 horas. La respuesta incluye `token` y los datos públicos del usuario con `roles`.
 
 ## Perfiles de prueba
 
-Estos perfiles se crean con `documentacion/sql/USUARIOS_SHA2_SETUP.sql` y sirven únicamente para probar el sistema en desarrollo:
+Estos perfiles se crean con `DOCUMENTACION/sql/sql_insert_test_users.sql` y sirven únicamente para probar el sistema en desarrollo:
 
 | Perfil | Nombre de usuario | Correo | Contraseña | Rol |
 |---|---|---|---|---|
@@ -79,7 +76,7 @@ El frontend muestra mensajes distintos según el problema:
 - `403`: usuario inactivo.
 - `409`: email o nombre de usuario ya registrados.
 - `500`: error interno o problema de conexión con MySQL.
-- Error de red: el backend no está iniciado o no responde en `http://localhost:3000`.
+- Error de red: la API no está iniciada o no responde en `http://localhost:3001`.
 
 La contraseña nunca se muestra en los mensajes ni se guarda en el navegador. Los detalles técnicos se escriben en la consola del navegador y del backend para facilitar la revisión durante el desarrollo.
 

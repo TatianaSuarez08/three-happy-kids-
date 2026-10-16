@@ -11,7 +11,59 @@ export const findColors = async () => {
   return rows;
 };
 
-export const findProducts = async () => {
+export const findPublicProducts = async () => {
+  const [rows] = await pool.execute(
+    `SELECT
+       p.id,
+       p.nombre_producto AS nombre,
+       p.descripcion,
+       p.precio_venta AS precio,
+       p.marca,
+       p.imagen_producto,
+       p.estado,
+       c.nombre_categoria AS categoria,
+       t.nombre_talla AS talla,
+       co.nombre_color AS color,
+       COALESCE(i.cantidad_disponible, 0) AS stock
+     FROM producto p
+     JOIN categoria c ON c.id = p.id_categoria
+     JOIN talla t ON t.id = p.id_talla
+     JOIN color co ON co.id = p.id_color
+     LEFT JOIN inventario i ON i.id_producto = p.id
+     WHERE p.estado = 'Activo'
+     ORDER BY p.id DESC`
+  );
+
+  return rows;
+};
+
+export const findPublicProductById = async (id) => {
+  const [rows] = await pool.execute(
+    `SELECT
+       p.id,
+       p.nombre_producto AS nombre,
+       p.descripcion,
+       p.precio_venta AS precioVenta,
+       p.marca,
+       p.imagen_producto AS imagen,
+       c.nombre_categoria AS categoria,
+       t.nombre_talla AS talla,
+       co.nombre_color AS color,
+       COALESCE(i.cantidad_disponible, 0) AS stock
+     FROM producto p
+     JOIN categoria c ON c.id = p.id_categoria
+     JOIN talla t ON t.id = p.id_talla
+     JOIN color co ON co.id = p.id_color
+     LEFT JOIN inventario i ON i.id_producto = p.id
+     WHERE p.id = ? AND p.estado = 'Activo'`,
+    [id]
+  );
+
+  return rows[0];
+};
+
+export const findProducts = async ({ includeInactive = false } = {}) => {
+  const estadoFilter = includeInactive ? '' : "WHERE p.estado = 'Activo'";
   const [rows] = await pool.execute(
     `SELECT
        p.id,
@@ -32,7 +84,7 @@ export const findProducts = async () => {
      JOIN talla t ON t.id = p.id_talla
      JOIN color co ON co.id = p.id_color
     LEFT JOIN inventario i ON i.id_producto = p.id
-    WHERE p.estado = 'Activo'
+    ${estadoFilter}
      ORDER BY p.id DESC`
   );
 

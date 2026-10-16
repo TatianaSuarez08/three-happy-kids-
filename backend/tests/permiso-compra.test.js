@@ -13,3 +13,8 @@ test('todos los roles habilitados para compra incluyen permiso comprar', () => {
   assert.ok(mensajero.includes('comprar'));
   assert.ok(cliente.includes('comprar'));
 });
+
+test('solo administración tiene permiso de reasignación de entregas', () => {
+  assert.ok(buildRolePermissions(['administrador']).includes('entregas:reassign'));
+  assert.ok(!buildRolePermissions(['mensajero']).includes('entregas:reassign'));
+});

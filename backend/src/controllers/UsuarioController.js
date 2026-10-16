@@ -1,8 +1,20 @@
 import jwt from 'jsonwebtoken'; // Librería para generar y verificar tokens JWT
 import { buildRolePermissions } from '../middleware/role.js';
-import { env } from '../config/env.js';
-import { hashPassword, verifyPassword } from '../utils/password.js';
-import { findUserByEmail, findUserProfile, updatePassword, updateUserProfilePhoto, createUser } from '../models/UsuarioModel.js'; // Funciones del modelo de usuario
+import { hashPassword, verifyPasswordAndUpgrade } from '../services/passwordService.js';
+import { findUserByEmail, findUserProfile, createUser, updateUserProfile, updatePasswordHash } from '../models/UsuarioModel.js';
+
+export const resolveProfileImagePath = (file, fallbackValue = null) => {
+  if (file?.filename) {
+    return `/assets/foto_de_perfil/${file.filename}`;
+  }
+
+  if (typeof fallbackValue === 'string') {
+    const normalized = fallbackValue.trim();
+    return normalized || null;
+  }
+
+  return fallbackValue || null;
+};
 
 // Genera un token JWT con información pública del usuario y expiración
 const generateToken = (user) => {
@@ -16,7 +28,7 @@ const generateToken = (user) => {
       roles: user.roles || [],
       permissions
     },
-    env.JWT_SECRET,
+    process.env.JWT_SECRET,
     { expiresIn: '8h' }
   );
 };
@@ -24,7 +36,21 @@ const generateToken = (user) => {
 // Controlador para registrar un nuevo usuario
 export const registerUser = async (req, res) => {
   try {
-    const { nombre_usuario, email, password, confirmar_password } = req.body;
+    const {
+      nombre_usuario,
+      email,
+      password,
+      confirmar_password,
+      primer_nombre,
+      primer_apellido,
+      numero_documento,
+      id_tipo_documento,
+      telefono,
+      direccion,
+      ciudad,
+      foto_perfil
+    } = req.body;
+    const fotoPerfilPath = resolveProfileImagePath(req.file, foto_perfil);
     
     // Validaciones básicas
     if (!nombre_usuario || !email || !password || !confirmar_password) {
@@ -43,33 +69,65 @@ export const registerUser = async (req, res) => {
       return res.status(400).json({ error: 'El nombre de usuario debe tener al menos 3 caracteres' });
     }
 
+    if (!primer_nombre?.trim() || primer_nombre.trim().length > 50) {
+      return res.status(400).json({ error: 'El primer nombre es obligatorio y debe tener máximo 50 caracteres' });
+    }
+    if (!primer_apellido?.trim() || primer_apellido.trim().length > 50) {
+      return res.status(400).json({ error: 'El primer apellido es obligatorio y debe tener máximo 50 caracteres' });
+    }
+    const documentNumber = String(numero_documento || '').trim();
+    if (!/^\d{6,19}$/.test(documentNumber) || BigInt(documentNumber) > 9223372036854775807n) {
+      return res.status(400).json({ error: 'El número de documento no es válido' });
+    }
+    const documentTypeId = Number.parseInt(id_tipo_documento, 10);
+    if (!Number.isInteger(documentTypeId) || documentTypeId <= 0) {
+      return res.status(400).json({ error: 'Selecciona un tipo de documento válido' });
+    }
+    if (telefono && (typeof telefono !== 'string' || telefono.trim().length > 20)) {
+      return res.status(400).json({ error: 'El teléfono debe tener máximo 20 caracteres' });
+    }
+    if (direccion && (typeof direccion !== 'string' || direccion.trim().length > 150)) {
+      return res.status(400).json({ error: 'La dirección debe tener máximo 150 caracteres' });
+    }
+    if (ciudad && (typeof ciudad !== 'string' || ciudad.trim().length > 60)) {
+      return res.status(400).json({ error: 'La ciudad debe tener máximo 60 caracteres' });
+    }
+    if (fotoPerfilPath && (typeof fotoPerfilPath !== 'string' || fotoPerfilPath.trim().length > 255)) {
+      return res.status(400).json({ error: 'La foto de perfil no es válida' });
+    }
+
     // Validar formato de email
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       return res.status(400).json({ error: 'Formato de email inválido' });
     }
 
-    // Verificar si el email ya existe
     const usuarioExistente = await findUserByEmail(email);
     if (usuarioExistente) {
       return res.status(409).json({ error: 'El email ya está registrado' });
     }
 
-    // Hashear la contraseña con SHA2 + SALT
     const hashedPassword = await hashPassword(password);
 
-    // Crear el usuario en la base de datos
     const nuevoUsuario = await createUser({
       nombre_usuario,
       email,
       contrasena: hashedPassword,
-      idioma: 'es'
+      telefono: telefono?.trim() || null,
+      foto_perfil: fotoPerfilPath?.trim() || null,
+      idioma: 'es',
+      cliente: {
+        primer_nombre: primer_nombre.trim(),
+        primer_apellido: primer_apellido.trim(),
+        numero_documento: documentNumber,
+        id_tipo_documento: documentTypeId,
+        direccion: direccion?.trim() || null,
+        ciudad: ciudad?.trim() || null
+      }
     });
 
-    // Generar token
     const token = generateToken(nuevoUsuario);
 
-    // Responder con éxito
     res.status(201).json({
       success: true,
       message: 'Usuario registrado correctamente',
@@ -89,8 +147,9 @@ export const registerUser = async (req, res) => {
     console.error('Error en registro:', error);
     
     if (error.code === 'ER_DUP_ENTRY') {
-      return res.status(409).json({ error: 'El nombre de usuario o email ya existe' });
+      return res.status(409).json({ error: 'El nombre de usuario, email o documento ya existe' });
     }
+    if (error.code === 'INVALID_DOCUMENT_TYPE') return res.status(400).json({ error: error.message });
     
     res.status(500).json({ error: 'Error al registrar el usuario' });
   }
@@ -101,7 +160,6 @@ export const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
     
-    // Validación básica: email y password son obligatorios
     if (!email || !password) {
       return res.status(400).json({ error: 'Faltan datos obligatorios' });
     }
@@ -112,19 +170,16 @@ export const loginUser = async (req, res) => {
       return res.status(400).json({ error: 'Formato de email inválido' });
     }
 
-    const user = await findUserByEmail(email); // Busca el usuario por email
+    const user = await findUserByEmail(email);
     if (!user) {
       return res.status(401).json({ error: 'Credenciales inválidas' });
     }
 
-    const passwordResult = await verifyPassword(password, user.password);
-    if (!passwordResult.valid) {
+    const passwordCheck = await verifyPasswordAndUpgrade(password, user.passwordHash);
+    if (!passwordCheck.valid) {
       return res.status(401).json({ error: 'Credenciales inválidas' });
     }
-
-    if (passwordResult.legacy) {
-      await updatePassword(user.id, await hashPassword(password));
-    }
+    if (passwordCheck.upgradedHash) await updatePasswordHash(user.id, passwordCheck.upgradedHash);
 
     const token = generateToken(user);
     
@@ -164,16 +219,42 @@ export const getMyProfile = async (req, res) => {
   }
 };
 
-export const updateMyProfilePhoto = async (req, res) => {
-  if (!req.file) return res.status(400).json({ error: 'Selecciona una imagen de perfil' });
-
+export const updateMyProfile = async (req, res) => {
   try {
-    const photoPath = `/assets/foto_de_perfil/${req.file.filename}`;
-    const updated = await updateUserProfilePhoto(req.user.id, photoPath);
+    const { nombre, email, telefono, password, direccion } = req.body;
+    const fotoPerfilPath = resolveProfileImagePath(req.file, req.body.foto_perfil ?? null);
+    if (!nombre || nombre.trim().length < 3) return res.status(400).json({ error: 'El nombre debe tener al menos 3 caracteres' });
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return res.status(400).json({ error: 'El correo no es válido' });
+    if (password !== undefined && password.length < 6) return res.status(400).json({ error: 'La contraseña debe tener al menos 6 caracteres' });
+    if (direccion !== undefined && (typeof direccion !== 'string' || !direccion.trim() || direccion.trim().length > 150)) {
+      return res.status(400).json({ error: 'La dirección no es válida' });
+    }
+    if (fotoPerfilPath && (typeof fotoPerfilPath !== 'string' || fotoPerfilPath.trim().length > 255)) {
+      return res.status(400).json({ error: 'La foto de perfil no es válida' });
+    }
+
+    const hashedPassword = password ? await hashPassword(password) : undefined;
+    const updated = await updateUserProfile({
+      id: req.user.id,
+      nombre: nombre.trim(),
+      email: email.trim().toLowerCase(),
+      telefono: telefono?.trim() || null,
+      hashedPassword,
+      direccion: direccion?.trim(),
+      foto_perfil: req.file || req.body.foto_perfil !== undefined ? fotoPerfilPath?.trim() || null : undefined
+    });
     if (!updated) return res.status(404).json({ error: 'Usuario no encontrado' });
-    res.json({ success: true, message: 'Foto de perfil actualizada correctamente', fotoPerfil: photoPath });
+    res.json({
+      success: true,
+      message: 'Perfil actualizado correctamente',
+      user: {
+        fotoPerfil: fotoPerfilPath || null
+      }
+    });
   } catch (error) {
-    console.error('Error al actualizar la foto de perfil:', error);
-    res.status(500).json({ error: 'No se pudo actualizar la foto de perfil' });
+    console.error('Error al actualizar el perfil:', error);
+    if (error.code === 'ER_DUP_ENTRY') return res.status(409).json({ error: 'El correo ya está registrado' });
+    if (error.code === 'CLIENT_PROFILE_NOT_FOUND') return res.status(400).json({ error: error.message });
+    res.status(500).json({ error: 'No se pudo actualizar el perfil' });
   }
 };

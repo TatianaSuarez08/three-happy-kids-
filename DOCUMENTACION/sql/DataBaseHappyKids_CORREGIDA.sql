@@ -1,7 +1,7 @@
 -- Esquema corregido de Three Happy Kids
--- Este archivo es la fuente de verdad vigente. El esquema histórico está en sql/legacy/.
--- No elimina la base de datos ni incluye consultas de lectura ni datos de prueba.
--- Usar en una base de datos nueva o después de realizar una copia de seguridad.
+-- Incluye el esquema de pedidos, preparación, asignación, entrega e historial.
+-- Los datos de ejemplo están en dml.sql y deben cargarse después de este archivo.
+-- No elimina la base de datos ni sustituye migraciones para instalaciones existentes.
 
 CREATE DATABASE IF NOT EXISTS happykids
 CHARACTER SET utf8mb4
@@ -21,8 +21,6 @@ CREATE TABLE IF NOT EXISTS usuario (
     correo VARCHAR(100) NOT NULL UNIQUE,
     telefono VARCHAR(20),
     foto_perfil VARCHAR(255),
-    creado_en TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    actualizado_en TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     activo BOOLEAN NOT NULL DEFAULT TRUE,
     idioma VARCHAR(10) NOT NULL DEFAULT 'es'
 ) ENGINE=InnoDB;
@@ -83,8 +81,6 @@ CREATE TABLE IF NOT EXISTS producto (
     id_talla INT NOT NULL,
     id_color INT NOT NULL,
     estado ENUM('Activo', 'Inactivo') NOT NULL DEFAULT 'Activo',
-    creado_en TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    actualizado_en TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT fk_producto_categoria
         FOREIGN KEY (id_categoria) REFERENCES categoria(id),
     CONSTRAINT fk_producto_talla
@@ -94,8 +90,7 @@ CREATE TABLE IF NOT EXISTS producto (
     CONSTRAINT chk_producto_precio_compra
         CHECK (precio_compra IS NULL OR precio_compra >= 0),
     CONSTRAINT chk_producto_precio_venta
-        CHECK (precio_venta >= 0),
-    INDEX idx_producto_categoria (id_categoria)
+        CHECK (precio_venta >= 0)
 ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS cliente (
@@ -160,8 +155,7 @@ CREATE TABLE IF NOT EXISTS inventario_movimiento (
     CONSTRAINT chk_inventario_movimiento_cantidad
         CHECK (cantidad >= 0),
     CONSTRAINT chk_inventario_movimiento_delta
-        CHECK (delta <> 0),
-    INDEX idx_inventario_movimiento_producto (id_producto)
+        CHECK (delta <> 0)
 ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS carrito (
@@ -169,12 +163,9 @@ CREATE TABLE IF NOT EXISTS carrito (
     fecha_creacion DATE NOT NULL DEFAULT (CURRENT_DATE),
     fecha_actualizacion DATE NOT NULL DEFAULT (CURRENT_DATE),
     estado ENUM('Activo', 'Finalizado', 'Cancelado') NOT NULL DEFAULT 'Activo',
-    creado_en TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    actualizado_en TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     id_cliente INT NOT NULL,
     CONSTRAINT fk_carrito_cliente
-        FOREIGN KEY (id_cliente) REFERENCES cliente(id),
-    INDEX idx_carrito_cliente_estado (id_cliente, estado)
+        FOREIGN KEY (id_cliente) REFERENCES cliente(id)
 ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS detalle_carrito (
@@ -195,21 +186,6 @@ CREATE TABLE IF NOT EXISTS detalle_carrito (
         CHECK (precio >= 0),
     CONSTRAINT chk_detalle_carrito_subtotal
         CHECK (subtotal >= 0)
-) ENGINE=InnoDB;
-
-CREATE TABLE IF NOT EXISTS favorito (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    id_usuario INT NOT NULL,
-    id_producto INT NOT NULL,
-    creado_en TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT uq_favorito_usuario_producto UNIQUE (id_usuario, id_producto),
-    CONSTRAINT fk_favorito_usuario
-        FOREIGN KEY (id_usuario) REFERENCES usuario(id)
-        ON UPDATE CASCADE ON DELETE CASCADE,
-    CONSTRAINT fk_favorito_producto
-        FOREIGN KEY (id_producto) REFERENCES producto(id)
-        ON UPDATE CASCADE ON DELETE CASCADE,
-    INDEX idx_favorito_usuario (id_usuario)
 ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS proveedor (
@@ -262,15 +238,12 @@ CREATE TABLE IF NOT EXISTS factura (
     estado ENUM('Pendiente', 'Pagada', 'Anulada') NOT NULL DEFAULT 'Pendiente',
     id_cliente INT NOT NULL,
     id_empleado INT NULL,
-    creado_en TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    actualizado_en TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT fk_factura_cliente
         FOREIGN KEY (id_cliente) REFERENCES cliente(id),
     CONSTRAINT fk_factura_empleado
         FOREIGN KEY (id_empleado) REFERENCES empleado(id),
     CONSTRAINT chk_factura_total
-        CHECK (total >= 0),
-    INDEX idx_factura_cliente (id_cliente)
+        CHECK (total >= 0)
 ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS detalle_pedido (
@@ -279,7 +252,6 @@ CREATE TABLE IF NOT EXISTS detalle_pedido (
     cantidad INT NOT NULL,
     precio_unitario DECIMAL(10,2) NOT NULL DEFAULT 0,
     subtotal DECIMAL(10,2) NOT NULL DEFAULT 0,
-    creado_en TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id_factura, id_producto),
     CONSTRAINT fk_detalle_pedido_factura
         FOREIGN KEY (id_factura) REFERENCES factura(id),
@@ -290,8 +262,7 @@ CREATE TABLE IF NOT EXISTS detalle_pedido (
     CONSTRAINT chk_detalle_pedido_precio
         CHECK (precio_unitario >= 0),
     CONSTRAINT chk_detalle_pedido_subtotal
-        CHECK (subtotal >= 0),
-    INDEX idx_detalle_pedido_producto (id_producto)
+        CHECK (subtotal >= 0)
 ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS pago (
@@ -311,11 +282,167 @@ CREATE TABLE IF NOT EXISTS pago (
 CREATE TABLE IF NOT EXISTS entrega (
     id INT AUTO_INCREMENT PRIMARY KEY,
     fecha_entrega DATE,
-    estado ENUM('Pendiente', 'En camino', 'Entregado', 'Cancelado') NOT NULL DEFAULT 'Pendiente',
+    estado ENUM('Pendiente', 'Por recoger', 'En camino', 'Entregado', 'Cancelado') NOT NULL DEFAULT 'Pendiente',
     empresa_transportadora VARCHAR(100),
     numero_guia VARCHAR(100),
     id_factura INT NOT NULL,
     CONSTRAINT uq_entrega_factura UNIQUE (id_factura),
     CONSTRAINT fk_entrega_factura
         FOREIGN KEY (id_factura) REFERENCES factura(id)
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS asignacion_entrega (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    id_entrega INT NOT NULL,
+    id_mensajero INT NOT NULL,
+    fecha_asignacion DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+    fecha_finalizacion DATETIME(6),
+    estado ENUM('Activa', 'Finalizada', 'Reasignada') NOT NULL DEFAULT 'Activa',
+    motivo_reasignacion VARCHAR(255),
+    id_usuario_reasignacion INT,
+    id_entrega_activa INT GENERATED ALWAYS AS (
+        CASE WHEN estado = 'Activa' THEN id_entrega ELSE NULL END
+    ) STORED,
+    CONSTRAINT uq_asignacion_entrega_activa UNIQUE (id_entrega_activa),
+    CONSTRAINT uq_asignacion_evidencia UNIQUE (id, id_entrega, id_mensajero),
+    INDEX idx_asignacion_entrega_estado (id_entrega, estado),
+    INDEX idx_asignacion_mensajero_estado (id_mensajero, estado),
+    CONSTRAINT fk_asignacion_entrega_entrega
+        FOREIGN KEY (id_entrega) REFERENCES entrega(id),
+    CONSTRAINT fk_asignacion_entrega_mensajero
+        FOREIGN KEY (id_mensajero) REFERENCES usuario(id),
+    CONSTRAINT fk_asignacion_entrega_actor
+        FOREIGN KEY (id_usuario_reasignacion) REFERENCES usuario(id)
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS evidencia_entrega (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    id_entrega INT NOT NULL,
+    id_asignacion BIGINT NOT NULL,
+    id_mensajero INT NOT NULL,
+    ruta_archivo VARCHAR(255) NOT NULL UNIQUE,
+    tipo_mime ENUM('image/jpeg', 'image/png', 'image/webp') NOT NULL,
+    tamano_bytes INT UNSIGNED NOT NULL,
+    fecha_confirmacion DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+    INDEX idx_evidencia_entrega_fecha (id_entrega, fecha_confirmacion),
+    INDEX idx_evidencia_mensajero_fecha (id_mensajero, fecha_confirmacion),
+    CONSTRAINT fk_evidencia_entrega
+        FOREIGN KEY (id_entrega) REFERENCES entrega(id),
+    CONSTRAINT fk_evidencia_asignacion
+        FOREIGN KEY (id_asignacion, id_entrega, id_mensajero)
+        REFERENCES asignacion_entrega(id, id_entrega, id_mensajero),
+    CONSTRAINT fk_evidencia_mensajero
+        FOREIGN KEY (id_mensajero) REFERENCES usuario(id),
+    CONSTRAINT chk_evidencia_tamano
+        CHECK (tamano_bytes > 0)
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS alistamiento_pedido (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    id_entrega INT NOT NULL,
+    id_usuario INT NOT NULL,
+    resultado ENUM('Incompleto', 'Completo') NOT NULL,
+    observaciones TEXT,
+    fecha_hora DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+    INDEX idx_alistamiento_entrega_fecha (id_entrega, fecha_hora),
+    INDEX idx_alistamiento_usuario_fecha (id_usuario, fecha_hora),
+    CONSTRAINT fk_alistamiento_entrega
+        FOREIGN KEY (id_entrega) REFERENCES entrega(id),
+    CONSTRAINT fk_alistamiento_usuario
+        FOREIGN KEY (id_usuario) REFERENCES usuario(id)
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS detalle_alistamiento_pedido (
+    id_alistamiento BIGINT NOT NULL,
+    id_factura INT NOT NULL,
+    id_producto INT NOT NULL,
+    cantidad_solicitada INT NOT NULL,
+    cantidad_preparada INT NOT NULL,
+    observaciones VARCHAR(255),
+    PRIMARY KEY (id_alistamiento, id_producto),
+    INDEX idx_detalle_alistamiento_pedido_producto (id_factura, id_producto),
+    CONSTRAINT fk_detalle_alistamiento_intento
+        FOREIGN KEY (id_alistamiento) REFERENCES alistamiento_pedido(id),
+    CONSTRAINT fk_detalle_alistamiento_detalle_pedido
+        FOREIGN KEY (id_factura, id_producto)
+        REFERENCES detalle_pedido(id_factura, id_producto),
+    CONSTRAINT chk_alistamiento_cantidades
+        CHECK (cantidad_solicitada > 0 AND cantidad_preparada >= 0
+            AND cantidad_preparada <= cantidad_solicitada)
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS asignacion_preparacion (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    id_entrega INT NOT NULL,
+    id_bodeguero INT NOT NULL,
+    fecha_asignacion DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+    fecha_finalizacion DATETIME(6),
+    estado ENUM('Activa', 'Finalizada') NOT NULL DEFAULT 'Activa',
+    id_entrega_activa INT GENERATED ALWAYS AS (
+        CASE WHEN estado = 'Activa' THEN id_entrega ELSE NULL END
+    ) STORED,
+    CONSTRAINT uq_preparacion_entrega_activa UNIQUE (id_entrega_activa),
+    INDEX idx_preparacion_bodeguero_estado (id_bodeguero, estado),
+    CONSTRAINT fk_preparacion_entrega
+        FOREIGN KEY (id_entrega) REFERENCES entrega(id),
+    CONSTRAINT fk_preparacion_bodeguero
+        FOREIGN KEY (id_bodeguero) REFERENCES usuario(id)
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS pedido_historial_operacion (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    id_entrega INT NOT NULL,
+    operacion VARCHAR(60) NOT NULL,
+    estado_anterior VARCHAR(60),
+    estado_nuevo VARCHAR(60),
+    id_usuario INT NOT NULL,
+    fecha_hora DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+    observaciones TEXT,
+    INDEX idx_pedido_historial_entrega_fecha (id_entrega, fecha_hora, id),
+    INDEX idx_pedido_historial_usuario_fecha (id_usuario, fecha_hora),
+    CONSTRAINT fk_pedido_historial_entrega
+        FOREIGN KEY (id_entrega) REFERENCES entrega(id),
+    CONSTRAINT fk_pedido_historial_usuario
+        FOREIGN KEY (id_usuario) REFERENCES usuario(id)
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS novedad_bodega (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    id_entrega INT NOT NULL,
+    id_alistamiento BIGINT NOT NULL,
+    id_producto INT NOT NULL,
+    id_bodeguero INT NOT NULL,
+    tipo ENUM(
+        'No encontrado',
+        'Dañado',
+        'Referencia incorrecta',
+        'Talla incorrecta',
+        'Color incorrecto',
+        'Otra novedad'
+    ) NOT NULL,
+    descripcion VARCHAR(1000) NOT NULL,
+    estado ENUM('Pendiente', 'En revisión', 'Resuelto', 'Rechazado') NOT NULL DEFAULT 'Pendiente',
+    id_administrador_respuesta INT,
+    respuesta_administracion VARCHAR(1000),
+    fecha_reporte DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+    fecha_respuesta DATETIME(6),
+    id_entrega_producto_abierto VARCHAR(32) GENERATED ALWAYS AS (
+        CASE
+            WHEN estado IN ('Pendiente', 'En revisión') THEN CONCAT(id_entrega, ':', id_producto)
+            ELSE NULL
+        END
+    ) STORED,
+    CONSTRAINT uq_novedad_bodega_abierta UNIQUE (id_entrega_producto_abierto),
+    INDEX idx_novedad_bodega_estado_fecha (estado, fecha_reporte),
+    INDEX idx_novedad_bodega_responsable (id_bodeguero, fecha_reporte),
+    CONSTRAINT fk_novedad_bodega_entrega
+        FOREIGN KEY (id_entrega) REFERENCES entrega(id),
+    CONSTRAINT fk_novedad_bodega_alistamiento
+        FOREIGN KEY (id_alistamiento) REFERENCES alistamiento_pedido(id),
+    CONSTRAINT fk_novedad_bodega_producto
+        FOREIGN KEY (id_producto) REFERENCES producto(id),
+    CONSTRAINT fk_novedad_bodega_usuario
+        FOREIGN KEY (id_bodeguero) REFERENCES usuario(id),
+    CONSTRAINT fk_novedad_bodega_administrador
+        FOREIGN KEY (id_administrador_respuesta) REFERENCES usuario(id)
 ) ENGINE=InnoDB;

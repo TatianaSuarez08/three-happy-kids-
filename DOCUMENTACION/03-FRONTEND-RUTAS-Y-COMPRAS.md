@@ -50,7 +50,7 @@ El menú de usuario muestra correo, rol, enlaces administrativos, perfil, favori
 
 ## Diseño
 
-Los estilos se mantienen en `Front-end/src/styles/global.css` y `Front-end/src/styles/style.css`. La interfaz conserva el fondo claro, naranja de HappyKids, tarjetas compactas y adaptación móvil.
+Los estilos se mantienen en `frontend/src/styles/global.css` y `frontend/src/styles/style.css`. La interfaz conserva el fondo claro, naranja de HappyKids, tarjetas compactas y adaptación móvil.
 
 ## Registro de clientes
 

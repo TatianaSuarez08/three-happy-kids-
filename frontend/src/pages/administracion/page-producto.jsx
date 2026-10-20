@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getProducts, removeProduct } from "../../services/productoService";
 import { createInventoryMovement, getInventoryHistory } from "../../services/inventarioService";
-import Icon from "../../components/Icon";
 
 function Inventario() {
   const navigate = useNavigate();
@@ -127,7 +126,7 @@ function Inventario() {
             <p className="admin-sub">Gestiona productos, existencias y estado</p>
           </div>
           <button className="btn-admin-primary" onClick={() => navigate("/admin/agregar-producto")}>
-            <Icon name="plus" size={18} /> Agregar al inventario
+            + Agregar al inventario
           </button>
         </div>
 
@@ -152,7 +151,7 @@ function Inventario() {
         {error && <div className="login-error">{error}</div>}
 
         <div className="admin-search">
-          <Icon name="search" size={18} />
+          <span>🔍</span>
           <input
             type="text"
             placeholder="Buscar producto..."
@@ -217,19 +216,19 @@ function Inventario() {
                           className="btn-admin-editar"
                           onClick={() => navigate(`/admin/editar-producto/${p.id}`)}
                         >
-                          <Icon name="package" size={16} /> Actualizar stock
+                          <i className="bi bi-box-seam" aria-hidden="true" /> Actualizar stock
                         </button>
                         <button
                           className="btn-admin-editar"
                           onClick={() => abrirHistorial(p)}
                         >
-                          <Icon name="receipt" size={16} /> Historial
+                          🧾 Historial
                         </button>
                         <button
                           className="btn-admin-eliminar"
                           onClick={() => confirmarEliminar(p)}
                         >
-                          <Icon name="trash" size={16} /> Eliminar
+                          🗑 Eliminar
                         </button>
                       </div>
                     </td>

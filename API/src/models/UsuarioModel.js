@@ -1,0 +1,118 @@
+import pool from '../db.js'; // Importa el pool de conexiones creado en db.js
+
+// Busca un usuario por su correo en la tabla `usuario` (nueva estructura) y devuelve
+// un objeto que incluye los datos del usuario y un array `roles` con sus roles.
+export const findUserByEmail = async (email) => {
+  // Buscar el usuario por correo (columna `correo`)
+  const [users] = await pool.execute(
+    'SELECT id, nombre_usuario AS nombre, contrasena AS password, correo AS email, telefono, foto_perfil AS fotoPerfil, activo, idioma FROM usuario WHERE correo = ?',
+    [email]
+  );
+
+  const user = users[0];
+  if (!user) return undefined;
+
+  // Validar que el usuario esté activo
+  if (!user.activo) {
+    throw new Error('El usuario está inactivo');
+  }
+
+  // Obtener los roles asociados al usuario a través de usuario_rol -> rol
+  const [rolesRows] = await pool.execute(
+    `SELECT r.nombre_rol
+     FROM rol r
+     JOIN usuario_rol ur ON r.id = ur.id_rol
+     WHERE ur.id_usuario = ?`,
+    [user.id]
+  );
+
+  // Mapear a un array de nombres de rol
+  const roles = rolesRows.map((r) => r.nombre_rol);
+
+  // Devolver usuario con la propiedad `roles`
+  return { id: user.id, nombre: user.nombre, email: user.email, telefono: user.telefono, fotoPerfil: user.fotoPerfil, password: user.password, activo: !!user.activo, idioma: user.idioma, roles };
+};
+
+export const findUserProfile = async (id) => {
+  const [rows] = await pool.execute(
+    `SELECT u.id, u.nombre_usuario AS nombre, u.correo AS email, u.telefono,
+            u.foto_perfil AS fotoPerfil, u.activo, u.idioma,
+            COALESCE(GROUP_CONCAT(r.nombre_rol ORDER BY r.nombre_rol SEPARATOR ', '), 'Sin rol') AS rol
+     FROM usuario u
+     LEFT JOIN usuario_rol ur ON ur.id_usuario = u.id
+     LEFT JOIN rol r ON r.id = ur.id_rol
+     WHERE u.id = ?
+     GROUP BY u.id, u.nombre_usuario, u.correo, u.telefono, u.foto_perfil, u.activo, u.idioma`,
+    [id]
+  );
+  return rows[0] ? { ...rows[0], estado: rows[0].activo ? 'Activo' : 'Inactivo' } : null;
+};
+
+export const updateUserProfilePhoto = async (id, photoPath) => {
+  const [result] = await pool.execute(
+    'UPDATE usuario SET foto_perfil = ? WHERE id = ?',
+    [photoPath, id]
+  );
+  return result.affectedRows > 0;
+};
+
+export const updatePassword = async (id, passwordHash) => {
+  await pool.execute('UPDATE usuario SET contrasena = ? WHERE id = ?', [passwordHash, id]);
+};
+
+// Crea un nuevo usuario en la base de datos con rol 'cliente' por defecto
+export const createUser = async (userData) => {
+  const { nombre_usuario, email, contrasena, idioma = 'es' } = userData;
+
+  try {
+    // 1. Insertar el usuario
+    const [insertResult] = await pool.execute(
+      'INSERT INTO usuario (nombre_usuario, contrasena, correo, activo, idioma) VALUES (?, ?, ?, 1, ?)',
+      [nombre_usuario, contrasena, email, idioma]
+    );
+
+    const userId = insertResult.insertId;
+
+    // 2. Obtener o crear el rol 'cliente'
+    const [rolRows] = await pool.execute(
+      'SELECT id FROM rol WHERE nombre_rol = ?',
+      ['cliente']
+    );
+
+    let roleId;
+    if (rolRows.length === 0) {
+      // Si no existe el rol, crearlo
+      const [roleInsert] = await pool.execute(
+        'INSERT INTO rol (nombre_rol) VALUES (?)',
+        ['cliente']
+      );
+      roleId = roleInsert.insertId;
+    } else {
+      roleId = rolRows[0].id;
+    }
+
+    // 3. Asignar el rol 'cliente' al usuario
+    await pool.execute(
+      'INSERT INTO usuario_rol (id_usuario, id_rol) VALUES (?, ?)',
+      [userId, roleId]
+    );
+
+    // 4. Retornar el usuario creado
+    return {
+      id: userId,
+      nombre: nombre_usuario,
+      email: email,
+      idioma: idioma,
+      activo: true,
+      roles: ['cliente']
+    };
+
+  } catch (error) {
+    // Re-lanzar el error para que el controlador lo maneje
+    throw error;
+  }
+};
+
+// Nota: la creación de usuarios y asignación de roles queda fuera del alcance
+// actual (backend centrado en inicio de sesión). Para crear/administrar usuarios
+// deberías implementar endpoints y lógica que inserten en `usuario` y `usuario_rol`.

@@ -1,166 +1,168 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { assignDelivery, getAvailableDeliveries } from '../../services/logisticaService';
-import Icon from '../../components/Icon';
-import StatusBadge from '../../components/StatusBadge';
+import { useEffect, useState } from "react";
+import { getLogistica } from "../../services/logisticaService";
 
-const formatDate = (value) => {
-  if (!value) return 'Fecha no registrada';
-  const date = new Date(`${value}T00:00:00`);
-  return Number.isNaN(date.getTime())
-    ? value
-    : new Intl.DateTimeFormat('es-CO', { dateStyle: 'medium' }).format(date);
+const estados = ["Pendiente", "En camino", "Entregado", "Cancelado"];
+const estadoColor = {
+  Pendiente: { bg: "#fff8e0", color: "#f0a500", icon: "bi-hourglass-split" },
+  "En camino": { bg: "#e8f4ff", color: "#4a90d9", icon: "bi-truck" },
+  Entregado: { bg: "#eafbea", color: "#3a7d44", icon: "bi-check-circle-fill" },
+  Cancelado: { bg: "#fff0f0", color: "#e53935", icon: "bi-x-circle-fill" },
 };
 
-export default function InicioMensajeria() {
-  const [deliveries, setDeliveries] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
-  const [search, setSearch] = useState('');
-  const [filter, setFilter] = useState('Todos');
-  const [assigningId, setAssigningId] = useState(null);
-
-  const refreshDeliveries = useCallback(async () => {
-    const available = await getAvailableDeliveries();
-    setDeliveries(available);
-  }, []);
+function InicioMensajeria() {
+  const [filtroEstado, setFiltroEstado] = useState("todos");
+  const [busqueda, setBusqueda] = useState("");
+  const [entregas, setEntregas] = useState([]);
+  const [cargando, setCargando] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    const loadDeliveries = async () => {
+    const cargarLogistica = async () => {
       try {
-        await refreshDeliveries();
+        const data = await getLogistica();
+        setEntregas(data.tasks);
       } catch (err) {
-        setError(err.message || 'No se pudieron cargar los pedidos disponibles.');
+        setError(err.message || "Base de datos no disponible.");
       } finally {
-        setLoading(false);
+        setCargando(false);
       }
     };
 
-    loadDeliveries();
-  }, [refreshDeliveries]);
+    cargarLogistica();
+  }, []);
 
-  const filteredDeliveries = useMemo(() => {
-    const query = search.trim().toLowerCase();
-    return deliveries.filter((delivery) => {
-      const matchesQuery = !query
-        || String(delivery.id).includes(query)
-        || String(delivery.cliente || '').toLowerCase().includes(query)
-        || String(delivery.direccion || '').toLowerCase().includes(query)
-        || String(delivery.ciudad || '').toLowerCase().includes(query);
-      const matchesStatus = filter === 'Todos' || (delivery.estadoEntrega || delivery.estado) === filter;
-      return matchesQuery && matchesStatus;
-    });
-  }, [deliveries, filter, search]);
+  const entregasFiltradas = entregas.filter((entrega) => {
+    const texto = busqueda.toLowerCase();
+    const coincideBusqueda = String(entrega.cliente || "").toLowerCase().includes(texto)
+      || String(entrega.direccion || "").toLowerCase().includes(texto)
+      || String(entrega.idPedido).toLowerCase().includes(texto);
 
-  const assignOrder = async (delivery) => {
-    const confirmed = window.confirm(`¿Deseas asignar el pedido #${delivery.id} a tu ruta?`);
-    if (!confirmed) return;
-
-    setError('');
-    setSuccess('');
-    setAssigningId(delivery.id);
-    try {
-      const result = await assignDelivery(delivery.id);
-      setDeliveries((current) => current.filter((item) => item.id !== delivery.id));
-      setSuccess(result?.message || `El pedido #${delivery.id} quedó asignado a tu ruta.`);
-    } catch (err) {
-      setError(err.message || 'No se pudo asignar el pedido.');
-      try {
-        await refreshDeliveries();
-      } catch (refreshError) {
-        setError(`${err.message || 'No se pudo asignar el pedido.'} Tampoco se pudo actualizar la lista: ${refreshError.message || 'Error del servidor.'}`);
-      }
-    } finally {
-      setAssigningId(null);
-    }
-  };
+    return coincideBusqueda && (filtroEstado === "todos" || entrega.estadoEntrega === filtroEstado);
+  });
 
   return (
-    <div className="admin-page mensajeria-module">
+    <div className="admin-page">
       <div className="admin-container">
         <div className="admin-header">
           <div>
-            <h2 className="admin-titulo">Pedidos disponibles</h2>
-            <p className="admin-sub">Pedidos preparados por Bodega que puedes asignar a tu ruta.</p>
+            <h2 className="admin-titulo">Pedidos</h2>
+            <p className="admin-sub">Pedidos activos y recorridos del día</p>
           </div>
-          <strong className="admin-contador">{filteredDeliveries.length} pedido(s)</strong>
+          <strong className="admin-contador">{entregasFiltradas.length} pedido(s)</strong>
         </div>
 
-        {success && <div className="mensajeria-feedback is-success" role="status">{success} <Link to="/mensajeria/entregas">Ver mis pedidos</Link></div>}
-        {error && <div className="mensajeria-feedback is-error" role="alert">{error}</div>}
-
-        <div className="admin-search mensajeria-search">
-          <Icon name="search" size={18} />
-          <input
-            type="search"
-            aria-label="Buscar pedidos disponibles por número, cliente o dirección"
-            placeholder="Buscar por pedido, cliente o dirección..."
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-          />
-        </div>
-
-        <div className="admin-toolbar" role="group" aria-label="Filtrar pedidos disponibles por estado">
-          {['Todos', 'Por recoger'].map((status) => (
+        <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", marginBottom: "1rem" }}>
+          {["todos", ...estados].map((estado) => (
             <button
-              key={status}
+              key={estado}
               type="button"
-              aria-pressed={filter === status}
-              onClick={() => setFilter(status)}
-              className={`admin-pill${filter === status ? ' active' : ''}`}
+              onClick={() => setFiltroEstado(estado)}
+              style={{
+                padding: "7px 14px",
+                borderRadius: "20px",
+                border: filtroEstado === estado ? "1px solid #ff8c42" : "1px solid #ddd",
+                background: filtroEstado === estado ? "#ff8c42" : "#fff",
+                color: filtroEstado === estado ? "#fff" : "#555",
+                cursor: "pointer",
+                fontSize: "13px",
+                fontWeight: 600,
+                lineHeight: 1.2,
+              }}
             >
-              {status}
+              {estado === "todos" ? "Todos" : <><i className={`bi ${estadoColor[estado].icon}`} aria-hidden="true" /> {estado}</>}
             </button>
           ))}
         </div>
 
-        {loading ? (
-          <div className="delivery-empty-state" role="status">Cargando pedidos disponibles...</div>
-        ) : filteredDeliveries.length === 0 ? (
-          <div className="delivery-empty-state">
-            {deliveries.length
-              ? 'No hay pedidos que coincidan con la búsqueda.'
-              : 'No hay pedidos listos para asignar. Los pedidos recién creados aparecerán aquí después de que Bodega los marque como preparados.'}
+        <div className="admin-search">
+          <span aria-hidden="true">🔍</span>
+          <input
+            type="text"
+            placeholder="Buscar por cliente, dirección o número..."
+            value={busqueda}
+            onChange={(event) => setBusqueda(event.target.value)}
+          />
+        </div>
+
+        {cargando ? (
+          <div style={{ background: "#fff", borderRadius: "12px", border: "1px solid #eee", padding: "3rem", textAlign: "center", color: "#888" }}>
+            Esperando datos del servidor...
+          </div>
+        ) : error ? (
+          <div style={{ background: "#fff", borderRadius: "12px", border: "1px solid #eee", padding: "3rem", textAlign: "center", color: "#a32d2d" }}>
+            {error}
+          </div>
+        ) : entregasFiltradas.length === 0 ? (
+          <div style={{ background: "#fff", borderRadius: "12px", border: "1px solid #eee", padding: "3rem", textAlign: "center", color: "#888" }}>
+            No hay pedidos disponibles.
           </div>
         ) : (
-          <div className="delivery-list">
-            {filteredDeliveries.map((delivery) => (
-              <article key={delivery.id} className="delivery-card">
-                <div className="delivery-card__header">
-                  <div>
-                    <h3 className="delivery-card__title">Pedido #{delivery.id}</h3>
-                    <p className="delivery-card__meta">{formatDate(delivery.fecha)}</p>
+          <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
+            {entregasFiltradas.map((entrega) => {
+              const estadoTexto = estadoColor[entrega.estadoEntrega] || estadoColor.Pendiente;
+
+              return (
+                <section key={entrega.id} style={{ background: "#fff", borderRadius: "12px", border: "1px solid #eee", padding: "1.25rem", boxShadow: "0 8px 20px rgba(26,26,26,0.04)" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "1rem", marginBottom: "1rem", flexWrap: "wrap" }}>
+                    <div>
+                      <h3 style={{ fontSize: "16px", color: "#1a1a1a", margin: 0 }}>Pedido #{entrega.idPedido}</h3>
+                      <p style={{ color: "#888", fontSize: "13px", margin: "5px 0 0" }}>{entrega.cliente} · {entrega.fecha}</p>
+                    </div>
+                    <span className="status-badge" style={{ background: estadoTexto.bg, color: estadoTexto.color }}>
+                      <i className={`bi ${estadoTexto.icon}`} aria-hidden="true" /> {entrega.estadoEntrega}
+                    </span>
                   </div>
-                  <StatusBadge tone="warning">
-                    <Icon name="package" size={15} /> {delivery.estadoEntrega || delivery.estado || 'Por recoger'}
-                  </StatusBadge>
-                </div>
 
-                <div className="mensajeria-order-information">
-                  <p><strong>Cliente:</strong> {delivery.cliente || 'No registrado'}</p>
-                  <p><strong>Dirección:</strong> {delivery.direccion || 'Dirección no registrada'}{delivery.ciudad ? `, ${delivery.ciudad}` : ''}</p>
-                  <p><strong>Recogida:</strong> Pedido preparado por Bodega</p>
-                  <p><strong>Productos:</strong> {delivery.productos?.length || 0}</p>
-                </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) 280px", gap: "1.5rem", alignItems: "start" }}>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "1rem", padding: "12px", background: "#fafafa", border: "1px solid #eee", borderRadius: "8px" }}>
+                        <div>
+                          <strong style={{ color: "#1a1a1a", fontSize: "14px" }}>Productos del pedido</strong>
+                          <small style={{ display: "block", color: "#888", marginTop: "4px" }}>Cantidad: {entrega.cantidadProductos}</small>
+                        </div>
+                        <strong style={{ color: "#ff8c42", whiteSpace: "nowrap" }}>{Number(entrega.total || 0).toLocaleString("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 })}</strong>
+                      </div>
 
-                <div className="admin-logistics-footer mensajeria-order-actions">
-                  <span>La asignación queda vinculada a tu sesión.</span>
-                  <button
-                    type="button"
-                    className="btn-admin-primary"
-                    disabled={assigningId !== null}
-                    onClick={() => assignOrder(delivery)}
-                  >
-                    <Icon name="truck" size={16} />
-                    {assigningId === delivery.id ? 'Asignando...' : 'Asignarme pedido'}
-                  </button>
-                </div>
-              </article>
-            ))}
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "1rem", padding: "12px", background: "#fff", border: "1px solid #eee", borderRadius: "8px" }}>
+                        <div>
+                          <strong style={{ color: "#1a1a1a", fontSize: "14px" }}>{entrega.ciudad || "Ciudad no registrada"}</strong>
+                          <small style={{ display: "block", color: "#888", marginTop: "4px" }}>Dirección de entrega</small>
+                        </div>
+                        <strong style={{ color: "#ff8c42", whiteSpace: "nowrap" }}>Real</strong>
+                      </div>
+                    </div>
+
+                    <aside style={{ borderLeft: "1px solid #eee", paddingLeft: "1.25rem" }}>
+                      <h4 style={{ fontSize: "15px", color: "#1a1a1a", margin: "0 0 1rem", paddingBottom: "10px", borderBottom: "1px solid #eee" }}>Resumen del pedido</h4>
+                      <p style={{ fontSize: "13px", color: "#555", margin: "0 0 8px" }}><strong>Cliente:</strong> {entrega.cliente}</p>
+                      <p style={{ fontSize: "13px", color: "#555", margin: "0 0 8px" }}><strong>Ciudad:</strong> {entrega.ciudad || "No registrada"}</p>
+                      <p style={{ fontSize: "13px", color: "#555", margin: "0 0 8px" }}><strong>Entrega:</strong> {entrega.direccion || "No registrada"}</p>
+                      <div style={{ display: "flex", justifyContent: "space-between", borderTop: "1px solid #eee", marginTop: "1rem", paddingTop: "1rem", fontSize: "18px", fontWeight: 700, color: "#1a1a1a" }}>
+                        <span>Total</span>
+                        <span>{Number(entrega.total || 0).toLocaleString("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 })}</span>
+                      </div>
+                    </aside>
+                  </div>
+
+                  <div style={{ borderTop: "1px solid #eee", marginTop: "1.25rem", paddingTop: "1rem", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "1rem", flexWrap: "wrap" }}>
+                    <span style={{ fontSize: "13px", color: "#888" }}>Cambiar estado del pedido</span>
+                    <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                      {estados.filter((opcion) => opcion !== entrega.estadoEntrega).map((opcion) => (
+                        <button key={opcion} type="button" className="btn-admin-editar" style={{ fontSize: "12px", padding: "6px 12px" }}>
+                          <><i className={`bi ${estadoColor[opcion].icon}`} aria-hidden="true" /> {opcion}</>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </section>
+              );
+            })}
           </div>
         )}
       </div>
     </div>
   );
 }
+
+
+export default InicioMensajeria;

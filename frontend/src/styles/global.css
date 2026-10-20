@@ -1,129 +1,17 @@
-/* Unified Bootstrap Icons scale for the frontend. */
-.icon {
-  display: inline-block;
-  flex: 0 0 auto;
-  line-height: 1;
-  font-weight: 400;
-  vertical-align: -0.125em;
-}
-
-.icon-16 { font-size: 16px; }
-.icon-18 { font-size: 18px; }
-.icon-20 { font-size: 20px; }
-.icon-24 { font-size: 24px; }
-.icon-32 { font-size: 32px; }
-
-.icon-button {
-  display: inline-grid;
-  width: 36px;
-  height: 36px;
-  place-items: center;
+* {
+  box-sizing: border-box;
+  margin: 0;
   padding: 0;
-  border: 0;
-  border-radius: 8px;
-  background: transparent;
-  color: inherit;
-  cursor: pointer;
-  transition: background-color 160ms ease, color 160ms ease;
-}
-
-.icon-button:hover,
-.icon-button:focus-visible {
-  background: rgba(255, 140, 66, 0.12);
-  color: #ff8c42;
-  outline: none;
-}
-
-/* Sistema reutilizable de estilos compartidos */
-.panel-base,
-.hero-card,
-.admin-header,
-.admin-tabla-wrap,
-.admin-card,
-.cart-summary,
-.orders-card,
-.delivery-card,
-.mensajeria-panel,
-.mensajeria-stat-card,
-.mensajeria-encabezado {
-  background: var(--color-bg-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  box-shadow: 0 12px 24px var(--color-shadow);
-}
-
-.tarjeta-superficial,
-.product-card,
-.favorite-card,
-.orders-card,
-.delivery-card {
-  background: var(--color-bg-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  overflow: hidden;
-}
-
-.campo-busqueda,
-.admin-search,
-.mensajeria-search-wrap {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  background: var(--color-bg-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  padding: 0 16px;
-  min-height: 48px;
-  color: var(--color-text-muted);
-}
-
-.boton-principal,
-.btn-admin-primary,
-.primary-cta,
-.cart-cta {
-  background: var(--color-primary);
-  color: #fff;
-  border: none;
-  border-radius: 999px;
-  padding: 10px 20px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: background-color 0.2s ease, transform 0.2s ease;
-}
-
-.boton-principal:hover,
-.btn-admin-primary:hover,
-.primary-cta:hover,
-.cart-cta:hover {
-  background: var(--color-primary-strong);
-  transform: translateY(-1px);
-}
-
-.estado-exito,
-.status-badge.is-active,
-.admin-stock {
-  background: color-mix(in srgb, var(--color-success) 14%, transparent);
-  color: var(--color-success);
-}
-
-.estado-advertencia,
-.status-badge.is-warning,
-.admin-stock.bajo {
-  background: color-mix(in srgb, var(--color-warning) 14%, transparent);
-  color: var(--color-warning);
-}
-
-.estado-error,
-.status-badge.is-danger,
-.page-empty-state--error,
-.delivery-empty-state--error {
-  background: color-mix(in srgb, var(--color-danger) 10%, transparent);
-  color: var(--color-danger);
 }
 
 html, body, #root {
   min-height: 100vh;
-  background: var(--color-bg-app);
+  background: var(--color-page);
+}
+
+body {
+  font-family: 'Segoe UI', sans-serif;
+  background: var(--color-page);
 }
 
 .mensajeria-vista {
@@ -134,27 +22,27 @@ html, body, #root {
 
 .mensajeria-page .mensajeria-panel {
   padding: 1.25rem;
-  background: #fff;
-  border: 1px solid #eee;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 8px 20px rgba(26, 26, 26, 0.04);
+  box-shadow: var(--shadow-soft);
 }
 
 .mensajeria-page .mensajeria-panel h2 {
   font-size: 16px;
   font-weight: 700;
-  color: #1a1a1a;
+  color: var(--color-ink);
   margin: 0 0 1rem;
 }
 
 .mensajeria-page .mensajeria-encabezado {
   margin-bottom: 0;
   padding: 1.25rem 1.5rem;
-  background: #fff;
-  border: 1px solid #eee;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
   border-radius: 12px;
-  box-shadow: 0 8px 20px rgba(26, 26, 26, 0.04);
+  box-shadow: var(--shadow-soft);
 }
 
 .mensajeria-page .mensajeria-encabezado h2 {
@@ -169,16 +57,16 @@ html, body, #root {
 }
 
 .mensajeria-page .mensajeria-stat-card {
-  background: #fff;
-  border: 1px solid #eee;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
   border-radius: 12px;
   padding: 1.25rem;
-  box-shadow: 0 8px 20px rgba(26, 26, 26, 0.04);
+  box-shadow: var(--shadow-soft);
 }
 
 .mensajeria-page .mensajeria-stat-label {
   font-size: 13px;
-  color: #888;
+  color: var(--color-muted);
 }
 
 .mensajeria-page .mensajeria-stat-value {
@@ -227,17 +115,17 @@ html, body, #root {
   margin: 0;
   font-size: 25px;
   font-weight: 700;
-  color: #1a1a1a;
+  color: var(--color-ink);
 }
 
 .mensajeria-subtitle {
   margin: 6px 0 0;
-  color: #888;
+  color: var(--color-muted);
   font-size: 14px;
 }
 
 .mensajeria-count {
-  color: #555;
+  color: var(--color-muted);
   font-size: 14px;
   font-weight: 600;
 }
@@ -250,10 +138,10 @@ html, body, #root {
 }
 
 .mensajeria-chip {
-  background: #fff;
-  border: 1px solid #ddd;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
   border-radius: 10px;
-  color: #555;
+  color: var(--color-muted);
   padding: 10px 16px;
   font-size: 13px;
   font-weight: 600;
@@ -263,8 +151,8 @@ html, body, #root {
 }
 
 .mensajeria-chip.activo {
-  background: #ff8c42;
-  border-color: #ff8c42;
+  background: var(--color-brand);
+  border-color: var(--color-brand);
   color: #fff;
   box-shadow: 0 4px 12px rgba(255, 140, 66, 0.25);
 }
@@ -273,12 +161,12 @@ html, body, #root {
   display: flex;
   align-items: center;
   gap: 10px;
-  background: #fff;
-  border: 1px solid #e5e5e5;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
   border-radius: 12px;
   padding: 0 16px;
   height: 48px;
-  color: #999;
+  color: var(--color-muted);
   margin-bottom: 0.25rem;
 }
 
@@ -287,12 +175,12 @@ html, body, #root {
   border: none;
   outline: none;
   background: transparent;
-  color: #1a1a1a;
+  color: var(--color-ink);
   font-size: 14px;
 }
 
 .mensajeria-search-wrap input::placeholder {
-  color: #9a9a9a;
+  color: var(--color-subtle);
 }
 
 .mensajeria-lista {
@@ -302,11 +190,11 @@ html, body, #root {
 }
 
 .mensajeria-entrega-card {
-  background: #fff;
-  border: 1px solid #eee;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 8px 20px rgba(26, 26, 26, 0.04);
+  box-shadow: var(--shadow-soft);
   padding: 1.25rem 1.35rem;
   cursor: pointer;
 }
@@ -322,13 +210,13 @@ html, body, #root {
 
 .mensajeria-entrega-main h3 {
   margin: 0;
-  color: #1a1a1a;
+  color: var(--color-ink);
   font-size: 18px;
 }
 
 .mensajeria-entrega-main p {
   margin: 5px 0 0;
-  color: #888;
+  color: var(--color-muted);
   font-size: 13px;
 }
 
@@ -559,60 +447,64 @@ html, body, #root {
   row-gap: 2px;
 }
 
+.status-success { background: var(--color-success-soft) !important; color: var(--color-success) !important; }
+.status-warning { background: var(--color-warning-soft) !important; color: var(--color-warning) !important; }
+.status-info { background: var(--color-info-soft) !important; color: var(--color-info) !important; }
+.status-danger { background: var(--color-danger-soft) !important; color: var(--color-danger) !important; }
+.historial-empty-icon { display: block; margin-bottom: 1rem; color: var(--color-brand); font-size: 3.5rem; }
+.historial-product-icon { width: 52px; height: 52px; border-radius: 8px; background: var(--color-surface-soft); display: grid; place-items: center; color: var(--color-brand); font-size: 1.5rem; }
+
 .catalogo-categorias-menu {
   position: absolute;
   top: calc(100% + 8px);
   left: 0;
   z-index: 999;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(175px, 1fr));
-  gap: 4px;
-  width: min(460px, calc(100vw - 32px));
-  padding: 9px;
-  background: rgba(30, 30, 30, 0.98);
-  border: 1px solid rgba(255, 140, 66, 0.25);
-  border-radius: 14px;
-  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.32), 0 4px 12px rgba(255, 140, 66, 0.08);
+  grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
+  width: min(430px, calc(100vw - 32px));
+  padding: 6px;
+  background: #1e1e1e;
+  border: 1px solid #2e2e2e;
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
   animation: catalogo-menu-in 0.18s ease-out both;
 }
 
 .catalogo-option {
-  display: grid;
-  grid-template-columns: 24px minmax(0, 1fr) 14px;
+  display: flex;
   align-items: center;
-  gap: 9px;
-  min-height: 44px;
-  padding: 10px 11px;
-  color: #e8e8e8;
-  border: 1px solid transparent;
-  border-radius: 9px;
+  gap: 10px;
+  min-height: 38px;
+  padding: 9px 10px;
+  color: #ccc;
+  border: 0;
+  border-radius: 7px;
   text-decoration: none;
   font-size: 13px;
-  font-weight: 600;
-  transition: color 0.18s ease, background-color 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
+  font-weight: 400;
+  transition: color 0.18s ease, background-color 0.18s ease;
 }
 
 .catalogo-option:hover,
 .catalogo-option:focus-visible {
   color: #fff;
-  background: rgba(255, 140, 66, 0.16);
-  border-color: rgba(255, 140, 66, 0.28);
-  transform: translateX(2px);
+  background: #2a2a2a;
 }
 
 .catalogo-option-icon {
   display: grid;
   place-items: center;
-  width: 24px;
-  height: 24px;
-  color: #ffad76;
-  background: rgba(255, 140, 66, 0.12);
-  border-radius: 7px;
+  width: 18px;
+  height: 18px;
+  color: #ff8c42;
+  background: transparent;
+  border-radius: 0;
   font-size: 12px;
 }
 
 .catalogo-option-arrow {
-  color: #777;
+  margin-left: auto;
+  color: #666;
   font-size: 18px;
   line-height: 1;
   transition: color 0.18s ease, transform 0.18s ease;
@@ -621,7 +513,6 @@ html, body, #root {
 .catalogo-option:hover .catalogo-option-arrow,
 .catalogo-option:focus-visible .catalogo-option-arrow {
   color: #ff8c42;
-  transform: translateX(2px);
 }
 
 @keyframes catalogo-menu-in {
@@ -670,27 +561,18 @@ html, body, #root {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: transparent;
+  background: linear-gradient(135deg, #fff8f0 0%, #ffeedd 100%);
   padding: 2rem 1rem;
 }
 
 .login-card {
-  background: var(--color-bg-surface);
-  border-radius: 18px;
-  border: 1px solid var(--color-border);
-  padding: 2.25rem 2rem;
+  background: #fff;
+  border-radius: 16px;
+  border: 1px solid #f0e8e0;
+  padding: 2.5rem 2rem;
   width: 100%;
   max-width: 420px;
-  box-shadow: 0 14px 32px var(--color-shadow);
-}
-
-.registro-page {
-  padding: 2rem 1.25rem;
-}
-
-.registro-card {
-  max-width: min(100%, 760px);
-  padding: 2rem 1.5rem;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
 }
 
 .login-logo {
@@ -702,13 +584,12 @@ html, body, #root {
   width: 60px;
   height: 60px;
   border-radius: 14px;
-  background: var(--color-primary);
+  background: #ff8c42;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 30px;
   margin: 0 auto 0.75rem;
-  color: #fff;
 }
 
 .login-logo-icon img {
@@ -721,102 +602,61 @@ html, body, #root {
 .login-logo h1 {
   font-size: 22px;
   font-weight: 600;
-  color: var(--color-text-primary);
+  color: #1a1a1a;
   margin: 0;
 }
 
 .login-logo p {
-  font-size: 15px;
-  color: var(--color-text-secondary);
+  font-size: 14px;
+  color: #888;
   margin-top: 4px;
 }
 
 .login-error {
-  background: color-mix(in srgb, var(--color-danger) 12%, transparent);
-  border: 1px solid color-mix(in srgb, var(--color-danger) 35%, var(--color-border));
+  background: #fff0f0;
+  border: 1px solid #ffc5c5;
   border-radius: 8px;
   padding: 10px 14px;
   font-size: 13px;
-  color: var(--color-danger);
+  color: #a32d2d;
   margin-bottom: 1rem;
 }
 
-.registro-form {
-  display: flex;
-  flex-direction: column;
-  gap: 1.2rem;
-}
-
-.registro-section {
-  padding: 1rem 1rem 1.1rem;
-  border: 1px solid var(--color-border);
-  background: var(--color-bg-secondary);
-  border-radius: 12px;
-  margin-bottom: 0.05rem;
-}
-
-.registro-section h3 {
-  margin: 0 0 0.9rem;
-  font-size: 0.92rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--color-text-secondary);
-}
-
-.registro-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 1rem 1.1rem;
-  align-items: start;
-}
-
-.registro-grid--2 {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
-.registro-field-full {
-  grid-column: 1 / -1;
-}
-
 .login-field {
-  margin-bottom: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+  margin-bottom: 1.1rem;
 }
 
 .login-field label {
   display: block;
   font-size: 13px;
-  font-weight: 600;
-  color: var(--color-text-secondary);
+  font-weight: 500;
+  color: #555;
   margin-bottom: 6px;
 }
 
 .login-field input,
 .login-field select {
   width: 100%;
-  height: 44px;
-  border: 1px solid var(--color-border);
-  border-radius: 10px;
+  height: 42px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
   padding: 0 12px;
   font-size: 14px;
-  color: var(--color-text-primary);
-  background: var(--color-bg-surface);
+  color: #1a1a1a;
+  background: #fafafa;
   outline: none;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.2s ease;
+  transition: border-color 0.15s, box-shadow 0.15s;
 }
 
 .login-field input:focus,
 .login-field select:focus {
-  border-color: var(--color-primary);
-  background: var(--color-bg-surface);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 18%, transparent);
+  border-color: #ff8c42;
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(255, 140, 66, 0.15);
 }
 
 .login-field input::placeholder {
-  color: var(--color-text-muted);
+  color: #bbb;
 }
 
 .login-pass-wrap {
@@ -832,17 +672,12 @@ html, body, #root {
   right: 10px;
   top: 50%;
   transform: translateY(-50%);
-  background: transparent;
+  background: none;
   border: none;
   cursor: pointer;
   font-size: 16px;
-  color: var(--color-text-muted);
+  color: #999;
   padding: 4px;
-}
-
-.login-toggle-pass:hover,
-.login-toggle-pass:focus-visible {
-  color: var(--color-primary);
 }
 
 .login-forgot {
@@ -856,66 +691,14 @@ html, body, #root {
   text-decoration: none;
 }
 
-.registro-foto-wrap {
-  display: flex;
-  flex-direction: column;
-  gap: 0.8rem;
-  padding: 0.75rem;
-  border: 1px solid var(--color-border);
-  border-radius: 12px;
-  background: var(--color-bg-surface);
-}
-
-.registro-foto-wrap input[type="file"] {
-  width: 100%;
-  min-height: 44px;
-  padding: 0.6rem 0.75rem;
-  border: 1px dashed var(--color-border);
-  border-radius: 10px;
-  background: var(--color-bg-secondary);
-  color: var(--color-text-primary);
-}
-
-.registro-foto-preview {
-  display: grid;
-  place-items: center;
-  width: min(100%, 150px);
-  height: 150px;
-  border-radius: 16px;
-  overflow: hidden;
-  border: 1px solid var(--color-border);
-  background: var(--color-bg-secondary);
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-border) 60%, transparent);
-}
-
-.registro-foto-preview img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.registro-foto-empty {
-  display: grid;
-  place-items: center;
-  width: min(100%, 150px);
-  height: 150px;
-  border-radius: 16px;
-  border: 1px dashed var(--color-border);
-  background: var(--color-bg-secondary);
-  color: var(--color-text-muted);
-  font-size: 12px;
-  text-align: center;
-  padding: 0.75rem;
-}
-
 .login-remember {
   display: flex;
   align-items: center;
   gap: 8px;
-  color: var(--color-text-secondary);
+  color: #666;
   font-size: 13px;
   line-height: 1.3;
-  margin: 0.1rem 0 1rem;
+  margin: -0.4rem 0 1.35rem;
   cursor: pointer;
 }
 
@@ -923,7 +706,7 @@ html, body, #root {
   width: 16px;
   height: 16px;
   margin: 0;
-  accent-color: var(--color-primary);
+  accent-color: #ff8c42;
   cursor: pointer;
 }
 
@@ -933,44 +716,35 @@ html, body, #root {
   gap: 10px;
 }
 
-.registro-actions {
-  margin-top: 0.4rem;
-  padding-bottom: 0.2rem;
-}
-
 .btn-ingresar {
   width: 100%;
   height: 44px;
-  border-radius: 10px;
+  border-radius: 8px;
   border: none;
-  background: var(--color-primary);
+  background: #ff8c42;
   color: #fff;
   font-size: 15px;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.15s ease, transform 0.15s ease;
+  transition: background 0.15s;
 }
 
-.btn-ingresar:hover {
-  background: var(--color-primary-hover);
-  transform: translateY(-1px);
-}
-.btn-ingresar:disabled { background: color-mix(in srgb, var(--color-primary) 44%, transparent); cursor: not-allowed; }
+.btn-ingresar:hover { background: #f07a2e; }
+.btn-ingresar:disabled { background: #f0b88a; cursor: not-allowed; }
 
 .btn-registro {
   width: 100%;
   height: 44px;
-  border-radius: 10px;
-  border: 1px solid var(--color-border);
-  background: var(--color-bg-surface);
-  color: var(--color-text-primary);
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  background: transparent;
+  color: #444;
   font-size: 15px;
   font-weight: 500;
   cursor: pointer;
-  transition: background 0.15s ease, border-color 0.15s ease;
 }
 
-.btn-registro:hover { background: var(--color-bg-hover); border-color: var(--color-border); }
+.btn-registro:hover { background: #f9f9f9; }
 
 .login-modal-overlay {
   position: fixed;
@@ -988,10 +762,10 @@ html, body, #root {
   width: min(100%, 380px);
   padding: 2.25rem 2rem 2rem;
   text-align: center;
-  background: var(--color-bg-surface);
-  border: 1px solid var(--color-border);
+  background: #fff;
+  border: 1px solid #f0e8e0;
   border-radius: 16px;
-  box-shadow: 0 18px 45px var(--color-shadow);
+  box-shadow: 0 18px 45px rgba(26, 26, 26, 0.18);
   animation: login-modal-entrada 0.2s ease-out;
 }
 
@@ -1029,34 +803,6 @@ html, body, #root {
 @keyframes login-modal-entrada {
   from { opacity: 0; transform: translateY(8px) scale(0.98); }
   to { opacity: 1; transform: translateY(0) scale(1); }
-}
-
-@media (max-width: 640px) {
-  .login-card {
-    padding: 1.5rem 1rem;
-  }
-
-  .registro-card {
-    padding: 1.35rem 1rem 1.5rem;
-  }
-
-  .registro-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .registro-section {
-    padding: 0.85rem 0.8rem 1rem;
-  }
-
-  .botones {
-    gap: 8px;
-  }
-
-  .registro-foto-preview,
-  .registro-foto-empty {
-    width: 100%;
-    max-width: 180px;
-  }
 }
 
 /* ================================
@@ -1256,34 +1002,12 @@ html, body, #root {
   margin-bottom: 1rem;
 }
 
-.catalogo-cargar-mas-wrap {
-  display: flex;
-  justify-content: center;
-  margin-top: 1.5rem;
-}
-
-.catalogo-cargar-mas {
-  max-width: 360px;
-  width: min(100%, 360px);
-  margin: 0 auto;
-}
-
-.catalogo-cargar-mas:disabled {
-  opacity: 0.7;
-  cursor: wait;
-}
-
-.catalogo-fin-lista {
-  padding-top: 1rem;
-  padding-bottom: 0.5rem;
-}
-
 /* ================================
    DETALLE PRODUCTO
 ================================ */
 .detalle-page {
   min-height: 100vh;
-  background: transparent;
+  background: #f5f5f5;
   padding: 2rem 1rem;
 }
 
@@ -1379,7 +1103,7 @@ html, body, #root {
 ================================ */
 .pedidos-page {
   min-height: 100vh;
-  background: transparent;
+  background: #f5f5f5;
   padding: 2rem 1rem;
 }
 
@@ -1582,7 +1306,7 @@ html, body, #root {
 /* ===== Carrito / Confirmar compra ===== */
 .carrito-page {
   min-height: 100vh;
-  background: transparent;
+  background: #f5f5f5;
   padding: 2rem 1rem;
 }
 

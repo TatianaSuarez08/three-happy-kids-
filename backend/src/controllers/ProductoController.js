@@ -1,14 +1,14 @@
 import { unlink } from 'fs/promises';
+import path from 'path';
 import {
   createProduct,
   deactivateProduct,
   findColors,
   findProductById,
-  findPublicProductById,
-  findPublicProducts,
   findProducts,
   updateProduct
 } from '../models/ProductoModel.js';
+import { productImagesDirectory } from '../middleware/subidaImagen.js';
 
 const toNumber = (value) => {
   const number = Number(value);
@@ -25,36 +25,9 @@ export const getColors = async (_req, res) => {
   }
 };
 
-export const getPublicProducts = async (_req, res) => {
-  try {
-    const products = await findPublicProducts();
-    res.json({ success: true, products });
-  } catch (error) {
-    console.error('Error al consultar el catálogo:', error);
-    res.status(500).json({ error: 'No se pudo consultar el catálogo' });
-  }
-};
-
-export const getPublicProduct = async (req, res) => {
-  const id = Number.parseInt(req.params.id, 10);
-  if (!Number.isInteger(id)) {
-    return res.status(400).json({ error: 'El ID del producto no es válido' });
-  }
-
-  try {
-    const product = await findPublicProductById(id);
-    if (!product) return res.status(404).json({ error: 'Producto no encontrado' });
-
-    res.json({ success: true, product });
-  } catch (error) {
-    console.error('Error al consultar el producto público:', error);
-    res.status(500).json({ error: 'No se pudo consultar el producto' });
-  }
-};
-
 export const getProducts = async (_req, res) => {
   try {
-    const products = await findProducts({ includeInactive: true });
+    const products = await findProducts();
     res.json({ success: true, products });
   } catch (error) {
     console.error('Error al consultar productos:', error);
@@ -268,7 +241,7 @@ export const editProduct = async (req, res) => {
     });
 
     if (req.file && currentProduct.imagen?.startsWith('/assets/productos/')) {
-      const oldImagePath = new URL(`../../../frontend/src${currentProduct.imagen}`, import.meta.url);
+      const oldImagePath = path.join(productImagesDirectory, path.basename(currentProduct.imagen));
       await unlink(oldImagePath).catch(() => {});
     }
 

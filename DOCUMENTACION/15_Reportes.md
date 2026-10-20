@@ -9,8 +9,8 @@
 
 ## Archivos relevantes
 
-- [Back-end/src/models/DashboardModel.js](../Back-end/src/models/DashboardModel.js)
-- [Back-end/src/controllers/DashboardController.js](../Back-end/src/controllers/DashboardController.js)
+- [backend/src/models/DashboardModel.js](../backend/src/models/DashboardModel.js)
+- [backend/src/controllers/DashboardController.js](../backend/src/controllers/DashboardController.js)
 
 ## Problemas
 

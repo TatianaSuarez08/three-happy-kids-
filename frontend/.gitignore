@@ -12,10 +12,6 @@ dist
 dist-ssr
 *.local
 
-# Evidencias de entrega privadas; conservar el marcador de la carpeta.
-/src/assets/entregas/*
-!/src/assets/entregas/.gitkeep
-
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

@@ -1,4 +1,4 @@
-const NovedadesMensajeria = () => {
+export default function NovedadesMensajeria() {
   return (
     <div className="admin-page">
       <div className="admin-container">
@@ -9,12 +9,10 @@ const NovedadesMensajeria = () => {
           </div>
         </div>
 
-        <div className="admin-surface-card admin-surface-card--plain">
-          <p className="admin-empty-message">No hay información de novedades disponible.</p>
+        <div style={{ background: "#fff", border: "1px solid #eee", borderRadius: "12px", boxShadow: "0 8px 20px rgba(26, 26, 26, 0.04)", padding: "1.25rem" }}>
+          <p style={{ margin: 0, color: "#777", fontSize: "13px" }}>No hay información de novedades disponible.</p>
         </div>
       </div>
     </div>
   );
-};
-
-export default NovedadesMensajeria;
+}

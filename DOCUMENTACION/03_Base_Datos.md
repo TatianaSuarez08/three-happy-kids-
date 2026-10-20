@@ -2,11 +2,11 @@
 
 ## Motor y conexión
 
-El backend usa MySQL con `mysql2/promise` desde [Back-end/src/db.js](../Back-end/src/db.js).
+El backend usa MySQL con `mysql2/promise` desde [backend/src/db.js](../backend/src/db.js).
 
-## Esquema documentado
+## Esquema principal que existe
 
-El esquema real documentado se encuentra en [DOCUMENTACION/sql/DataBaseHappyKids_CORREGIDA.sql](../DOCUMENTACION/sql/DataBaseHappyKids_CORREGIDA.sql) y contempla las tablas principales:
+El esquema real documentado se encuentra en [documentacion/sql/DataBaseHappyKids_CORREGIDA.sql](../documentacion/sql/DataBaseHappyKids_CORREGIDA.sql) y contempla las tablas principales:
 
 - rol
 - usuario
@@ -29,34 +29,33 @@ El esquema real documentado se encuentra en [DOCUMENTACION/sql/DataBaseHappyKids
 - detalle_pedido
 - pago
 - entrega
-- asignacion_entrega
-- evidencia_entrega
-- alistamiento_pedido
-- detalle_alistamiento_pedido
-- pedido_historial_operacion
 
-El archivo corregido incluye las definiciones completas para una instalación nueva. Para una base existente, `CREATE TABLE IF NOT EXISTS` no modifica columnas ni agrega restricciones faltantes: se deben utilizar las migraciones incrementales aplicables.
+## Observaciones reales
 
-## Relaciones de pedidos y logística
+### 1. Roles
+La tabla `rol` existe y se usa junto a `usuario_rol`. El sistema soporta `administrador`, `cliente` y `mensajero` como roles funcionales.
 
-- `factura` contiene el pedido asociado al cliente; `detalle_pedido` conserva productos y cantidades.
-- `entrega` mantiene el estado logístico, separado del estado de factura.
-- `asignacion_preparacion` registra el bodeguero que seleccionó el pedido; un índice único permite una sola selección activa por entrega.
-- `novedad_bodega` conserva incidencias por producto, su estado y la respuesta de Administración.
-- `alistamiento_pedido` registra cada intento, usuario, resultado y fecha; `detalle_alistamiento_pedido` registra cantidades verificadas por línea.
-- `asignacion_preparacion`
-- `novedad_bodega`
-- `asignacion_entrega` conserva el historial de mensajeros y limita a una asignación activa por entrega.
-- `evidencia_entrega` referencia una imagen real, la entrega, la asignación y el mensajero. El archivo reside fuera de SQL.
-- `pedido_historial_operacion` conserva eventos logísticos, estados anterior/nuevo, responsable, fecha y observaciones.
-- `inventario_movimiento` conserva el tipo y motivo de las entradas, salidas y ajustes. El proceso de alistamiento no descuenta stock por segunda vez.
+### 2. Inventario
+Existe la tabla `inventario`, pero no hay una tabla de historial de movimientos ni diferenciación entre inventario actual y movimientos. La cantidad disponible representa el stock actual, pero no documenta el origen/causa del cambio.
 
-Los estados de `entrega` son `Pendiente`, `Por recoger`, `En camino`, `Entregado` y `Cancelado`. `En preparación` se deriva del historial; `Incidencia` se deriva de novedades no resueltas y se conserva tras la respuesta de Administración. No son valores del enum de entrega.
+### 3. Pedidos
+La tabla `factura` representa el pedido/pago principal y `detalle_pedido` representa sus líneas. La entrega está separada en `entrega`.
 
-## Datos de ejemplo y migraciones
+### 4. Entregas
+La entrega tiene estado `Pendiente`, `En camino`, `Entregado`, `Cancelado`, y está asociada a una factura.
 
-[`sql/dml.sql`](../DOCUMENTACION/sql/dml.sql) contiene datos de ejemplo para una base nueva: un pedido listo sin asignar, dos pedidos en camino con mensajeros activos, una selección activa de Bodega y un reporte de novedad asociado al producto faltante. No crea evidencias ficticias: para probar una imagen se debe subir un archivo real por el flujo de Mensajería.
+## Problemas detectados
 
-El DML asume una instalación vacía y los IDs consecutivos creados por su carga inicial; no ejecutarlo sobre una base con datos existentes. Para bases existentes, aplicar únicamente las migraciones incrementales pertinentes, luego validar el esquema y probar con datos controlados.
+- No existe una tabla de `movimientos_inventario`.
+- El rol de bodeguero no está formalizado con permisos por acción.
+- La lógica de stock bajo y agotado depende de `inventario.cantidad_disponible` sin trazabilidad.
+- La base de datos no tiene un sistema de permisos granulares ni módulos de autorización por acción.
 
-La inspección realizada el 2026-10-15 confirmó que la base configurada contiene las tablas de asignación y evidencia, pero aún no las tres tablas de preparación e historial. Las migraciones de `alistamiento_pedido`, `detalle_alistamiento_pedido` y `pedido_historial_operacion` siguen pendientes en esa base.
+## Recomendación
+
+La base de datos podría mantenerse tal como está para la fase actual, pero se recomienda:
+
+- crear un historial de movimientos de inventario,
+- mantener el stock actual en `inventario`,
+- separar claramente la lógica del pedido y la logística de entrega,
+- formalizar permisos por acción.

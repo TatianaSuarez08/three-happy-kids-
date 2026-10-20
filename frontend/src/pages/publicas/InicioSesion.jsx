@@ -1,9 +1,6 @@
 import { useRef, useState, useEffect, useCallback } from "react";
-import { API_BASE_URL } from "../../services/httpClient";
 import { Link, useNavigate } from "react-router-dom";
-import Icon from "../../components/Icon";
-
-const REMEMBERED_LOGIN_KEY = 'happykids_remembered_login';
+import { login } from "../../services/authService";
 
 function InicioSesion() {
   // Referencias a los inputs (no controlados) para leer valores sin estado adicional
@@ -12,7 +9,7 @@ function InicioSesion() {
 
   // Estados locales del componente
   const [showPass, setShowPass] = useState(false); // controla mostrar/ocultar contraseña
-  const [recordarme, setRecordarme] = useState(false); // recuerda los datos del login, sin mantener la sesión activa
+  const [recordarme, setRecordarme] = useState(false); // decide si la sesión permanece al cerrar la pestaña
   const [error, setError] = useState(""); // mensaje de error para mostrar en la UI
   const [loading, setLoading] = useState(false); // indicador de envío
   const navigate = useNavigate(); // hook de react-router para navegación programática
@@ -49,22 +46,6 @@ function InicioSesion() {
 
   // Verificar si ya existe sesión activa al volver a la pantalla de login
   useEffect(() => {
-    const savedLogin = localStorage.getItem(REMEMBERED_LOGIN_KEY);
-    if (savedLogin) {
-      try {
-        const parsed = JSON.parse(savedLogin);
-        if (parsed?.email) {
-          correoRef.current.value = parsed.email;
-          setRecordarme(true);
-        }
-        if (parsed?.password) {
-          contraseñaRef.current.value = parsed.password;
-        }
-      } catch {
-        localStorage.removeItem(REMEMBERED_LOGIN_KEY);
-      }
-    }
-
     const storage = localStorage.getItem('token') ? localStorage : sessionStorage;
     const token = storage.getItem('token');
     const userJson = storage.getItem('user');
@@ -106,63 +87,31 @@ function InicioSesion() {
 
     setLoading(true);
     try {
-      // URL del backend configurable mediante Vite env var
-      const BACKEND = API_BASE_URL;
-
-      // Petición POST a /login con JSON
-      const res = await fetch(`${BACKEND}/login`, {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ email: correo, password: contraseña }),
-      });
-
-      const data = await res.json();
+      const data = await login({ email: correo, password: contraseña });
       
-      if (!res.ok) {
-        // Manejar diferentes códigos de error
-        if (res.status === 403) {
-          throw new Error('El usuario está inactivo. Contacta al administrador.');
-        } else if (res.status === 401) {
-          throw new Error('Correo o contraseña incorrectos.');
-        } else if (res.status === 400) {
-          throw new Error(data.error || 'Datos inválidos.');
-        }
-        throw new Error(data.error || 'Error en el login');
-      }
-
       // Validar que la respuesta tenga los datos esperados
       if (!data.token || !data.user) {
         throw new Error('Respuesta inválida del servidor');
       }
 
-      // La casilla solo recuerda los datos del login; la sesión activa sigue en sessionStorage.
+      // Almacenamiento de credenciales/tokens en localStorage (simple y persistente)
+      // Nota: para mayor seguridad usar HttpOnly cookies en producción
       const userSession = {
         ...data.user,
         roles: Array.isArray(data.user.roles) ? data.user.roles : [],
       };
 
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      localStorage.removeItem('usuario');
-      localStorage.removeItem('userRoles');
-      sessionStorage.removeItem('token');
-      sessionStorage.removeItem('user');
-      sessionStorage.removeItem('usuario');
-      sessionStorage.removeItem('userRoles');
+      const storage = recordarme ? localStorage : sessionStorage;
+      const otherStorage = recordarme ? sessionStorage : localStorage;
 
-      sessionStorage.setItem('token', data.token);
-      sessionStorage.setItem('user', JSON.stringify(userSession));
-      sessionStorage.setItem('usuario', JSON.stringify(userSession));
-      sessionStorage.setItem('userRoles', JSON.stringify(userSession.roles));
-
-      if (recordarme) {
-        localStorage.setItem(REMEMBERED_LOGIN_KEY, JSON.stringify({ email: correo, password: contraseña }));
-      } else {
-        localStorage.removeItem(REMEMBERED_LOGIN_KEY);
-      }
-
+      otherStorage.removeItem('token');
+      otherStorage.removeItem('user');
+      otherStorage.removeItem('usuario');
+      otherStorage.removeItem('userRoles');
+      storage.setItem('token', data.token);
+      storage.setItem('user', JSON.stringify(userSession));
+      storage.setItem('usuario', JSON.stringify(userSession));
+      storage.setItem('userRoles', JSON.stringify(userSession.roles));
       window.dispatchEvent(new Event('happykids:session-changed'));
 
       // Limpiar formulario
@@ -230,7 +179,7 @@ function InicioSesion() {
                 onClick={() => setShowPass(!showPass)}
                 disabled={loading}
               >
-                <Icon name={showPass ? "eye" : "lock"} size={18} />
+                {showPass ? "👁" : "🔒"}
               </button>
             </div>
           </div>
@@ -244,21 +193,10 @@ function InicioSesion() {
             <input
               type="checkbox"
               checked={recordarme}
-              onChange={(e) => {
-                const checked = e.target.checked;
-                setRecordarme(checked);
-                if (checked) {
-                  localStorage.setItem(REMEMBERED_LOGIN_KEY, JSON.stringify({
-                    email: correoRef.current?.value?.trim() || '',
-                    password: contraseñaRef.current?.value || '',
-                  }));
-                } else {
-                  localStorage.removeItem(REMEMBERED_LOGIN_KEY);
-                }
-              }}
+              onChange={(e) => setRecordarme(e.target.checked)}
               disabled={loading}
             />
-            Recordar mis datos de inicio de sesión
+            Recordarme en este dispositivo
           </label>
 
           {/* Botones: enviar formulario y navegar a registro */}

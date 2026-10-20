@@ -1,67 +1,47 @@
 {
-	"version": "2.0.0",
-	"tasks": [
-		{
-			"label": "Happy Kids: Front-end",
-			"type": "shell",
-			"command": "npm.cmd run dev",
-			"options": {
-				"cwd": "${workspaceFolder}/Frontend"
-			},
-			"isBackground": true,
-			"runOptions": {
-				"runOn": "folderOpen"
-			},
-			"presentation": {
-				"reveal": "always",
-				"focus": false,
-				"panel": "dedicated",
-				"group": "happy-kids-front-end",
-				"showReuseMessage": false,
-				"clear": false
-			},
-			"problemMatcher": []
-		},
-		{
-			"label": "Happy Kids: Back-end",
-			"type": "shell",
-			"command": "npm.cmd run dev",
-			"options": {
-				"cwd": "${workspaceFolder}/Backend"
-			},
-			"isBackground": true,
-			"runOptions": {
-				"runOn": "folderOpen"
-			},
-			"presentation": {
-				"reveal": "always",
-				"focus": false,
-				"panel": "dedicated",
-				"group": "happy-kids-back-end",
-				"showReuseMessage": false,
-				"clear": false
-			},
-			"problemMatcher": []
-		},
-		{
-			"label": "Build Frontend",
-			"type": "shell",
-			"command": "npm.cmd run build; npm.cmd run lint",
-			"options": {
-				"cwd": "${workspaceFolder}/Frontend"
-			},
-			"isBackground": false,
-			"problemMatcher": [
-				"$tsc"
-			]
-		},
-		{
-			"label": "Happy Kids: validate frontend",
-			"type": "shell",
-			"command": "cd Frontend && npm.cmd run build; npm.cmd run lint",
-			"isBackground": false,
-			"problemMatcher": [],
-			"group": "build"
-		}
-	]
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Happy Kids: frontend",
+      "type": "shell",
+      "command": "npm run dev",
+      "options": {
+        "cwd": "${workspaceFolder}/frontend"
+      },
+      "isBackground": true,
+      "runOptions": {
+        "runOn": "folderOpen"
+      },
+      "presentation": {
+        "reveal": "always",
+        "focus": false,
+        "panel": "dedicated",
+        "group": "happy-kids-front-end",
+        "showReuseMessage": false,
+        "clear": false
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Happy Kids: backend",
+      "type": "shell",
+      "command": "npm run dev",
+      "options": {
+        "cwd": "${workspaceFolder}/backend"
+      },
+      "isBackground": true,
+      "runOptions": {
+        "runOn": "folderOpen"
+      },
+      "presentation": {
+        "reveal": "always",
+        "focus": false,
+        "panel": "dedicated",
+        "group": "happy-kids-back-end",
+        "showReuseMessage": false,
+        "clear": false
+      },
+      "problemMatcher": []
+    }
+  ]
 }

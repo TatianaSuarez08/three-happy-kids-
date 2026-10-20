@@ -1,0 +1,42 @@
+.ds-navbar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.theme-toggle {
+  display: inline-grid;
+  place-items: center;
+  width: 2.4rem;
+  height: 2.4rem;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-surface);
+  color: var(--color-ink);
+  cursor: pointer;
+  box-shadow: var(--shadow-soft);
+}
+
+.theme-toggle:hover {
+  background: var(--color-brand-soft);
+  border-color: var(--color-border-strong);
+}
+
+.nav-dropdown-menu,
+.catalogo-categorias-menu {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-soft);
+}
+
+.nav-link-item,
+.catalogo-nav-link,
+.catalogo-option {
+  transition: color 0.18s ease, background-color 0.18s ease, border-color 0.18s ease;
+}
+
+@media (max-width: 767px) {
+  .ds-navbar {
+    flex-wrap: wrap;
+  }
+}

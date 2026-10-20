@@ -9,32 +9,32 @@ Three Happy Kids utiliza una arquitectura cliente-servidor separada:
 - **Base de datos:** MySQL, mediante `mysql2/promise` y un pool de conexiones.
 - **Comunicación:** API REST que recibe y devuelve JSON.
 - **Autenticación:** JWT con expiración de 8 horas.
-- **Contraseñas:** `bcryptjs` con rondas configurables mediante `BCRYPT_SALT_ROUNDS`.
+- **Contraseñas:** SHA-256, perteneciente a la familia SHA-2, combinado con un `salt` aleatorio.
 - **Control de acceso:** roles `cliente` y `administrador`.
 - **CORS:** permite al frontend de desarrollo `http://localhost:5173` consumir el backend.
 
-El frontend, la API gateway y el backend se ejecutan como procesos independientes. Durante el desarrollo, Vite sirve la aplicación web en `5173`, la API en `3001` y el backend en `3002`.
+El frontend y el backend se ejecutan como procesos independientes. Durante el desarrollo, Vite sirve la aplicación web en el puerto `5173` y Express expone la API en el puerto `3000`.
 
 ## 2. Configuración de la URL de la API
 
-El frontend obtiene la dirección de la API desde la variable de entorno `VITE_API_URL`:
+El frontend obtiene la dirección del backend desde la variable de entorno `VITE_BACKEND_URL`:
 
 ```env
-VITE_API_URL=http://localhost:3001
+VITE_BACKEND_URL=http://localhost:3000
 ```
 
 Si la variable no existe, el código utiliza automáticamente:
 
 ```text
-http://localhost:3001
+http://localhost:3000
 ```
 
-La variable debe configurarse en el entorno del frontend, normalmente en `Front-end/.env`. No debe incluirse una barra final si se quieren evitar URLs como `//login`.
+La variable debe configurarse en el entorno del frontend, normalmente en `frontend/.env`. No debe incluirse una barra final si se quieren evitar URLs como `//login`.
 
 Para iniciar el sistema:
 
 ```bash
-cd Back-end
+cd backend
 npm install
 npm run dev
 ```
@@ -42,7 +42,7 @@ npm run dev
 En otra terminal:
 
 ```bash
-cd Front-end
+cd frontend
 npm install
 npm run dev
 ```
@@ -241,9 +241,9 @@ El CRUD de productos está implementado en `ProductoModel.js`, `ProductoControll
 El login construye la URL a partir de la variable de entorno y usa `fetch`:
 
 ```js
-const API = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+const BACKEND = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000';
 
-const response = await fetch(`${API}/login`, {
+const response = await fetch(`${BACKEND}/login`, {
   method: 'POST',
   headers: {
     'Content-Type': 'application/json'
@@ -376,7 +376,7 @@ El diseño de navegación cambia según los datos recibidos en `data.user.roles`
 
 ### Estilos utilizados en autenticación
 
-Las pantallas de login y registro se construyen con las clases definidas en `Front-end/src/styles/global.css`:
+Las pantallas de login y registro se construyen con las clases definidas en `frontend/src/styles/global.css`:
 
 - `.login-page`: centra la pantalla y aplica el fondo degradado claro.
 - `.login-card`: crea el panel principal del formulario.
@@ -413,19 +413,19 @@ El middleware `role.js` está preparado para comprobar que el usuario tenga algu
 
 ## 9. Cómo se procesan las contraseñas
 
-En el registro, el servicio central genera un hash bcrypt:
+En el registro, el backend genera un `salt` aleatorio y calcula:
 
 ```text
-await bcrypt.hash(contraseña, 12)
+SHA-256(salt + contraseña)
 ```
 
-La base de datos guarda el hash bcrypt completo:
+La base de datos guarda el valor con el formato:
 
 ```text
-$2b$12$...
+salt:hash
 ```
 
-En el login se utiliza `bcrypt.compare(contraseña, hash)`. La contraseña original no se guarda.
+En el login, el backend separa el `salt`, calcula nuevamente el hash con la contraseña recibida y compara ambos hashes. La contraseña original no se guarda.
 
 La conexión con MySQL utiliza las variables de entorno:
 
@@ -471,5 +471,5 @@ Para conectar esas funciones a MySQL será necesario crear posteriormente sus ru
 - Configurar `CORS_ORIGIN` con el dominio real del frontend.
 - Usar HTTPS.
 - Preferir cookies `HttpOnly` y `Secure` para el JWT en lugar de almacenamiento accesible desde JavaScript.
-- Mantener `BCRYPT_SALT_ROUNDS` en un valor adecuado y rotar secretos de entorno cuando sea necesario.
+- Sustituir SHA-256 con salt por un algoritmo específico para contraseñas, como Argon2 o bcrypt, al evolucionar el sistema.
 - Validar y limitar las peticiones del API en el servidor.

@@ -2,26 +2,13 @@ import { useEffect, useState } from "react";
 import "../../styles/style.css";
 import EmptyState from "../../components/EmptyState";
 import { getOrders, updateOrderStatus } from "../../services/pedidoService";
-import Icon from "../../components/Icon";
 
-const estados = ["Pendiente", "En preparación", "Incidencia", "Por recoger", "En camino", "Entregado", "Cancelado"];
+const estados = ["Pendiente", "En camino", "Entregado", "Cancelado"];
 const estadoColor = {
-  Pendiente: { bg: "#fff8e0", color: "#f0a500", icon: "clock" },
-  "En preparación": { bg: "#e8f4ff", color: "#4a90d9", icon: "package" },
-  Incidencia: { bg: "#fff0f0", color: "#e53935", icon: "x" },
-  "Por recoger": { bg: "#fff8e0", color: "#b87800", icon: "package" },
-  "En camino": { bg: "#e8f4ff", color: "#4a90d9", icon: "truck" },
-  Entregado: { bg: "#eafbea", color: "#3a7d44", icon: "checkCircle" },
-  Cancelado: { bg: "#fff0f0", color: "#e53935", icon: "x" },
-};
-const accionesPorEstado = {
-  Pendiente: ["Cancelado"],
-  "En preparación": ["Cancelado"],
-  Incidencia: ["Cancelado"],
-  "Por recoger": ["En camino"],
-  "En camino": [],
-  Entregado: [],
-  Cancelado: [],
+  Pendiente: { icon: "bi-hourglass-split", className: "status-warning" },
+  "En camino": { icon: "bi-truck", className: "status-info" },
+  Entregado: { icon: "bi-check-circle-fill", className: "status-success" },
+  Cancelado: { icon: "bi-x-circle-fill", className: "status-danger" },
 };
 const formatoPrecio = new Intl.NumberFormat("es-CO", {
   style: "currency",
@@ -38,7 +25,6 @@ function Pedidos() {
   const [estadoNuevo, setEstadoNuevo] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
-  const [actualizando, setActualizando] = useState(false);
   const [guardando, setGuardando] = useState(false);
 
   useEffect(() => {
@@ -54,18 +40,6 @@ function Pedidos() {
 
     cargarPedidos();
   }, []);
-
-  const actualizarPedidos = async () => {
-    setActualizando(true);
-    setError("");
-    try {
-      setPedidos(await getOrders());
-    } catch (err) {
-      setError(err.message || "No se pudieron actualizar los pedidos");
-    } finally {
-      setActualizando(false);
-    }
-  };
 
   const actualizarEstado = async () => {
     if (!pedidoSeleccionado || !estadoNuevo) return;
@@ -101,12 +75,7 @@ function Pedidos() {
             <h2 className="admin-titulo">Pedidos</h2>
             <p className="admin-sub">Pedidos reales registrados en la base de datos</p>
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-            <strong style={{ color: "#555" }}>{pedidosFiltrados.length} pedido(s)</strong>
-            <button type="button" className="btn-admin-editar" onClick={actualizarPedidos} disabled={actualizando}>
-              {actualizando ? "Actualizando..." : "Actualizar pedidos"}
-            </button>
-          </div>
+          <strong style={{ color: "#555" }}>{pedidosFiltrados.length} pedido(s)</strong>
         </div>
 
         {error && <div className="login-error">{error}</div>}
@@ -114,13 +83,13 @@ function Pedidos() {
         <div className="admin-toolbar">
           {["todos", ...estados].map((estado) => (
             <button key={estado} type="button" onClick={() => setFiltroEstado(estado)} className={`admin-pill ${filtroEstado === estado ? "active" : ""}`}>
-              {estado === "todos" ? "Todos" : <><Icon name={estadoColor[estado].icon} size={16} /> {estado}</>}
+              {estado === "todos" ? "Todos" : <><i className={`bi ${estadoColor[estado].icon}`} aria-hidden="true" /> {estado}</>}
             </button>
           ))}
         </div>
 
         <div className="admin-search" style={{ marginBottom: "1.5rem" }}>
-          <Icon name="search" size={18} />
+          <span>🔍</span>
           <input type="text" placeholder="Buscar por cliente, correo o número..." value={busqueda} onChange={(event) => setBusqueda(event.target.value)} />
         </div>
 
@@ -139,15 +108,8 @@ function Pedidos() {
                       <h3 style={{ fontSize: "16px", color: "#1a1a1a", margin: 0 }}>Pedido #{pedido.id}</h3>
                       <p style={{ color: "#888", fontSize: "13px", margin: "5px 0 0" }}>{pedido.cliente} · {pedido.fecha}</p>
                     </div>
-                    <span className="status-badge" style={{ background: estado.bg, color: estado.color }}><Icon name={estado.icon} size={16} /> {pedido.estado}</span>
+                    <span className={`status-badge ${estado.className}`}><i className={`bi ${estado.icon}`} aria-hidden="true" /> {pedido.estado}</span>
                   </div>
-
-                  {pedido.estado === "Incidencia" && pedido.incidencia && (
-                    <div className="admin-order-incident" role="status">
-                      <strong>Novedad reportada por Bodega</strong>
-                      <p>{pedido.incidencia}</p>
-                    </div>
-                  )}
 
                   <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) 280px", gap: "1.5rem", alignItems: "start" }}>
                     <div className="admin-order-products">
@@ -172,9 +134,9 @@ function Pedidos() {
                   <div className="admin-order-action">
                     <span style={{ fontSize: "13px", color: "#888" }}>Cambiar estado del pedido</span>
                     <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-                      {(accionesPorEstado[pedido.estado] || []).map((opcion) => (
+                      {estados.filter((opcion) => opcion !== pedido.estado).map((opcion) => (
                         <button key={opcion} type="button" className="btn-admin-editar" onClick={() => { setPedidoSeleccionado(pedido); setEstadoNuevo(opcion); }}>
-                          <Icon name={estadoColor[opcion].icon} size={16} /> {opcion}
+                          <><i className={`bi ${estadoColor[opcion].icon}`} aria-hidden="true" /> {opcion}</>
                         </button>
                       ))}
                     </div>

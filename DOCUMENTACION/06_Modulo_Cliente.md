@@ -6,13 +6,13 @@ El cliente cuenta con catálogo, detalle del producto, carrito, favoritos, compr
 
 ## Archivos clave
 
-- [Front-end/src/cliente/page-catalogo.jsx](../Front-end/src/cliente/page-catalogo.jsx)
-- [Front-end/src/cliente/page-DetalleProducto.jsx](../Front-end/src/cliente/page-DetalleProducto.jsx)
-- [Front-end/src/cliente/page-Carrito.jsx](../Front-end/src/cliente/page-Carrito.jsx)
-- [Front-end/src/cliente/page-ConfirmarCompra.jsx](../Front-end/src/cliente/page-ConfirmarCompra.jsx)
-- [Front-end/src/cliente/page-MisPedidosBD.jsx](../Front-end/src/cliente/page-MisPedidosBD.jsx)
-- [Back-end/src/routes/PedidoRoute.js](../Back-end/src/routes/PedidoRoute.js)
-- [Back-end/src/controllers/PedidoController.js](../Back-end/src/controllers/PedidoController.js)
+- [frontend/src/pages/cliente/page-catalogo.jsx](../frontend/src/pages/cliente/page-catalogo.jsx)
+- [frontend/src/pages/cliente/page-DetalleProducto.jsx](../frontend/src/pages/cliente/page-DetalleProducto.jsx)
+- [frontend/src/pages/cliente/page-Carrito.jsx](../frontend/src/pages/cliente/page-Carrito.jsx)
+- [frontend/src/pages/cliente/page-ConfirmarCompra.jsx](../frontend/src/pages/cliente/page-ConfirmarCompra.jsx)
+- [frontend/src/pages/cliente/page-MisPedidosBD.jsx](../frontend/src/pages/cliente/page-MisPedidosBD.jsx)
+- [backend/src/routes/PedidoRoute.js](../backend/src/routes/PedidoRoute.js)
+- [backend/src/controllers/PedidoController.js](../backend/src/controllers/PedidoController.js)
 
 ## Observaciones
 

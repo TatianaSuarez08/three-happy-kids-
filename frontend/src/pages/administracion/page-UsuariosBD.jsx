@@ -1,10 +1,8 @@
 import { useEffect, useState } from "react";
-import { API_BASE_URL } from "../../services/httpClient";
 import { useNavigate } from "react-router-dom";
 import "../../styles/style.css";
-import Icon from "../../components/Icon";
-
-const backendUrl = API_BASE_URL;
+import { deactivateUser, getUsers, updateUserStatus } from "../../services/usuarioService";
+import { API_BASE_URL } from "../../services/httpClient";
 
 const rolColor = {
   Cliente: { bg: "#e8f4ff", color: "#4a90d9" },
@@ -14,7 +12,6 @@ const rolColor = {
 };
 
 function Usuarios() {
-  const backend = API_BASE_URL;
   const navigate = useNavigate();
   const [usuarios, setUsuarios] = useState([]);
   const [busqueda, setBusqueda] = useState("");
@@ -24,19 +21,10 @@ function Usuarios() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
 
-  const token = () => {
-    const storage = localStorage.getItem("token") ? localStorage : sessionStorage;
-    return storage.getItem("token");
-  };
-
   useEffect(() => {
     const cargarUsuarios = async () => {
       try {
-        const response = await fetch(`${backend}/usuarios`, {
-          headers: { Authorization: `Bearer ${token()}` },
-        });
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.error || "No se pudieron cargar los usuarios");
+        const data = await getUsers();
         setUsuarios(data.users || []);
       } catch (err) {
         setError(err.message || "No se pudieron cargar los usuarios");
@@ -46,7 +34,7 @@ function Usuarios() {
     };
 
     cargarUsuarios();
-  }, [backend]);
+  }, []);
 
   const cambiarEstado = async () => {
     if (!usuarioSeleccionado) return;
@@ -54,16 +42,7 @@ function Usuarios() {
     const activo = usuarioSeleccionado.estado !== "Activo";
 
     try {
-      const response = await fetch(`${backend}/usuarios/${usuarioSeleccionado.id}/estado`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token()}`,
-        },
-        body: JSON.stringify({ activo }),
-      });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || "No se pudo actualizar el usuario");
+      await updateUserStatus(usuarioSeleccionado.id, activo);
 
       setUsuarios((prev) => prev.map((usuario) => (
         usuario.id === usuarioSeleccionado.id
@@ -80,9 +59,7 @@ function Usuarios() {
   const eliminarUsuario = async (usuario) => {
     if (!window.confirm(`¿Desactivar a ${usuario.nombre}?`)) return;
     try {
-      const response = await fetch(`${backend}/usuarios/${usuario.id}`, { method: "DELETE", headers: { Authorization: `Bearer ${token()}` } });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || "No se pudo eliminar el usuario");
+      await deactivateUser(usuario.id);
       setUsuarios((prev) => prev.map((item) => item.id === usuario.id ? { ...item, activo: 0, estado: "Inactivo" } : item));
     } catch (err) {
       setError(err.message || "No se pudo eliminar el usuario");
@@ -113,7 +90,7 @@ function Usuarios() {
           </div>
           <div className="admin-meta">
             <span style={{ fontSize: "14px", color: "#888" }}>Total: {usuarios.length} usuarios</span>
-            <button className="btn-admin-primary" onClick={() => navigate("/admin/crear-usuario")}><Icon name="plus" size={18} /> Crear usuario</button>
+            <button className="btn-admin-primary" onClick={() => navigate("/admin/crear-usuario")}>+ Crear usuario</button>
           </div>
         </div>
 
@@ -128,7 +105,7 @@ function Usuarios() {
         </div>
 
         <div className="admin-search">
-          <Icon name="search" size={18} />
+          <span>🔍</span>
           <input type="text" placeholder="Buscar por nombre o correo..." value={busqueda} onChange={(event) => setBusqueda(event.target.value)} />
         </div>
 
@@ -140,12 +117,12 @@ function Usuarios() {
                 const color = rolColor[usuario.rol.split(", ")[0]] || { bg: "#f5f5f5", color: "#555" };
                 return <tr key={usuario.id}>
                   <td>{indice + 1}</td>
-                  <td className="admin-tabla-nombre"><div style={{ display: "flex", alignItems: "center", gap: "10px" }}><img src={usuario.fotoPerfil ? `${backendUrl}${usuario.fotoPerfil}` : ""} alt="" style={{ width: "36px", height: "36px", borderRadius: "50%", objectFit: "cover", background: "#fff3e0" }} />{usuario.nombre} {usuario.apellido}</div></td>
+                  <td className="admin-tabla-nombre"><div style={{ display: "flex", alignItems: "center", gap: "10px" }}><img src={usuario.fotoPerfil ? `${API_BASE_URL}${usuario.fotoPerfil}` : ""} alt="" style={{ width: "36px", height: "36px", borderRadius: "50%", objectFit: "cover", background: "#fff3e0" }} />{usuario.nombre} {usuario.apellido}</div></td>
                   <td>{usuario.correo}</td>
                   <td>{usuario.telefono || "Sin registrar"}</td>
                   <td><span className="status-badge" style={{ background: color.bg, color: color.color }}>{usuario.rol}</span></td>
                   <td><span className={usuario.estado === "Activo" ? "status-badge is-active" : "status-badge is-inactive"}>{usuario.estado}</span></td>
-                  <td><div className="admin-acciones"><button className="btn-admin-editar" onClick={() => navigate(`/admin/editar-usuario/${usuario.id}`)} aria-label="Editar usuario" title="Editar usuario"><Icon name="pencil" size={16} /> Editar</button><button className={usuario.estado === "Activo" ? "btn-admin-eliminar" : "btn-admin-editar"} onClick={() => confirmarCambio(usuario)} aria-label={usuario.estado === "Activo" ? "Desactivar usuario" : "Activar usuario"} title={usuario.estado === "Activo" ? "Desactivar usuario" : "Activar usuario"}><Icon name={usuario.estado === "Activo" ? "lock" : "checkCircle"} size={16} /> {usuario.estado === "Activo" ? "Desactivar" : "Activar"}</button><button className="btn-admin-eliminar" onClick={() => eliminarUsuario(usuario)} aria-label="Eliminar usuario" title="Eliminar usuario"><Icon name="trash" size={16} /> Eliminar</button></div></td>
+                  <td><div className="admin-acciones"><button className="btn-admin-editar" onClick={() => navigate(`/admin/editar-usuario/${usuario.id}`)}><i className="bi bi-pencil-square" aria-hidden="true" /> Editar</button><button className={usuario.estado === "Activo" ? "btn-admin-eliminar" : "btn-admin-editar"} onClick={() => confirmarCambio(usuario)}><i className={`bi ${usuario.estado === "Activo" ? "bi-lock-fill" : "bi-check-circle-fill"}`} aria-hidden="true" /> {usuario.estado === "Activo" ? "Desactivar" : "Activar"}</button><button className="btn-admin-eliminar" onClick={() => eliminarUsuario(usuario)}><i className="bi bi-trash3" aria-hidden="true" /> Eliminar</button></div></td>
                 </tr>;
               })}
             </tbody>

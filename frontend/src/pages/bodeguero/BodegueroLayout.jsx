@@ -5,7 +5,6 @@ const tabs = [
   { label: 'Inicio', to: '/bodeguero' },
   { label: 'Inventario', to: '/bodeguero/inventario' },
   { label: 'Pedidos', to: '/bodeguero/pedidos' },
-  { label: 'Envío', to: '/bodeguero/envio' },
   { label: 'Movimientos', to: '/bodeguero/movimientos' }
 ];
 
@@ -24,9 +23,7 @@ export default function BodegueroLayout({ children }) {
 
       <nav className="bodeguero-tabs" aria-label="Navegación bodeguero">
         {tabs.map((tab) => {
-          const isActive = tab.to === '/bodeguero'
-            ? location.pathname === tab.to
-            : location.pathname === tab.to || location.pathname.startsWith(`${tab.to}/`);
+          const isActive = location.pathname === tab.to || location.pathname.startsWith(`${tab.to}/`);
           return (
             <Link
               key={tab.to}

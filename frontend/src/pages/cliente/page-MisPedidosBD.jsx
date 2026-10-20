@@ -2,17 +2,13 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getMyOrders } from "../../services/pedidoService";
 import "../../styles/style.css";
-import Icon from "../../components/Icon";
 
-const estados = ["Todos", "Pendiente", "En preparación", "Incidencia", "Por recoger", "En camino", "Entregado", "Cancelado"];
+const estados = ["Todos", "Pendiente", "En camino", "Entregado", "Cancelado"];
 const estadoColor = {
-  Pendiente: { bg: "#fff8e0", color: "#f0a500", icon: "clock" },
-  "En preparación": { bg: "#e8f4ff", color: "#4a90d9", icon: "package" },
-  Incidencia: { bg: "#fff0f0", color: "#e53935", icon: "x" },
-  "Por recoger": { bg: "#fff8e0", color: "#b87800", icon: "package" },
-  "En camino": { bg: "#e8f4ff", color: "#4a90d9", icon: "truck" },
-  Entregado: { bg: "#eafbea", color: "#3a7d44", icon: "checkCircle" },
-  Cancelado: { bg: "#fff0f0", color: "#e53935", icon: "x" },
+  Pendiente: { icon: "bi-hourglass-split", className: "status-warning" },
+  "En camino": { icon: "bi-truck", className: "status-info" },
+  Entregado: { icon: "bi-check-circle-fill", className: "status-success" },
+  Cancelado: { icon: "bi-x-circle-fill", className: "status-danger" },
 };
 const formatoPrecio = new Intl.NumberFormat("es-CO", {
   style: "currency",
@@ -48,41 +44,36 @@ function MisPedidos() {
   const cantidadProductos = pedidosFiltrados.reduce((total, pedido) => total + pedido.productos.reduce((suma, producto) => suma + Number(producto.cantidad || 0), 0), 0);
 
   if (loading) {
-    return <div className="page-empty-state page-empty-state--loading">Cargando mis pedidos...</div>;
+    return <div style={{ minHeight: "100vh", background: "#f5f5f5", padding: "4rem", textAlign: "center", color: "#888" }}>Cargando mis pedidos...</div>;
   }
 
   return (
     <div className="carrito-page">
       <div className="carrito-container">
-        <button className="back-link" onClick={() => navigate("/catalogo")}>
-          <Icon name="arrowLeft" size={18} /> Volver al catálogo
+        <button onClick={() => navigate("/catalogo")} style={{ background: "none", border: "none", color: "#ff8c42", fontWeight: 600, cursor: "pointer", padding: 0, marginBottom: "1rem" }}>
+          ← Volver al catálogo
         </button>
 
-        <h2 className="carrito-titulo">Mis pedidos</h2>
+        <h2 className="carrito-titulo">Historial de compras</h2>
         {error && <div className="login-error">{error}</div>}
 
-        <div className="orders-filter-bar">
+        <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", marginBottom: "1.5rem" }}>
           {estados.map((estado) => (
-            <button
-              key={estado}
-              type="button"
-              onClick={() => setFiltroEstado(estado)}
-              className={filtroEstado === estado ? "orders-filter-btn is-active" : "orders-filter-btn"}
-            >
-              {estado === "Todos" ? estado : <><Icon name={estadoColor[estado].icon} size={16} /> {estado}</>}
+            <button key={estado} type="button" onClick={() => setFiltroEstado(estado)} style={{ padding: "7px 14px", borderRadius: "20px", border: filtroEstado === estado ? "1px solid #ff8c42" : "1px solid #ddd", background: filtroEstado === estado ? "#ff8c42" : "#fff", color: filtroEstado === estado ? "#fff" : "#555", cursor: "pointer", fontSize: "13px", fontWeight: 600 }}>
+              {estado === "Todos" ? estado : <><i className={`bi ${estadoColor[estado].icon}`} aria-hidden="true" /> {estado}</>}
             </button>
           ))}
         </div>
 
         {pedidos.length === 0 ? (
-          <div className="orders-empty-state">
-            <span className="empty-page__icon empty-page__icon--accent"><Icon name="package" size={32} /></span>
-            <h3 className="orders-empty-state__title">Aún no tienes pedidos</h3>
-            <p className="orders-empty-state__text">Cuando realices una compra aparecerá aquí.</p>
-            <button className="primary-action-button" onClick={() => navigate("/catalogo")}>Ver productos</button>
+          <div style={{ background: "#fff", borderRadius: "12px", padding: "4rem 2rem", textAlign: "center" }}>
+            <i className="bi bi-box-seam historial-empty-icon" aria-hidden="true" />
+            <h3 style={{ color: "#1a1a1a", marginBottom: "8px" }}>Aún no tienes pedidos</h3>
+            <p style={{ color: "#888", marginBottom: "1.5rem" }}>Cuando realices una compra aparecerá aquí.</p>
+            <button onClick={() => navigate("/catalogo")} style={{ background: "#ff8c42", color: "#fff", border: "none", borderRadius: "8px", padding: "10px 24px", cursor: "pointer", fontWeight: 600 }}>Ver productos</button>
           </div>
         ) : pedidosFiltrados.length === 0 ? (
-          <div className="orders-empty-state orders-empty-state--compact">No tienes pedidos con este estado.</div>
+          <div style={{ background: "#fff", borderRadius: "12px", padding: "3rem", textAlign: "center", color: "#888" }}>No tienes pedidos con este estado.</div>
         ) : (
           <div className="carrito-layout">
             <div className="carrito-lista">
@@ -90,32 +81,14 @@ function MisPedidos() {
                 const estado = estadoColor[pedido.estado] || estadoColor.Pendiente;
                 const abierto = pedidoAbierto === pedido.id;
                 return (
-                  <div key={pedido.id} className="orders-card">
-                    <button type="button" className="orders-card__toggle" onClick={() => setPedidoAbierto(abierto ? null : pedido.id)}>
-                      <div>
-                        <strong className="orders-card__id">Pedido #{pedido.id}</strong>
-                        <small className="orders-card__meta">{pedido.fecha} · {pedido.productos.length} producto(s)</small>
-                      </div>
-                      <div className="orders-card__summary">
-                        <span className="status-badge" style={{ background: estado.bg, color: estado.color }}><Icon name={estado.icon} size={16} /> {pedido.estado}</span>
-                        <span className="orders-card__amount">{formatoPrecio.format(Number(pedido.total) || 0)}</span>
-                        <Icon name={abierto ? "arrowUp" : "arrowDown"} size={16} />
-                      </div>
+                  <div key={pedido.id} style={{ background: "#fff", borderRadius: "12px", border: "1px solid #eee", padding: "1rem" }}>
+                    <button type="button" onClick={() => setPedidoAbierto(abierto ? null : pedido.id)} style={{ width: "100%", display: "flex", justifyContent: "space-between", alignItems: "center", gap: "1rem", border: 0, background: "transparent", padding: 0, cursor: "pointer", textAlign: "left" }}>
+                      <div><strong style={{ fontSize: "14px", color: "#1a1a1a" }}>Pedido #{pedido.id}</strong><small style={{ display: "block", color: "#888", marginTop: "5px" }}>{pedido.fecha} · {pedido.productos.length} producto(s)</small></div>
+                      <div style={{ display: "flex", alignItems: "center", gap: "10px" }}><span className={`status-badge ${estado.className}`}><i className={`bi ${estado.icon}`} aria-hidden="true" /> {pedido.estado}</span><span style={{ fontSize: "15px", fontWeight: 700, color: "#ff8c42", whiteSpace: "nowrap" }}>{formatoPrecio.format(Number(pedido.total) || 0)}</span><i className={`bi ${abierto ? "bi-chevron-up" : "bi-chevron-down"}`} aria-hidden="true" /></div>
                     </button>
-                    {abierto && <div className="orders-card__details">
-                      {pedido.productos.map((producto) => (
-                        <div key={`${pedido.id}-${producto.nombre}`} className="orders-card__product">
-                          <div className="orders-card__product-main">
-                            <div className="orders-card__product-icon"><Icon name="package" size={22} /></div>
-                            <div>
-                              <strong className="orders-card__product-name">{producto.nombre}</strong>
-                              <small className="orders-card__product-qty">Cantidad: {producto.cantidad}</small>
-                            </div>
-                          </div>
-                          <strong className="orders-card__product-total">{formatoPrecio.format(Number(producto.subtotal) || 0)}</strong>
-                        </div>
-                      ))}
-                      <div className="orders-card__info"><p><strong>Entrega:</strong> {pedido.direccion || "Sin dirección"}{pedido.ciudad ? `, ${pedido.ciudad}` : ""}</p><p><strong>Pago:</strong> {pedido.pago || "Sin registrar"}</p></div>
+                    {abierto && <div style={{ marginTop: "1rem", paddingTop: "1rem", borderTop: "1px solid #eee" }}>
+                      {pedido.productos.map((producto) => <div key={`${pedido.id}-${producto.nombre}`} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "1rem", padding: "10px 0", borderBottom: "1px solid #f0f0f0" }}><div style={{ display: "flex", alignItems: "center", gap: "10px" }}><div className="historial-product-icon"><i className="bi bi-box-seam" aria-hidden="true" /></div><div><strong style={{ fontSize: "14px", color: "#1a1a1a" }}>{producto.nombre}</strong><small style={{ display: "block", color: "#888", marginTop: "4px" }}>Cantidad: {producto.cantidad}</small></div></div><strong style={{ color: "#ff8c42", whiteSpace: "nowrap" }}>{formatoPrecio.format(Number(producto.subtotal) || 0)}</strong></div>)}
+                      <div style={{ marginTop: "1rem", fontSize: "13px", color: "#555" }}><p><strong>Entrega:</strong> {pedido.direccion || "Sin dirección"}{pedido.ciudad ? `, ${pedido.ciudad}` : ""}</p><p><strong>Pago:</strong> {pedido.pago || "Sin registrar"}</p></div>
                     </div>}
                   </div>
                 );
@@ -123,11 +96,11 @@ function MisPedidos() {
             </div>
 
             <div className="carrito-resumen">
-              <h3>Resumen de mis pedidos</h3>
-              <div className="cart-summary__row"><span>Pedidos</span><span>{pedidosFiltrados.length}</span></div>
-              <div className="cart-summary__row"><span>Productos</span><span>{cantidadProductos}</span></div>
-              <div className="cart-summary__row cart-summary__row--total"><span>Total</span><span>{formatoPrecio.format(totalPedidos)}</span></div>
-              <button className="cart-cta" onClick={() => navigate("/catalogo")}>Seguir comprando</button>
+              <h3>Resumen de compras</h3>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "14px", color: "#555", marginBottom: "10px" }}><span>Pedidos</span><span>{pedidosFiltrados.length}</span></div>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "14px", color: "#555", marginBottom: "12px" }}><span>Productos</span><span>{cantidadProductos}</span></div>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "18px", fontWeight: 700, color: "#1a1a1a", paddingTop: "12px", borderTop: "1px solid #eee" }}><span>Total</span><span>{formatoPrecio.format(totalPedidos)}</span></div>
+              <button onClick={() => navigate("/catalogo")} style={{ width: "100%", height: "44px", borderRadius: "8px", border: "none", background: "#ff8c42", color: "#fff", fontSize: "15px", fontWeight: 600, cursor: "pointer", marginTop: "1rem" }}>Seguir comprando</button>
             </div>
           </div>
         )}

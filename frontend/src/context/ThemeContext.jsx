@@ -1,10 +1,9 @@
-import { useEffect, useState } from "react";
-import { ThemeContext } from "./theme-context";
+import { useEffect, useMemo, useState } from "react";
+import { ThemeContext } from "./ThemeContext";
 
-const THEME_KEY = "happykids-theme";
 const getInitialTheme = () => {
-  const stored = localStorage.getItem(THEME_KEY);
-  if (stored === "light" || stored === "dark") return stored;
+  const saved = localStorage.getItem("happykids-theme");
+  if (saved === "light" || saved === "dark") return saved;
   return window.matchMedia?.("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 };
 
@@ -13,12 +12,14 @@ export function ThemeProvider({ children }) {
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
-    document.documentElement.style.colorScheme = theme;
-    localStorage.setItem(THEME_KEY, theme);
+    localStorage.setItem("happykids-theme", theme);
   }, [theme]);
 
-  const toggleTheme = () => setTheme((current) => (current === "light" ? "dark" : "light"));
+  const value = useMemo(() => ({
+    theme,
+    toggleTheme: () => setTheme((current) => current === "dark" ? "light" : "dark"),
+  }), [theme]);
 
-  return <ThemeContext.Provider value={{ theme, setTheme, toggleTheme }}>{children}</ThemeContext.Provider>;
+  return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 }
 

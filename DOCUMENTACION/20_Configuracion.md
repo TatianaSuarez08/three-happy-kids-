@@ -23,7 +23,7 @@ CORS_ORIGIN=http://localhost:5173
 El frontend usa variables de entorno para el backend, por ejemplo:
 
 ```env
-VITE_API_URL=http://localhost:3001
+VITE_BACKEND_URL=http://localhost:3000
 ```
 
 ## Observación

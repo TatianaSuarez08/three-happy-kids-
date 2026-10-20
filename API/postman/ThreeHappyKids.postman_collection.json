@@ -1,0 +1,574 @@
+{
+  "info": {
+    "name": "Three Happy Kids - API",
+    "_postman_id": "3d6b1a2e-8f2d-4c7a-9f1a-thk-api-collection",
+    "description": "Colección para la API de Three Happy Kids (carpeta `api/`). Base montada en Express, rutas de negocio bajo `/api/v1`. Autenticación por JWT (header `Authorization: Bearer <token>`). Las peticiones de login/registro guardan el token automáticamente en la variable de colección `token` mediante un test script.\n\nRoles y permisos (ver `src/middleware/role.js`): administrador, bodeguero, mensajero, cliente. Cada ruta protegida indica en su descripción los roles/permisos aceptados.\n\nEndpoints que suben archivos usan `multipart/form-data` (campo `imagen` para productos, `foto` para usuarios/perfil).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }]
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3000", "type": "string" },
+    { "key": "apiBase", "value": "{{baseUrl}}/api/v1", "type": "string" },
+    { "key": "token", "value": "", "type": "string" },
+    { "key": "productId", "value": "1", "type": "string" },
+    { "key": "orderId", "value": "1", "type": "string" },
+    { "key": "userId", "value": "1", "type": "string" },
+    { "key": "categoriaId", "value": "1", "type": "string" },
+    { "key": "tallaId", "value": "1", "type": "string" },
+    { "key": "colorId", "value": "1", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "Root",
+      "item": [
+        {
+          "name": "Estado de la API",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/", "host": ["{{baseUrl}}"], "path": [""] },
+            "description": "Ruta raíz fuera de `/api/v1`. Responde `{ success, message }` si el servidor está arriba."
+          }
+        },
+        {
+          "name": "Health check (DB)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{apiBase}}/health", "host": ["{{apiBase}}"], "path": ["health"] },
+            "description": "Ejecuta `SELECT 1` contra MySQL. 200 `{ ok: true }` si conecta, 503 `{ ok: false, error }` si no."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Usuarios (Auth)",
+      "item": [
+        {
+          "name": "Registro",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  const body = pm.response.json();",
+                  "  if (body.token) pm.collectionVariables.set('token', body.token);",
+                  "  if (body.user && body.user.id) pm.collectionVariables.set('userId', body.user.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre_usuario\": \"Juan Perez\",\n  \"email\": \"juan.perez@example.com\",\n  \"password\": \"secreto123\",\n  \"confirmar_password\": \"secreto123\"\n}"
+            },
+            "url": { "raw": "{{apiBase}}/registro", "host": ["{{apiBase}}"], "path": ["registro"] },
+            "description": "Crea un usuario cliente. Valida email, longitud de password (>=6) y nombre (>=3), y que `password === confirmar_password`. 201 devuelve `user` + `token`. 409 si el email ya existe."
+          }
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const body = pm.response.json();",
+                  "  if (body.token) pm.collectionVariables.set('token', body.token);",
+                  "  if (body.user && body.user.id) pm.collectionVariables.set('userId', body.user.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"juan.perez@example.com\",\n  \"password\": \"secreto123\"\n}"
+            },
+            "url": { "raw": "{{apiBase}}/login", "host": ["{{apiBase}}"], "path": ["login"] },
+            "description": "Autentica y devuelve `{ user, token }`. El token JWT expira en 8h e incluye `roles` y `permissions`. Guarda el token en la variable de colección `token` para las demás peticiones. 401 si credenciales inválidas, 403 si el usuario está inactivo."
+          }
+        },
+        {
+          "name": "Mi perfil",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{apiBase}}/me", "host": ["{{apiBase}}"], "path": ["me"] },
+            "description": "Requiere JWT. Devuelve el perfil del usuario autenticado."
+          }
+        },
+        {
+          "name": "Actualizar mi foto de perfil",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "foto", "type": "file", "src": [] }
+              ]
+            },
+            "url": { "raw": "{{apiBase}}/me/foto", "host": ["{{apiBase}}"], "path": ["me", "foto"] },
+            "description": "Requiere JWT. `multipart/form-data`, campo `foto` (jpg/png/webp/gif, máx 5MB). Devuelve la nueva ruta `fotoPerfil`."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Productos",
+      "item": [
+        {
+          "name": "Listar productos públicos",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": { "raw": "{{apiBase}}/productos-publicos", "host": ["{{apiBase}}"], "path": ["productos-publicos"] },
+            "description": "Público, sin autenticación. Lista productos activos."
+          }
+        },
+        {
+          "name": "Detalle producto público",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": {
+              "raw": "{{apiBase}}/productos-publicos/:id",
+              "host": ["{{apiBase}}"],
+              "path": ["productos-publicos", ":id"],
+              "variable": [{ "key": "id", "value": "{{productId}}" }]
+            },
+            "description": "Público. 404 si no existe."
+          }
+        },
+        {
+          "name": "Listar colores",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{apiBase}}/colores", "host": ["{{apiBase}}"], "path": ["colores"] },
+            "description": "Requiere JWT + rol administrador/bodeguero o permiso `productos:read`."
+          }
+        },
+        {
+          "name": "Listar productos (admin)",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{apiBase}}/productos", "host": ["{{apiBase}}"], "path": ["productos"] },
+            "description": "Requiere JWT + rol administrador/bodeguero o permiso `productos:read`."
+          }
+        },
+        {
+          "name": "Detalle producto (admin)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{apiBase}}/productos/:id",
+              "host": ["{{apiBase}}"],
+              "path": ["productos", ":id"],
+              "variable": [{ "key": "id", "value": "{{productId}}" }]
+            },
+            "description": "Requiere JWT + rol administrador/bodeguero o permiso `productos:read`."
+          }
+        },
+        {
+          "name": "Crear producto",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "nombre", "value": "Camiseta estampada", "type": "text" },
+                { "key": "descripcion", "value": "Camiseta de algodón 100%", "type": "text" },
+                { "key": "precioCompra", "value": "10000", "type": "text" },
+                { "key": "precioVenta", "value": "19900", "type": "text" },
+                { "key": "marca", "value": "Happy Kids", "type": "text" },
+                { "key": "idCategoria", "value": "{{categoriaId}}", "type": "text" },
+                { "key": "idTalla", "value": "{{tallaId}}", "type": "text" },
+                { "key": "idColor", "value": "{{colorId}}", "type": "text" },
+                { "key": "stock", "value": "50", "type": "text" },
+                { "key": "stockMinimo", "value": "5", "type": "text" },
+                { "key": "estado", "value": "Activo", "type": "text" },
+                { "key": "imagen", "type": "file", "src": [] }
+              ]
+            },
+            "url": { "raw": "{{apiBase}}/productos", "host": ["{{apiBase}}"], "path": ["productos"] },
+            "description": "Requiere JWT + rol administrador/bodeguero o permiso `productos:write`. `multipart/form-data`, `imagen` obligatoria (jpg/png/webp/gif, máx 5MB). `precioCompra` es opcional; `precioVenta`, `idCategoria`, `idTalla`, `idColor`, `stock` y `stockMinimo` son obligatorios. `estado` en `Activo|Inactivo` (default `Activo`)."
+          }
+        },
+        {
+          "name": "Editar producto",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "nombre", "value": "Camiseta estampada", "type": "text" },
+                { "key": "descripcion", "value": "Camiseta de algodón 100%", "type": "text" },
+                { "key": "precioCompra", "value": "10000", "type": "text" },
+                { "key": "precioVenta", "value": "21900", "type": "text" },
+                { "key": "marca", "value": "Happy Kids", "type": "text" },
+                { "key": "idCategoria", "value": "{{categoriaId}}", "type": "text" },
+                { "key": "idTalla", "value": "{{tallaId}}", "type": "text" },
+                { "key": "idColor", "value": "{{colorId}}", "type": "text" },
+                { "key": "stock", "value": "40", "type": "text" },
+                { "key": "stockMinimo", "value": "5", "type": "text" },
+                { "key": "estado", "value": "Activo", "type": "text" },
+                { "key": "imagen", "type": "file", "src": [] }
+              ]
+            },
+            "url": {
+              "raw": "{{apiBase}}/productos/:id",
+              "host": ["{{apiBase}}"],
+              "path": ["productos", ":id"],
+              "variable": [{ "key": "id", "value": "{{productId}}" }]
+            },
+            "description": "Requiere JWT + rol administrador/bodeguero o permiso `productos:write`. Mismos campos que crear; `imagen` es opcional (si se omite se conserva la actual)."
+          }
+        },
+        {
+          "name": "Desactivar producto",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{apiBase}}/productos/:id",
+              "host": ["{{apiBase}}"],
+              "path": ["productos", ":id"],
+              "variable": [{ "key": "id", "value": "{{productId}}" }]
+            },
+            "description": "Requiere JWT + rol administrador/bodeguero o permiso `productos:write`. Borrado lógico: pasa `estado` a `Inactivo`."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Pedidos",
+      "item": [
+        {
+          "name": "Listar todos los pedidos",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{apiBase}}/pedidos", "host": ["{{apiBase}}"], "path": ["pedidos"] },
+            "description": "Requiere JWT + rol administrador/bodeguero/mensajero o permiso `pedidos:read`."
+          }
+        },
+        {
+          "name": "Crear pedido",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"direccion\": \"Calle 123 #45-67\",\n  \"ciudad\": \"Bogotá\",\n  \"telefono\": \"3001234567\",\n  \"pago\": \"Contraentrega\",\n  \"productos\": [\n    { \"id\": {{productId}}, \"cantidad\": 2 }\n  ]\n}"
+            },
+            "url": { "raw": "{{apiBase}}/pedidos", "host": ["{{apiBase}}"], "path": ["pedidos"] },
+            "description": "Requiere JWT + rol administrador/bodeguero/mensajero/cliente o permiso `comprar`. `productos` es un arreglo no vacío. Puede enviar `Idempotency-Key` como header para evitar duplicados. 409 si no hay stock suficiente."
+          }
+        },
+        {
+          "name": "Cambiar estado de pedido",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"estado\": \"En camino\"\n}"
+            },
+            "url": {
+              "raw": "{{apiBase}}/pedidos/:id/estado",
+              "host": ["{{apiBase}}"],
+              "path": ["pedidos", ":id", "estado"],
+              "variable": [{ "key": "id", "value": "{{orderId}}" }]
+            },
+            "description": "Requiere JWT + rol administrador/mensajero o permiso `pedidos:write`. `estado` debe ser uno de: `Pendiente`, `En camino`, `Entregado`, `Cancelado`."
+          }
+        },
+        {
+          "name": "Mis pedidos",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{apiBase}}/mis-pedidos", "host": ["{{apiBase}}"], "path": ["mis-pedidos"] },
+            "description": "Requiere JWT + rol administrador/bodeguero/mensajero/cliente o permiso `pedidos:own:read`. Devuelve los pedidos del usuario autenticado."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Administración de Usuarios",
+      "item": [
+        {
+          "name": "Listar usuarios administrativos",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{apiBase}}/usuarios", "host": ["{{apiBase}}"], "path": ["usuarios"] },
+            "description": "Requiere JWT + rol administrador o permiso `usuarios:read`."
+          }
+        },
+        {
+          "name": "Crear usuario administrativo",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "nombre", "value": "Ana", "type": "text" },
+                { "key": "apellido", "value": "Gómez", "type": "text" },
+                { "key": "correo", "value": "ana.gomez@example.com", "type": "text" },
+                { "key": "telefono", "value": "3009876543", "type": "text" },
+                { "key": "password", "value": "secreto123", "type": "text" },
+                { "key": "rol", "value": "Bodeguero", "type": "text" },
+                { "key": "foto", "type": "file", "src": [] }
+              ]
+            },
+            "url": { "raw": "{{apiBase}}/usuarios", "host": ["{{apiBase}}"], "path": ["usuarios"] },
+            "description": "Requiere JWT + rol administrador o permiso `usuarios:write`. `rol` debe ser uno de: `Administrador`, `Bodeguero`, `Mensajero`. `foto` es opcional."
+          }
+        },
+        {
+          "name": "Editar usuario administrativo",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Ana\",\n  \"apellido\": \"Gómez\",\n  \"correo\": \"ana.gomez@example.com\",\n  \"telefono\": \"3009876543\",\n  \"password\": \"\",\n  \"rol\": \"Bodeguero\"\n}"
+            },
+            "url": {
+              "raw": "{{apiBase}}/usuarios/:id",
+              "host": ["{{apiBase}}"],
+              "path": ["usuarios", ":id"],
+              "variable": [{ "key": "id", "value": "{{userId}}" }]
+            },
+            "description": "Requiere JWT + rol administrador o permiso `usuarios:write`. `password` es opcional (déjalo vacío/omítelo para no cambiarla; si se envía, mínimo 6 caracteres)."
+          }
+        },
+        {
+          "name": "Cambiar estado de usuario",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"activo\": false\n}"
+            },
+            "url": {
+              "raw": "{{apiBase}}/usuarios/:id/estado",
+              "host": ["{{apiBase}}"],
+              "path": ["usuarios", ":id", "estado"],
+              "variable": [{ "key": "id", "value": "{{userId}}" }]
+            },
+            "description": "Requiere JWT + rol administrador o permiso `usuarios:write`. `activo` es booleano. No se puede desactivar el propio usuario autenticado."
+          }
+        },
+        {
+          "name": "Eliminar usuario administrativo",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{apiBase}}/usuarios/:id",
+              "host": ["{{apiBase}}"],
+              "path": ["usuarios", ":id"],
+              "variable": [{ "key": "id", "value": "{{userId}}" }]
+            },
+            "description": "Requiere JWT + rol administrador o permiso `usuarios:write`. No se puede eliminar el propio usuario autenticado."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Dashboard",
+      "item": [
+        {
+          "name": "Obtener dashboard",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{apiBase}}/dashboard", "host": ["{{apiBase}}"], "path": ["dashboard"] },
+            "description": "Requiere JWT + rol administrador o permiso `dashboard:read`."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Catálogo",
+      "item": [
+        {
+          "name": "Listar categorías",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": { "raw": "{{apiBase}}/categorias", "host": ["{{apiBase}}"], "path": ["categorias"] },
+            "description": "Público, sin autenticación. Lista categorías activas."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Inventario",
+      "item": [
+        {
+          "name": "Historial de inventario por producto",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{apiBase}}/inventario/:id/historial",
+              "host": ["{{apiBase}}"],
+              "path": ["inventario", ":id", "historial"],
+              "variable": [{ "key": "id", "value": "{{productId}}" }]
+            },
+            "description": "Requiere JWT + rol administrador/bodeguero."
+          }
+        },
+        {
+          "name": "Registrar movimiento de inventario",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productId\": {{productId}},\n  \"tipo\": \"entrada\",\n  \"cantidad\": 10,\n  \"motivo\": \"Reposición de stock\",\n  \"referencia\": \"OC-0001\"\n}"
+            },
+            "url": { "raw": "{{apiBase}}/inventario/movimiento", "host": ["{{apiBase}}"], "path": ["inventario", "movimiento"] },
+            "description": "Requiere JWT + rol administrador/bodeguero. `tipo` en `entrada|salida|ajuste`. `cantidad` > 0. `referencia` y `motivo` opcionales. 400 si no hay stock suficiente para una `salida`."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Logística",
+      "item": [
+        {
+          "name": "Resumen logístico",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{apiBase}}/logistica", "host": ["{{apiBase}}"], "path": ["logistica"] },
+            "description": "Requiere JWT + rol administrador/bodeguero/mensajero o permiso `pedidos:read`."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Favoritos",
+      "item": [
+        {
+          "name": "Listar mis favoritos",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{apiBase}}/favoritos", "host": ["{{apiBase}}"], "path": ["favoritos"] },
+            "description": "Requiere JWT."
+          }
+        },
+        {
+          "name": "Agregar favorito",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productId\": {{productId}}\n}"
+            },
+            "url": { "raw": "{{apiBase}}/favoritos", "host": ["{{apiBase}}"], "path": ["favoritos"] },
+            "description": "Requiere JWT. Acepta `productId` o `id_producto`. 404 si el producto no existe."
+          }
+        },
+        {
+          "name": "Eliminar favorito",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{apiBase}}/favoritos/:productId",
+              "host": ["{{apiBase}}"],
+              "path": ["favoritos", ":productId"],
+              "variable": [{ "key": "productId", "value": "{{productId}}" }]
+            },
+            "description": "Requiere JWT."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Carrito",
+      "item": [
+        {
+          "name": "Ver mi carrito",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{apiBase}}/carrito", "host": ["{{apiBase}}"], "path": ["carrito"] },
+            "description": "Requiere JWT."
+          }
+        },
+        {
+          "name": "Agregar producto al carrito",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productId\": {{productId}},\n  \"quantity\": 1\n}"
+            },
+            "url": { "raw": "{{apiBase}}/carrito", "host": ["{{apiBase}}"], "path": ["carrito"] },
+            "description": "Requiere JWT. Acepta `productId`/`id_producto`/`id` y `quantity`/`cantidad` (default 1, entero >= 1)."
+          }
+        },
+        {
+          "name": "Actualizar cantidad de un ítem",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"quantity\": 3\n}"
+            },
+            "url": {
+              "raw": "{{apiBase}}/carrito/:productId",
+              "host": ["{{apiBase}}"],
+              "path": ["carrito", ":productId"],
+              "variable": [{ "key": "productId", "value": "{{productId}}" }]
+            },
+            "description": "Requiere JWT. 404 si el producto no está en el carrito del usuario."
+          }
+        },
+        {
+          "name": "Eliminar ítem del carrito",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{apiBase}}/carrito/:productId",
+              "host": ["{{apiBase}}"],
+              "path": ["carrito", ":productId"],
+              "variable": [{ "key": "productId", "value": "{{productId}}" }]
+            },
+            "description": "Requiere JWT."
+          }
+        },
+        {
+          "name": "Vaciar carrito",
+          "request": {
+            "method": "DELETE",
+            "url": { "raw": "{{apiBase}}/carrito", "host": ["{{apiBase}}"], "path": ["carrito"] },
+            "description": "Requiere JWT."
+          }
+        }
+      ]
+    }
+  ]
+}

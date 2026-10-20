@@ -1,5 +1,6 @@
 -- Script de referencia para usuarios de prueba.
--- Las contraseñas de prueba se almacenan como hashes bcrypt.
+-- Preferir USUARIOS_SHA2_SETUP.sql, que contiene hashes SHA-256 completos.
+-- Este archivo conserva el flujo SQL, pero los hashes de ejemplo no son válidos.
 
 USE happykids;
 
@@ -7,12 +8,13 @@ INSERT INTO rol (nombre_rol)
 VALUES ('cliente'), ('administrador')
 ON DUPLICATE KEY UPDATE nombre_rol = nombre_rol;
 
+-- Sustituye los valores salt:hash por hashes reales antes de ejecutar.
 INSERT INTO usuario (nombre_usuario, contrasena, correo, activo, idioma)
-VALUES ('cliente_test', '$2b$12$UH6CkIil1lBloqcSjqrnuepo5ot0dpaFx1HHDe6MH7ZN1bJoXqrEi', 'cliente@example.com', 1, 'es')
+VALUES ('cliente_test', 'SUSTITUIR_SALT_HASH', 'cliente@example.com', 1, 'es')
 ON DUPLICATE KEY UPDATE contrasena = VALUES(contrasena), activo = VALUES(activo);
 
 INSERT INTO usuario (nombre_usuario, contrasena, correo, activo, idioma)
-VALUES ('admin_test', '$2b$12$WNRzj4xO4T9bB.LWrp08suOe6btUaUSMJsnX4wXEREtTYmh6urguG', 'admin@example.com', 1, 'es')
+VALUES ('admin_test', 'SUSTITUIR_SALT_HASH', 'admin@example.com', 1, 'es')
 ON DUPLICATE KEY UPDATE contrasena = VALUES(contrasena), activo = VALUES(activo);
 
 DELETE FROM usuario_rol WHERE id_usuario = (SELECT id FROM usuario WHERE correo = 'cliente@example.com');

@@ -1,25 +1,20 @@
 import { Link, useSearchParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { getPublicProducts } from "../../services/productoService";
-import ProductoCard from "../../components/ProductoCard";
-
-const PRODUCTOS_POR_PAGINA = 20;
+import { API_BASE_URL } from "../../services/httpClient";
 
 function Index() {
   const [searchParams] = useSearchParams();
   const busqueda = searchParams.get("buscar") || "";
   const [productos, setProductos] = useState([]);
-  const [visibleCount, setVisibleCount] = useState(PRODUCTOS_POR_PAGINA);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState("");
-  const [hoverId, setHoverId] = useState(null);
+  const [hoverBtn, setHoverBtn] = useState(null);
 
   useEffect(() => {
     const cargarProductos = async () => {
       try {
-        const productosObtenidos = await getPublicProducts();
-        setProductos(productosObtenidos);
-        setVisibleCount(Math.min(PRODUCTOS_POR_PAGINA, productosObtenidos.length || PRODUCTOS_POR_PAGINA));
+        setProductos(await getPublicProducts());
       } catch (err) {
         setError(err.message || "No se pudo conectar con la base de datos");
       } finally {
@@ -33,13 +28,6 @@ function Index() {
   const productosFiltrados = productos.filter((p) =>
     p.nombre.toLowerCase().includes(busqueda.toLowerCase())
   );
-
-  useEffect(() => {
-    setVisibleCount(Math.min(PRODUCTOS_POR_PAGINA, productosFiltrados.length || PRODUCTOS_POR_PAGINA));
-  }, [busqueda, productosFiltrados.length]);
-
-  const productosVisibles = productosFiltrados.slice(0, visibleCount);
-  const hayMasProductos = visibleCount < productosFiltrados.length;
   const formatoPrecio = new Intl.NumberFormat("es-CO", {
     style: "currency",
     currency: "COP",
@@ -47,61 +35,126 @@ function Index() {
   });
 
   return (
-    <div className="page-hero">
+    <div className="page-hero" style={{ background: "#ffffff", minHeight: "100vh", fontFamily: "'Inter', sans-serif" }}>
+
+      <style>{`
+        .hk-banner { padding: 4rem 1.5rem 3rem; max-width: 1100px; margin: 0 auto; }
+        .hk-banner-title { font-size: 40px; }
+        .hk-banner-card {
+          max-width: 560px;
+          background: rgba(255,255,255,0.8);
+          border: 1px solid rgba(255,140,66,0.12);
+          border-radius: 26px;
+          padding: 2rem;
+          box-shadow: 0 18px 35px rgba(31, 36, 48, 0.05);
+        }
+        .hk-productos-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+          gap: 20px;
+        }
+
+        @media (max-width: 640px) {
+          .hk-banner { padding: 2rem 1rem 1.5rem; }
+          .hk-banner-title { font-size: 28px; }
+          .hk-banner-sub { font-size: 14px; }
+          .hk-banner-card { padding: 1.3rem; }
+          .hk-productos-grid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+          }
+          .hk-section { padding: 0 1rem 2.5rem !important; }
+        }
+
+        @media (max-width: 380px) {
+          .hk-productos-grid {
+            grid-template-columns: 1fr;
+          }
+        }
+      `}</style>
+
+      {/* Banner */}
       <section className="hk-banner">
         <div className="hk-banner-card">
-          <h1 className="hk-banner-title">
+          <h1 className="hk-banner-title" style={{ fontWeight: 700, letterSpacing: "-0.5px", color: "#1a1a1a", margin: "0 0 12px" }}>
             Bienvenido a HappyKids
           </h1>
-          <p className="hk-banner-sub">
+          <p className="hk-banner-sub" style={{ fontSize: "16px", color: "#8a8a8a", fontWeight: 400, lineHeight: 1.5, margin: "0 0 1.25rem" }}>
             Sudaderas, jeans, bermudas y mucho más para niñas y niños. Calidad y diseño en cada prenda, a los mejores precios.
           </p>
           <Link to="/catalogo" className="primary-cta">Ver colección</Link>
         </div>
       </section>
 
-      <section className="hk-section">
-        <h2 className="hk-section-title">Productos Recientes</h2>
-        <p className="hk-section-subtitle">Los productos más recientes para tus pequeños</p>
+      {/* Productos */}
+      <section className="hk-section" style={{ padding: "0 1.5rem 4rem", maxWidth: "1100px", margin: "0 auto" }}>
+        <h2 style={{ fontSize: "22px", fontWeight: 700, color: "#1a1a1a", margin: "0 0 4px" }}>
+          Productos Recientes
+        </h2>
+        <p style={{ fontSize: "14px", color: "#8a8a8a", fontWeight: 400, margin: "0 0 1.5rem" }}>
+          Los productos más recientes para tus pequeños
+        </p>
 
         {cargando ? (
-          <div className="page-empty-state">Cargando productos...</div>
+          <div style={{ textAlign: "center", padding: "3rem 1rem", color: "#8a8a8a" }}>
+            Cargando productos...
+          </div>
         ) : error ? (
-          <div className="page-empty-state page-empty-state--error">{error}</div>
+          <div style={{ textAlign: "center", padding: "3rem 1rem", color: "#a32d2d" }}>
+            {error}
+          </div>
         ) : productosFiltrados.length === 0 ? (
-          <div className="page-empty-state">
-            <span className="page-empty-state__emoji">😕</span>
+          <div style={{ textAlign: "center", padding: "3rem 1rem", color: "#8a8a8a" }}>
+            <span style={{ fontSize: "40px", display: "block", marginBottom: "12px" }}>😕</span>
             <p>No se encontraron productos para "<strong>{busqueda}</strong>"</p>
           </div>
         ) : (
-          <>
-            <div className="hk-productos-grid">
-              {productosVisibles.map((p) => (
-                <ProductoCard
-                  key={p.id}
-                  producto={p}
-                  formatoPrecio={formatoPrecio}
-                  hoverId={hoverId}
-                  setHoverId={setHoverId}
-                />
-              ))}
-            </div>
-
-            {hayMasProductos && (
-              <div style={{ display: "flex", justifyContent: "center", marginTop: "1.5rem" }}>
-                <button
-                  type="button"
-                  className="product-card-link"
-                  onClick={() => setVisibleCount((prev) => Math.min(prev + PRODUCTOS_POR_PAGINA, productosFiltrados.length))}
-                  style={{ maxWidth: "360px", width: "100%", cursor: "pointer" }}
-                >
-                  Mostrar más productos
-                </button>
+          <div className="hk-productos-grid">
+            {productosFiltrados.map((p) => (
+              <div
+                key={p.id}
+                className="product-card"
+                style={{
+                  overflow: "hidden",
+                  transition: "border-color 0.2s ease",
+                }}
+              >
+                <div style={{ aspectRatio: "1 / 1", overflow: "hidden" }}>
+                  <img
+                    src={p.imagen_producto
+                      ? `${API_BASE_URL}${p.imagen_producto.startsWith("/assets/") ? p.imagen_producto : `/assets/productos/${p.imagen_producto}`}`
+                      : ""}
+                    alt={p.nombre}
+                    style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                  />
+                </div>
+                <div style={{ padding: "14px 16px 18px" }}>
+                  <span style={{ fontSize: "14px", fontWeight: 500, color: "#1a1a1a", display: "block", marginBottom: "4px" }}>
+                    {p.nombre}
+                  </span>
+                  <span style={{ fontSize: "16px", fontWeight: 700, color: "#ff8c42", display: "block", marginBottom: "14px" }}>
+                    {formatoPrecio.format(Number(p.precio) || 0)}
+                  </span>
+                  <Link
+                    to={`/producto/${p.id}`}
+                    onMouseEnter={() => setHoverBtn(p.id)}
+                    onMouseLeave={() => setHoverBtn(null)}
+                    className="product-button"
+                    style={{
+                      border: `1px solid ${hoverBtn === p.id ? "#ff8c42" : "#eeeeee"}`,
+                      color: hoverBtn === p.id ? "#ff8c42" : "#1a1a1a",
+                      background: hoverBtn === p.id ? "#fff7f1" : "#fff",
+                    }}
+                  >
+                    Ver producto
+                  </Link>
+                </div>
               </div>
-            )}
-          </>
+            ))}
+          </div>
         )}
       </section>
+
     </div>
   );
 }

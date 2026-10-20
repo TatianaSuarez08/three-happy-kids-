@@ -24,12 +24,12 @@ El sistema ya funciona como un conjunto integrado, pero la separación conceptua
 
 ## Estructura real detectada
 
-- Frontend: [Front-end/src/App.jsx](../Front-end/src/App.jsx)
-- Backend: [Back-end/index.js](../Back-end/index.js)
-- Middleware de auth: [Back-end/src/middleware/autenticacion.js](../Back-end/src/middleware/autenticacion.js)
-- Middleware de roles: [Back-end/src/middleware/role.js](../Back-end/src/middleware/role.js)
-- Modelo de dashboard: [Back-end/src/models/DashboardModel.js](../Back-end/src/models/DashboardModel.js)
-- Esquema SQL: [DOCUMENTACION/sql/DataBaseHappyKids_CORREGIDA.sql](../DOCUMENTACION/sql/DataBaseHappyKids_CORREGIDA.sql)
+- Frontend: [frontend/src/App.jsx](../frontend/src/App.jsx)
+- Backend: [backend/index.js](../backend/index.js)
+- Middleware de auth: [backend/src/middleware/autenticacion.js](../backend/src/middleware/autenticacion.js)
+- Middleware de roles: [backend/src/middleware/role.js](../backend/src/middleware/role.js)
+- Modelo de dashboard: [backend/src/models/DashboardModel.js](../backend/src/models/DashboardModel.js)
+- Esquema SQL: [documentacion/sql/DataBaseHappyKids_CORREGIDA.sql](../documentacion/sql/DataBaseHappyKids_CORREGIDA.sql)
 
 ## Diagnóstico general
 

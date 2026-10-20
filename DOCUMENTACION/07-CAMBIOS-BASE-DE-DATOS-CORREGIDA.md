@@ -2,17 +2,17 @@
 
 ## Archivo creado
 
-La versión completa para instalaciones nuevas está en:
+La nueva versión está en:
 
 ```text
-DOCUMENTACION/sql/DataBaseHappyKids_CORREGIDA.sql
+documentacion/sql/DataBaseHappyKids_CORREGIDA.sql
 ```
 
-Es un archivo independiente de `DataBaseHappyKids.sql`. No reemplaza automáticamente el archivo original ni elimina información existente. Para bases existentes, este DDL no sustituye las migraciones incrementales.
+Es la fuente de verdad vigente. El esquema histórico fue archivado en `sql/legacy/DataBaseHappyKids.sql`; no debe utilizarse para instalaciones nuevas.
 
 ## Qué contiene
 
-El archivo crea la estructura completa de la base de datos `happykids`, incluyendo:
+El archivo vuelve a crear la estructura completa de la base de datos `happykids`, incluyendo:
 
 - Usuarios y roles.
 - Clientes y empleados.
@@ -23,13 +23,8 @@ El archivo crea la estructura completa de la base de datos `happykids`, incluyen
 - Facturas y detalle de pedidos.
 - Pagos.
 - Entregas.
-- Asignaciones de mensajería e índice único de asignación activa.
-- Evidencias fotográficas vinculadas a pedido, asignación y mensajero.
-- Selección exclusiva de pedidos de Bodega y novedades por producto con respuesta administrativa.
-- Intentos y detalle de alistamiento.
-- Historial de operaciones logísticas.
 
-Los datos de ejemplo están separados en [`sql/dml.sql`](./sql/dml.sql). Ese DML debe ejecutarse después del esquema y solo sobre una base vacía. Incluye un pedido liberado para Mensajería, pedidos asignados/en camino, una selección activa de Bodega y un reporte de faltante asociado a su intento y producto. No inserta filas ficticias en `evidencia_entrega`, ya que cada referencia debe corresponder a una imagen real almacenada.
+No contiene usuarios de prueba, productos de ejemplo ni consultas `SELECT`. Solo contiene la definición de la base de datos y sus tablas.
 
 ## Cambios realizados y motivo
 
@@ -134,7 +129,7 @@ Pendiente, Pagada, Anulada
 La entrega conserva estados logísticos:
 
 ```text
-Pendiente, Por recoger, En camino, Entregado, Cancelado
+Pendiente, En camino, Entregado, Cancelado
 ```
 
 **Motivo:** el estado del pago y el estado del envío representan procesos diferentes. El dashboard puede mostrar ambos sin mezclarlos.
@@ -142,16 +137,16 @@ Pendiente, Por recoger, En camino, Entregado, Cancelado
 ## Qué no se cambió
 
 - No se cambiaron los nombres principales de tablas ni columnas usados por el backend actual.
-- La columna `contrasena VARCHAR(255)` admite hashes bcrypt completos.
+- No se modificó el formato de la contraseña `salt:hash`.
 - No se eliminaron tablas necesarias para el catálogo o el dashboard.
-- No se incluyen datos de prueba en el archivo DDL.
+- No se insertaron datos de prueba.
 - No se crearon endpoints del backend en este archivo SQL.
 
 ## Importante sobre `IF NOT EXISTS`
 
 Este archivo crea las tablas que no existan, pero no modifica automáticamente una tabla que ya fue creada con la estructura anterior. Por ejemplo, si `cliente` ya existe, el nuevo `UNIQUE` no se añade solo por volver a ejecutar el archivo.
 
-Para una base existente, se debe hacer una migración controlada después de comprobar que no haya datos duplicados. Para una instalación limpia, ejecutar el DDL y luego, si se necesitan datos de demostración, el DML separado.
+Para una base existente, se debe hacer una migración controlada después de comprobar que no haya datos duplicados. Para una instalación limpia, lo recomendable es crear una base nueva y ejecutar este archivo.
 
 ## Compatibilidad con el dashboard
 
@@ -170,3 +165,15 @@ Para que el dashboard use estos datos reales todavía deben crearse las rutas y 
 ## Resultado
 
 La base corregida queda preparada para trabajar con el dashboard y reduce los errores de integridad más importantes sin borrar datos ni incluir información ficticia.
+
+## Fuente de verdad y auditoría
+
+`DataBaseHappyKids_CORREGIDA.sql` es el esquema vigente. `sql/legacy/DataBaseHappyKids.sql` se conserva únicamente como referencia histórica y no debe usarse para nuevas instalaciones.
+
+La migración `sql/MIGRACION_AUDITORIA_INDICES.sql` agrega, sin borrar información:
+
+- `creado_en` y `actualizado_en` en usuarios, productos, facturas y carritos.
+- `creado_en` en detalles de pedidos.
+- Índices explícitos para cliente de factura, producto de detalle, movimientos de inventario y carrito por cliente/estado.
+
+Los cambios permiten auditoría básica y aceleran las consultas que alimentan pedidos, historial, inventario y dashboard.

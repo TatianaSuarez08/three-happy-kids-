@@ -8,10 +8,10 @@
 
 ## Archivos
 
-- [Back-end/src/middleware/autenticacion.js](../Back-end/src/middleware/autenticacion.js)
-- [Back-end/src/middleware/role.js](../Back-end/src/middleware/role.js)
-- [Back-end/src/controllers/UsuarioController.js](../Back-end/src/controllers/UsuarioController.js)
-- [Front-end/src/Componentes/ProtectedRoute.jsx](../Front-end/src/Componentes/ProtectedRoute.jsx)
+- [backend/src/middleware/autenticacion.js](../backend/src/middleware/autenticacion.js)
+- [backend/src/middleware/role.js](../backend/src/middleware/role.js)
+- [backend/src/controllers/UsuarioController.js](../backend/src/controllers/UsuarioController.js)
+- [frontend/src/components/ProtectedRoute.jsx](../frontend/src/components/ProtectedRoute.jsx)
 
 ## Observaciones
 

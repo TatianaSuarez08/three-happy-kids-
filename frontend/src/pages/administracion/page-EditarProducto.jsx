@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { getColors, getProduct, updateProduct } from "../../services/productoAdminService";
 import { API_BASE_URL } from "../../services/httpClient";
 
 const camposProducto = [
@@ -15,7 +16,6 @@ const camposProducto = [
 function EditarProducto() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const backend = API_BASE_URL;
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const [guardando, setGuardando] = useState(false);
@@ -39,16 +39,7 @@ function EditarProducto() {
   useEffect(() => {
     const cargarColores = async () => {
       try {
-        const storage = localStorage.getItem("token") ? localStorage : sessionStorage;
-        const response = await fetch(`${backend}/colores`, {
-          headers: { Authorization: `Bearer ${storage.getItem("token")}` },
-        });
-        const contentType = response.headers.get("content-type") || "";
-        if (!contentType.includes("application/json")) {
-          throw new Error(`La API no devolvió JSON en ${backend}/colores.`);
-        }
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.error || "No se pudieron cargar los colores");
+        const data = await getColors();
         setColores(data.colors || []);
       } catch (err) {
         setError(err.message || "No se pudieron cargar los colores");
@@ -56,17 +47,12 @@ function EditarProducto() {
     };
 
     cargarColores();
-  }, [backend]);
+  }, []);
 
   useEffect(() => {
     const cargarProducto = async () => {
       try {
-        const storage = localStorage.getItem("token") ? localStorage : sessionStorage;
-        const response = await fetch(`${backend}/productos/${id}`, {
-          headers: { Authorization: `Bearer ${storage.getItem("token")}` },
-        });
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.error || "No se pudo cargar el producto");
+        const data = await getProduct(id);
 
         const product = data.product;
         setFormulario({
@@ -91,7 +77,7 @@ function EditarProducto() {
     };
 
     cargarProducto();
-  }, [backend, id]);
+  }, [id]);
 
   const actualizarCampo = (event) => {
     const { name, value } = event.target;
@@ -104,22 +90,11 @@ function EditarProducto() {
     setGuardando(true);
 
     try {
-      const storage = localStorage.getItem("token") ? localStorage : sessionStorage;
       const datos = new FormData();
       Object.entries(formulario).forEach(([campo, valor]) => datos.append(campo, valor));
       if (imagen) datos.append("imagen", imagen);
 
-      const response = await fetch(`${backend}/productos/${id}`, {
-        method: "PUT",
-        headers: { Authorization: `Bearer ${storage.getItem("token")}` },
-        body: datos,
-      });
-      const contentType = response.headers.get("content-type") || "";
-      if (!contentType.includes("application/json")) {
-        throw new Error(`El backend no devolvió JSON en ${backend}/productos/${id}. Reinicia el backend en el puerto 3000.`);
-      }
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || "No se pudo actualizar el producto");
+      await updateProduct(id, datos);
 
       navigate("/admin/inventario");
     } catch (err) {
@@ -193,7 +168,7 @@ function EditarProducto() {
               {(imagen || imagenActual) && (
                 <div className="admin-form-preview">
                   <img
-                    src={imagen ? URL.createObjectURL(imagen) : `${backend}${imagenActual}`}
+                    src={imagen ? URL.createObjectURL(imagen) : `${API_BASE_URL}${imagenActual}`}
                     alt="Imagen del producto"
                   />
                 </div>

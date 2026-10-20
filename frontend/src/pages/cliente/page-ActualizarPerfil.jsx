@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { API_BASE_URL, getSessionToken } from "../../services/httpClient";
+import { API_BASE_URL } from "../../services/httpClient";
+import { getMyProfile, updateMyProfilePhoto } from "../../services/usuarioService";
 import "../../styles/style.css";
-import Icon from "../../components/Icon";
 
 function ActualizarPerfil() {
   const nombreRef = useRef(null);
@@ -19,55 +19,15 @@ function ActualizarPerfil() {
   const [modal, setModal] = useState(null);
   const [loading, setLoading] = useState(false);
   const [perfil, setPerfil] = useState(null);
-  const [fotoPerfil, setFotoPerfil] = useState(null);
-  const [fotoPreview, setFotoPreview] = useState("");
+  const [fotoSeleccionada, setFotoSeleccionada] = useState(null);
+  const [vistaPrevia, setVistaPrevia] = useState("");
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetch(`${API_BASE_URL}/me`, { headers: { Authorization: `Bearer ${getSessionToken()}` } })
-      .then(async (response) => {
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.error || "No se pudo cargar el perfil");
-        setPerfil(data.user);
-        nombreRef.current.value = data.user.nombre || "";
-        correoRef.current.value = data.user.email || "";
-        telefonoRef.current.value = data.user.telefono || "";
-        if (data.user.esCliente && direccionRef.current) {
-          direccionRef.current.value = data.user.direccion || "";
-        }
-      })
+    getMyProfile()
+      .then((data) => setPerfil(data.user))
       .catch((err) => setError(err.message));
   }, []);
-
-  const handleFotoChange = (event) => {
-    const file = event.target.files?.[0] || null;
-    if (!file) {
-      setFotoPerfil(null);
-      setFotoPreview("");
-      return;
-    }
-
-    const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
-    if (!validTypes.includes(file.type)) {
-      setError('La imagen debe ser JPG, PNG o WEBP.');
-      event.target.value = '';
-      setFotoPerfil(null);
-      setFotoPreview("");
-      return;
-    }
-
-    if (file.size > 5 * 1024 * 1024) {
-      setError('La imagen supera el tamaño permitido de 5 MB.');
-      event.target.value = '';
-      setFotoPerfil(null);
-      setFotoPreview("");
-      return;
-    }
-
-    setError('');
-    setFotoPerfil(file);
-    setFotoPreview(URL.createObjectURL(file));
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -82,45 +42,14 @@ function ActualizarPerfil() {
 
     setLoading(true);
     try {
-      const formData = new FormData();
-      formData.append('nombre', nombreRef.current.value);
-      formData.append('email', correoRef.current.value);
-      formData.append('telefono', telefonoRef.current.value);
-      if (contraseña) formData.append('password', contraseña);
-      if (perfil?.esCliente) formData.append('direccion', direccionRef.current.value);
-      if (fotoPerfil) formData.append('foto', fotoPerfil);
-
-      const response = await fetch(`${API_BASE_URL}/me`, {
-        method: "PUT",
-        headers: { Authorization: `Bearer ${getSessionToken()}` },
-        body: formData,
-      });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || "No se pudo actualizar el perfil");
-
-      const storage = localStorage.getItem("token") ? localStorage : sessionStorage;
-      const user = JSON.parse(storage.getItem("user") || storage.getItem("usuario") || "{}");
-      const updatedUser = {
-        ...user,
-        nombre: nombreRef.current.value,
-        email: correoRef.current.value,
-        telefono: telefonoRef.current.value,
-        fotoPerfil: data.user?.fotoPerfil || user.fotoPerfil || fotoPreview || perfil?.fotoPerfil || null,
-      };
-      storage.setItem("user", JSON.stringify(updatedUser));
-      storage.setItem("usuario", JSON.stringify(updatedUser));
-      window.dispatchEvent(new Event("happykids:session-changed"));
-      setPerfil((current) => ({
-        ...current,
-        ...updatedUser,
-        ...(current?.esCliente ? { direccion: direccionRef.current.value } : {}),
-      }));
-      if (data.user?.fotoPerfil) {
-        setFotoPreview(`${API_BASE_URL}${data.user.fotoPerfil}`);
+      if (fotoSeleccionada) {
+        const data = await updateMyProfilePhoto(fotoSeleccionada);
+        setPerfil((actual) => ({ ...actual, fotoPerfil: data.fotoPerfil }));
+        setFotoSeleccionada(null);
       }
       setModal("exito");
-    } catch (err) {
-      setError(err.message || "No se pudo actualizar. Intenta de nuevo.");
+    } catch {
+      setError("No se pudo actualizar. Intenta de nuevo.");
     } finally {
       setLoading(false);
     }
@@ -133,12 +62,18 @@ function ActualizarPerfil() {
 
   const cancelar = () => navigate("/");
 
+  const seleccionarFoto = (event) => {
+    const archivo = event.target.files?.[0] || null;
+    setFotoSeleccionada(archivo);
+    setVistaPrevia(archivo ? URL.createObjectURL(archivo) : "");
+  };
+
   return (
     <div className="login-page perfil-page">
       <div className="login-card perfil-card">
 
         <div className="login-logo perfil-heading">
-          <div className="login-logo-icon">👤</div>
+          <div className="login-logo-icon"><i className="bi bi-person-circle" aria-hidden="true" /></div>
           <h1>Actualizar perfil</h1>
           <p>Modifica tus datos personales</p>
         </div>
@@ -147,9 +82,9 @@ function ActualizarPerfil() {
 
         {perfil && <div className="perfil-summary">
           <div className="perfil-avatar-wrap">
-            <img className="perfil-avatar" src={fotoPreview || (perfil.fotoPerfil ? `${API_BASE_URL}${perfil.fotoPerfil}` : "")} alt="Foto de perfil" />
+            <img className="perfil-avatar" src={vistaPrevia || (perfil.fotoPerfil ? `${API_BASE_URL}${perfil.fotoPerfil}` : "")} alt="Foto de perfil" />
           </div>
-          <div className="perfil-summary-info"><strong>{perfil.nombre}</strong><div>{perfil.email}</div><div>{perfil.telefono || "Sin teléfono registrado"}</div><div className="perfil-summary-meta"><span>{perfil.rol}</span><span>{perfil.estado}</span></div></div>
+          <div className="perfil-summary-info"><strong>{perfil.nombre}</strong><div>{perfil.email}</div><div>{perfil.telefono || "Sin teléfono registrado"}</div><div className="perfil-summary-meta"><span>{perfil.rol}</span><span>{perfil.estado}</span></div><label className="perfil-photo-picker">Cambiar foto<input type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={seleccionarFoto} /></label></div>
         </div>}
 
         <form className="perfil-form" onSubmit={handleSubmit}>
@@ -191,7 +126,7 @@ function ActualizarPerfil() {
           </div>
 
           {/* Dirección */}
-          {perfil?.esCliente && <div className="login-field">
+          <div className="login-field">
             <label htmlFor="direccion">Dirección</label>
             <input
               id="direccion"
@@ -200,20 +135,6 @@ function ActualizarPerfil() {
               placeholder="Tu dirección"
               required
             />
-          </div>}
-
-          <div className="login-field perfil-field-full">
-            <label htmlFor="foto">Foto de perfil</label>
-            <div className="registro-foto-wrap">
-              <input id="foto" type="file" accept="image/jpeg,image/png,image/webp" onChange={handleFotoChange} />
-              {fotoPreview ? (
-                <div className="registro-foto-preview">
-                  <img src={fotoPreview} alt="Vista previa de la foto de perfil" />
-                </div>
-              ) : (
-                <div className="registro-foto-empty">Sin imagen seleccionada</div>
-              )}
-            </div>
           </div>
 
           {/* Contraseña */}
@@ -231,7 +152,7 @@ function ActualizarPerfil() {
                 className="login-toggle-pass"
                 onClick={() => setShowPass(!showPass)}
               >
-                <Icon name={showPass ? "eye" : "lock"} size={18} />
+                {showPass ? "👁" : "🔒"}
               </button>
             </div>
           </div>
@@ -251,7 +172,7 @@ function ActualizarPerfil() {
                 className="login-toggle-pass"
                 onClick={() => setShowConfirm(!showConfirm)}
               >
-                <Icon name={showConfirm ? "eye" : "lock"} size={18} />
+                {showConfirm ? "👁" : "🔒"}
               </button>
             </div>
           </div>

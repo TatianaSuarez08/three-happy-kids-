@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import Icon from "../../components/Icon";
-import { useCarrito } from "../../Context/useCarrito";
+import { useCarrito } from "../../context/useCarrito";
 import { createOrder } from "../../services/pedidoService";
 import "../../styles/style.css";
 
@@ -66,7 +65,7 @@ function ConfirmarCompra() {
           <div className="carrito-lista">
             <form onSubmit={handleSubmit}>
 
-              <h3 className="confirmar-subtitulo"><Icon name="mapPin" size={18} /> Dirección de envío</h3>
+              <h3 className="confirmar-subtitulo"><i className="bi bi-geo-alt" aria-hidden="true" /> Dirección de envío</h3>
 
               <div className="confirmar-field">
                 <label>Dirección</label>
@@ -105,15 +104,15 @@ function ConfirmarCompra() {
               </div>
 
               <h3 className="confirmar-subtitulo" style={{ marginTop: "1.5rem" }}>
-                <Icon name="receipt" size={18} /> Método de pago
+                💳 Método de pago
               </h3>
 
               <div className="confirmar-metodos">
                 {[
-                  { id: "efectivo", label: "Efectivo contra entrega", icon: "cash" },
-                  { id: "transferencia", label: "Transferencia bancaria", icon: "bank" },
-                  { id: "nequi", label: "Nequi", icon: "phone" },
-                  { id: "daviplata", label: "Daviplata", icon: "phone" },
+                  { id: "efectivo", label: "💵 Efectivo contra entrega" },
+                  { id: "transferencia", label: "🏦 Transferencia bancaria" },
+                  { id: "nequi", label: "📱 Nequi" },
+                  { id: "daviplata", label: "📱 Daviplata" },
                 ].map((m) => (
                   <label
                     key={m.id}
@@ -126,21 +125,21 @@ function ConfirmarCompra() {
                       checked={form.pago === m.id}
                       onChange={handleChange}
                     />
-                    <Icon name={m.icon} size={18} /> {m.label}
+                    {m.label}
                   </label>
                 ))}
               </div>
 
               <div className="confirmar-botones">
                 <button type="submit" className="btn-ingresar" disabled={guardando}>
-                  {guardando ? "Guardando pedido..." : <><Icon name="checkCircle" size={18} /> Realizar pedido</>}
+                  {guardando ? "Guardando pedido..." : <><i className="bi bi-check-circle-fill" aria-hidden="true" /> Realizar pedido</>}
                 </button>
                 <button
                   type="button"
                   className="btn-registro"
                   onClick={() => navigate("/carrito")}
                 >
-                  <Icon name="arrowLeft" size={18} /> Volver al carrito
+                  ← Volver al carrito
                 </button>
               </div>
 

@@ -1,8 +1,7 @@
 import { useParams, useNavigate } from "react-router-dom";
-import Icon from "../../components/Icon";
 import { useEffect, useState } from "react";
-import { useFavoritos } from "../../Context/useFavoritos";
-import { useCarrito } from "../../Context/useCarrito";
+import { useFavoritos } from "../../context/useFavoritos";
+import { useCarrito } from "../../context/useCarrito";
 import { getPublicProduct } from "../../services/productoService";
 import { API_BASE_URL } from "../../services/httpClient";
 
@@ -84,7 +83,7 @@ function DetalleProducto() {
       <div className="detalle-container">
 
         <button className="detalle-volver" onClick={() => navigate(-1)}>
-          <Icon name="arrowLeft" size={18} /> Volver
+          ← Volver
         </button>
 
         <div className="detalle-content">
@@ -150,7 +149,7 @@ function DetalleProducto() {
 
             <div className="detalle-botones">
               <button className="btn-ingresar" onClick={handleAgregarCarrito}>
-                {agregado ? <><Icon name="check" size={18} /> Agregado</> : <><Icon name="shoppingBag" size={18} /> Agregar al carrito</>}
+                {agregado ? "✔ Agregado" : "🛍 Agregar al carrito"}
               </button>
               <button
                 className={favoritoActivo ? "btn-favorito-activo" : "btn-registro"}
@@ -163,7 +162,7 @@ function DetalleProducto() {
                   favoritoActivo ? quitarFavorito(producto.id) : agregarFavorito(producto);
                 }}
               >
-                {favoritoActivo ? <><Icon name="heartFill" size={18} /> En favoritos</> : <><Icon name="heart" size={18} /> Agregar a favoritos</>}
+                {favoritoActivo ? "❤️ En favoritos" : "♡ Agregar a favoritos"}
               </button>
             </div>
 

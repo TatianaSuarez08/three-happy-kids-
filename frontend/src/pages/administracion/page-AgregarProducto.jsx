@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { API_BASE_URL } from "../../services/httpClient";
+import { createProduct, getColors } from "../../services/productoAdminService";
 
 const camposProducto = [
   ["nombre", "Nombre del producto", "text", true],
@@ -15,7 +15,6 @@ const camposProducto = [
 
 function AgregarProducto() {
   const navigate = useNavigate();
-  const backend = API_BASE_URL;
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [imagen, setImagen] = useState(null);
@@ -37,16 +36,7 @@ function AgregarProducto() {
   useEffect(() => {
     const cargarColores = async () => {
       try {
-        const storage = localStorage.getItem("token") ? localStorage : sessionStorage;
-        const response = await fetch(`${backend}/colores`, {
-          headers: { Authorization: `Bearer ${storage.getItem("token")}` },
-        });
-        const contentType = response.headers.get("content-type") || "";
-        if (!contentType.includes("application/json")) {
-          throw new Error(`La API no devolvió JSON en ${backend}/colores.`);
-        }
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.error || "No se pudieron cargar los colores");
+        const data = await getColors();
         setColores(data.colors || []);
       } catch (err) {
         setError(err.message || "No se pudieron cargar los colores");
@@ -54,7 +44,7 @@ function AgregarProducto() {
     };
 
     cargarColores();
-  }, [backend]);
+  }, []);
 
   const actualizarCampo = (event) => {
     const { name, value } = event.target;
@@ -67,24 +57,13 @@ function AgregarProducto() {
     setLoading(true);
 
     try {
-      const storage = localStorage.getItem("token") ? localStorage : sessionStorage;
-      const token = storage.getItem("token");
       const datos = new FormData();
       Object.entries(formulario).forEach(([campo, valor]) => {
         datos.append(campo, valor);
       });
       datos.append("imagen", imagen);
 
-      const response = await fetch(`${backend}/productos`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
-        body: datos,
-      });
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "No se pudo crear el producto");
-      }
+      await createProduct(datos);
 
       navigate("/admin/inventario");
     } catch (err) {

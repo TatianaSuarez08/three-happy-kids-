@@ -1,6 +1,6 @@
 import { createOrder, findOrders, findOrdersByEmail, findOrdersByUser, updateOrderStatus } from '../models/PedidoModel.js';
 
-const allowedStatuses = ['Pendiente', 'En camino', 'Entregado', 'Cancelado'];
+const allowedStatuses = ['Cancelado'];
 
 export const getOrders = async (_req, res) => {
   try {
@@ -42,10 +42,10 @@ export const placeOrder = async (req, res) => {
 };
 
 export const changeOrderStatus = async (req, res) => {
-  const id = Number.parseInt(req.params.id, 10);
+  const id = Number(req.params.id);
   const { estado } = req.body;
 
-  if (!Number.isInteger(id)) {
+  if (!Number.isSafeInteger(id) || id <= 0) {
     return res.status(400).json({ error: 'El ID del pedido no es válido' });
   }
   if (!allowedStatuses.includes(estado)) {
@@ -53,12 +53,15 @@ export const changeOrderStatus = async (req, res) => {
   }
 
   try {
-    const updated = await updateOrderStatus(id, estado);
+    const updated = await updateOrderStatus(id, estado, req.user.id);
     if (!updated) return res.status(404).json({ error: 'Pedido no encontrado' });
 
     res.json({ success: true, message: 'Estado del pedido actualizado correctamente' });
   } catch (error) {
     console.error('Error al actualizar pedido:', error);
+    if (error.code === 'ORDER_STATUS_CONFLICT') {
+      return res.status(409).json({ error: error.message });
+    }
     res.status(500).json({ error: 'No se pudo actualizar el estado del pedido' });
   }
 };

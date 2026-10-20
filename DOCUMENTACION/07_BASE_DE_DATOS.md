@@ -143,7 +143,11 @@ Guarda el método de pago asociado a la factura.
 
 ### `entrega`
 
-Guarda el estado de la entrega posible a la factura.
+Guarda el estado de la entrega asociada a la factura. El DDL conserva el estado heredado `Por recoger` además de `Entrega fallida`.
+
+### Flujo persistente de pedidos
+
+El esquema vigente incluye `pedido_flujo`, `pedido_preparacion_detalle`, `pedido_novedad` y `pedido_historial` para guardar responsables, preparación, novedades y trazabilidad de las entregas. Estas tablas evitan depender solo del estado volátil de las vistas.
 
 ## Carrito y favoritos
 
@@ -218,5 +222,7 @@ El proyecto usa queries de lectura para:
 - y resúmenes de logística.
 
 ## Importante
+
+Los datos ficticios viven por separado en `documentacion/sql/dml.sql`. No ejecutes ese archivo en producción. Para una base existente, consulta las migraciones incrementales de `documentacion/sql/` y crea una copia de seguridad antes de aplicarlas.
 
 La base de datos no es opcional ni redundante: es el almacenamiento real del sistema y ambas instancias de servicio apuntan a la misma base de datos. La documentación debe describirla como fuente de verdad del negocio.

@@ -1,22 +1,20 @@
+import { Link } from 'react-router-dom';
+
 export default function EvidenciasMensajeria() {
   return (
     <div className="admin-page">
       <div className="admin-container">
         <div className="admin-header">
           <div>
-            <h2 className="admin-titulo">Evidencias</h2>
-            <p className="admin-sub">Adjunta comprobantes y capturas de entrega.</p>
+            <h2 className="admin-titulo">Evidencias de entrega</h2>
+            <p className="admin-sub">Cada fotografía se carga desde el detalle de la entrega asignada.</p>
           </div>
         </div>
-
-        <div style={{ background: "#fff", border: "1px solid #eee", borderRadius: "12px", boxShadow: "0 8px 20px rgba(26, 26, 26, 0.04)", padding: "1.25rem" }}>
-          <div style={{ border: "2px dashed #ddd", borderRadius: "12px", background: "#fafafa", padding: "2rem", textAlign: "center", color: "#888", minHeight: "150px", display: "grid", placeItems: "center" }}>
-            <div>
-              <strong>No hay evidencias cargadas</strong>
-              <small style={{ display: "block", marginTop: "8px", color: "#9a9a9a" }}>Sube fotos o comprobantes desde la entrega seleccionada.</small>
-            </div>
-          </div>
-        </div>
+        <section className="admin-order-card">
+          <p>Selecciona una entrega para capturar o elegir una imagen, revisar la vista previa y guardarla de forma persistente.</p>
+          <p>La aplicación valida formato y tamaño, y requiere una evidencia guardada antes de permitir marcar el pedido como entregado.</p>
+          <Link className="btn-admin-primary" to="/mensajeria/entregas">Ir a mis entregas</Link>
+        </section>
       </div>
     </div>
   );

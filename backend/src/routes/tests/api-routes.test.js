@@ -43,6 +43,20 @@ jest.mock('../../controllers/PedidoController.js', () => ({
   getOrders: jest.fn(),
   placeOrder: jest.fn()
 }));
+jest.mock('../../controllers/PedidoFlujoController.js', () => ({
+  assignCourier: jest.fn(),
+  assignWarehouse: jest.fn(),
+  changeCourierStatus: jest.fn(),
+  getAdminNovelties: jest.fn(),
+  getCourierAssigned: jest.fn(),
+  getCourierAvailable: jest.fn(),
+  getCourierEvidence: jest.fn(),
+  getWarehouseAssigned: jest.fn(),
+  getWarehouseAvailable: jest.fn(),
+  resolveAdminNovelty: jest.fn(),
+  submitPreparation: jest.fn(),
+  uploadCourierEvidence: jest.fn()
+}));
 jest.mock('../../controllers/ProductoController.js', () => ({
   addProduct: jest.fn(),
   editProduct: jest.fn(),
@@ -70,6 +84,9 @@ jest.mock('../../middleware/subidaImagen.js', () => ({
   },
   uploadProfileImage: {
     single: jest.fn(() => (_req, _res, next) => next())
+  },
+  uploadDeliveryEvidence: {
+    single: jest.fn(() => (_req, _res, next) => next())
   }
 }));
 
@@ -82,6 +99,7 @@ import * as healthController from '../../controllers/HealthController.js';
 import * as inventarioController from '../../controllers/InventarioController.js';
 import * as logisticaController from '../../controllers/LogisticaController.js';
 import * as pedidoController from '../../controllers/PedidoController.js';
+import * as pedidoFlujoController from '../../controllers/PedidoFlujoController.js';
 import * as productoController from '../../controllers/ProductoController.js';
 import * as usuarioController from '../../controllers/UsuarioController.js';
 import auth from '../../middleware/autenticacion.js';
@@ -96,6 +114,7 @@ import healthRouter from '../HealthRoute.js';
 import inventarioRouter from '../InventarioRoute.js';
 import logisticaRouter from '../LogisticaRoute.js';
 import pedidoRouter from '../PedidoRoute.js';
+import pedidoFlujoRouter from '../PedidoFlujoRoute.js';
 import productoRouter from '../ProductoRoute.js';
 import rootRouter from '../RootRoute.js';
 import usuarioRouter from '../UsuarioRoute.js';
@@ -110,6 +129,7 @@ const controllers = {
   ...inventarioController,
   ...logisticaController,
   ...pedidoController,
+  ...pedidoFlujoController,
   ...productoController,
   ...usuarioController
 };
@@ -129,6 +149,7 @@ const routers = [
   inventarioRouter,
   logisticaRouter,
   pedidoRouter,
+  pedidoFlujoRouter,
   productoRouter,
   rootRouter,
   usuarioRouter
@@ -162,6 +183,18 @@ const endpoints = [
   ['post', '/pedidos', 'placeOrder'],
   ['put', '/pedidos/12/estado', 'changeOrderStatus'],
   ['get', '/mis-pedidos', 'getMyOrders'],
+  ['get', '/bodega/pedidos/disponibles', 'getWarehouseAvailable'],
+  ['get', '/bodega/pedidos/mios', 'getWarehouseAssigned'],
+  ['post', '/bodega/pedidos/12/asignar', 'assignWarehouse'],
+  ['put', '/bodega/pedidos/12/preparacion', 'submitPreparation'],
+  ['get', '/mensajeria/pedidos/disponibles', 'getCourierAvailable'],
+  ['get', '/mensajeria/mis-entregas', 'getCourierAssigned'],
+  ['post', '/mensajeria/pedidos/12/asignar', 'assignCourier'],
+  ['put', '/mensajeria/pedidos/12/estado', 'changeCourierStatus'],
+  ['post', '/mensajeria/pedidos/12/evidencia', 'uploadCourierEvidence'],
+  ['get', '/mensajeria/pedidos/12/evidencia', 'getCourierEvidence'],
+  ['get', '/admin/novedades/pedidos', 'getAdminNovelties'],
+  ['put', '/admin/novedades/pedidos/12/resolver', 'resolveAdminNovelty'],
   ['get', '/productos-publicos', 'getProducts'],
   ['get', '/productos-publicos/12', 'getProduct'],
   ['get', '/colores', 'getColors'],
@@ -262,12 +295,7 @@ describe('rutas de la API', () => {
     expect(configuredRolePolicies).toContainEqual(['administrador', 'bodeguero', { permission: 'productos:write' }]);
     expect(configuredRolePolicies).toContainEqual(['administrador', { permission: 'dashboard:read' }]);
     expect(configuredRolePolicies).toContainEqual(['administrador', 'bodeguero']);
-    expect(configuredRolePolicies).toContainEqual([
-      'administrador',
-      'bodeguero',
-      'mensajero',
-      { permission: 'pedidos:read' }
-    ]);
+    expect(configuredRolePolicies).toContainEqual(['administrador']);
     expect(configuredRolePolicies).toContainEqual([
       'administrador',
       'bodeguero',
@@ -275,10 +303,8 @@ describe('rutas de la API', () => {
       'cliente',
       { permission: 'comprar' }
     ]);
-    expect(configuredRolePolicies).toContainEqual([
-      'administrador',
-      'mensajero',
-      { permission: 'pedidos:write' }
-    ]);
+    expect(configuredRolePolicies).toContainEqual(['bodeguero']);
+    expect(configuredRolePolicies).toContainEqual(['mensajero']);
+    expect(configuredRolePolicies).toContainEqual(['administrador', 'bodeguero']);
   });
 });

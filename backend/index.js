@@ -6,6 +6,7 @@ import { verifyDatabaseConnection } from './src/db.js';
 import userRoutes from './src/routes/UsuarioRoute.js'; // Importa las rutas relacionadas con usuarios
 import productRoutes from './src/routes/ProductoRoute.js'; // Importa las rutas relacionadas con productos
 import orderRoutes from './src/routes/PedidoRoute.js';
+import orderWorkflowRoutes from './src/routes/PedidoFlujoRoute.js';
 import adminUserRoutes from './src/routes/AdminUsuarioRoute.js';
 import dashboardRoutes from './src/routes/DashboardRoute.js';
 import catalogRoutes from './src/routes/CatalogoRoute.js';
@@ -47,6 +48,7 @@ app.use(rootRoutes);
   userRoutes,
   productRoutes,
   orderRoutes,
+  orderWorkflowRoutes,
   adminUserRoutes,
   dashboardRoutes,
   catalogRoutes,

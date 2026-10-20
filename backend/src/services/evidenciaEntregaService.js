@@ -3,13 +3,11 @@ import fs from 'fs/promises';
 import path from 'path';
 
 const workingDirectory = path.resolve(process.cwd());
-const projectRoot = path.basename(workingDirectory).toLowerCase() === 'backend'
+const projectDirectory = ['backend', 'api'].includes(path.basename(workingDirectory).toLowerCase())
   ? path.dirname(workingDirectory)
   : workingDirectory;
-export const defaultDeliveryImagesDirectory = path.resolve(
-  projectRoot,
-  'Frontend/src/assets/entregas'
-);
+const backendDirectory = path.resolve(projectDirectory, 'backend');
+export const defaultDeliveryImagesDirectory = path.resolve(backendDirectory, 'storage/assets/entregas');
 
 const imageTypes = [
   {

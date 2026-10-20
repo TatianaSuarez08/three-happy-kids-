@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import EmptyState from '../../components/EmptyState';
 import StatusBadge from '../../components/StatusBadge';
 import { getAllMovements } from '../../services/inventarioService';
-import { getOrders } from '../../services/pedidoService';
+import { getAvailableWarehouseOrders, getMyWarehouseOrders } from '../../services/pedidoService';
 import { getProducts } from '../../services/productoService';
 
 const normalizeStatus = (value) => String(value || '').trim();
@@ -17,10 +17,14 @@ export default function BodegueroDashboard() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [productosList, pedidosList] = await Promise.all([getProducts(), getOrders()]);
+        const [productosList, available, assigned] = await Promise.all([
+          getProducts(),
+          getAvailableWarehouseOrders(),
+          getMyWarehouseOrders()
+        ]);
 
         setProductos(productosList);
-        setPedidos(pedidosList);
+        setPedidos([...available, ...assigned]);
         const movimientos = await getAllMovements(productosList.slice(0, 5));
         setMovimientos(movimientos.slice(0, 6));
       } catch (err) {

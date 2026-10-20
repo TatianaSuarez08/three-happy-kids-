@@ -45,12 +45,7 @@ El backend busca el usuario, verifica que esté activo, comprueba SHA-256 y gene
 
 ## Perfiles de prueba
 
-Estos perfiles se crean con `documentacion/sql/USUARIOS_SHA2_SETUP.sql` y sirven únicamente para probar el sistema en desarrollo:
-
-| Perfil | Nombre de usuario | Correo | Contraseña | Rol |
-|---|---|---|---|---|
-| Cliente | `cliente_test` | `cliente@example.com` | `cliente123` | `cliente` |
-| Administrador | `admin_test` | `admin@example.com` | `admin123` | `administrador` |
+El seed vigente es `documentacion/sql/dml.sql`; crea cuatro perfiles ficticios, uno por rol, con hashes compatibles con la migración heredada. No publica contraseñas de prueba ni debe ejecutarse en producción. Para credenciales interactivas de desarrollo, crea los usuarios desde el flujo de registro o restablecimiento de contraseña de la aplicación.
 
 ### Acceso del cliente
 
@@ -66,9 +61,7 @@ El administrador puede utilizar todas las funciones de compra del cliente y adem
 - `/admin/pedidos`
 - `/admin/usuarios`
 
-Si estos usuarios no existen en la base de datos, ejecuta primero el script SQL indicado arriba y después inicia sesión desde `http://localhost:5173/login`.
-
-> Estas credenciales son públicas dentro de la documentación porque son perfiles de prueba. No las uses en producción ni las conviertas en cuentas reales.
+Para cargar los perfiles ficticios, sigue el orden DDL → DML descrito en `documentacion/sql/README.md`.
 
 ## Errores identificables
 

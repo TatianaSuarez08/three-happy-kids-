@@ -95,6 +95,14 @@ La fuente de verdad del esquema se encuentra en:
 
 - `documentacion/sql/DataBaseHappyKids_CORREGIDA.sql`
 
+Para probar el esquema y los datos de ejemplo, usa una instancia o una base de datos desechable de desarrollo, nunca la base de producción. El archivo DDL selecciona `happykids`; para pruebas aisladas, cambia el nombre de la base en una copia local del DDL y del DML. Después de cargar el DDL, ejecuta:
+
+```bash
+mysql -u root -p happykids < documentacion/sql/dml.sql
+```
+
+El seed no reemplaza ni elimina filas existentes y puede repetirse. Revisa [la guía de los archivos SQL](./sql/README.md) para el orden, las migraciones y las limitaciones del entorno.
+
 ## Arranque local
 
 ### 1. Iniciar backend principal

@@ -1,99 +1,302 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import EmptyState from '../../components/EmptyState';
 import StatusBadge from '../../components/StatusBadge';
-import { getOrders } from '../../services/pedidoService';
+import {
+  assignWarehouseOrder,
+  getAvailableWarehouseOrders,
+  getMyWarehouseOrders,
+  submitOrderPreparation
+} from '../../services/pedidoService';
 
-const normalizeStatus = (value) => String(value || '').trim();
+const issueTypes = [
+  'No encontrado',
+  'Dañado',
+  'Referencia incorrecta',
+  'Talla incorrecta',
+  'Color incorrecto',
+  'Otra novedad'
+];
+
+const initialChecklist = (order) => order.productos.map((product) => {
+  const preparation = order.preparacion?.find((line) => line.idProducto === product.idProducto);
+  const novelty = order.novedades?.find((line) => line.idProducto === product.idProducto && line.etapa === 'Bodega');
+  return {
+    idProducto: product.idProducto,
+    encontrado: Boolean(preparation?.encontrado),
+    tipoNovedad: novelty?.tipo || '',
+    descripcion: preparation?.observacion || novelty?.descripcion || ''
+  };
+});
 
 export default function BodegueroPedidos() {
-  const [pedidos, setPedidos] = useState([]);
+  const [availableOrders, setAvailableOrders] = useState([]);
+  const [assignedOrders, setAssignedOrders] = useState([]);
+  const [checklists, setChecklists] = useState({});
   const [loading, setLoading] = useState(true);
+  const [savingId, setSavingId] = useState(null);
   const [error, setError] = useState('');
+  const [message, setMessage] = useState('');
 
-  useEffect(() => {
-    const loadOrders = async () => {
-      try {
-        const pedidosList = await getOrders();
-        const filtered = pedidosList.filter((pedido) => {
-          const estado = normalizeStatus(pedido.estado).toLowerCase();
-          return !['entregado', 'cancelado', 'anulada'].includes(estado);
+  const loadOrders = useCallback(async () => {
+    try {
+      const [available, assigned] = await Promise.all([
+        getAvailableWarehouseOrders(),
+        getMyWarehouseOrders()
+      ]);
+      setError('');
+      setAvailableOrders(available);
+      setAssignedOrders(assigned);
+      setChecklists((previous) => {
+        const next = { ...previous };
+        assigned.forEach((order) => {
+          if (!next[order.id]) next[order.id] = initialChecklist(order);
         });
-
-        setPedidos(filtered);
-      } catch (err) {
-        setError(err.message || 'No se pudieron cargar los pedidos.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadOrders();
+        return next;
+      });
+    } catch (err) {
+      setError(err.message || 'No se pudieron cargar los pedidos de Bodega.');
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  const pedidosResumen = useMemo(
-    () => pedidos.map((pedido) => ({
-      ...pedido,
-      productosList: Array.isArray(pedido.productos) ? pedido.productos : []
-    })),
-    [pedidos]
-  );
+  useEffect(() => {
+    let active = true;
+    const fetchOrders = async () => {
+      try {
+        const [available, assigned] = await Promise.all([
+          getAvailableWarehouseOrders(),
+          getMyWarehouseOrders()
+        ]);
+        if (!active) return;
+        setError('');
+        setAvailableOrders(available);
+        setAssignedOrders(assigned);
+        setChecklists((previous) => {
+          const next = { ...previous };
+          assigned.forEach((order) => {
+            if (!next[order.id]) next[order.id] = initialChecklist(order);
+          });
+          return next;
+        });
+      } catch (err) {
+        if (active) setError(err.message || 'No se pudieron cargar los pedidos de Bodega.');
+      } finally {
+        if (active) setLoading(false);
+      }
+    };
+    fetchOrders();
+    const refreshInterval = window.setInterval(fetchOrders, 15000);
+    return () => {
+      active = false;
+      window.clearInterval(refreshInterval);
+    };
+  }, []);
 
-  if (loading) {
-    return (
-      <div className="bodeguero-panel">
-        <EmptyState>Cargando pedidos para preparación...</EmptyState>
-      </div>
-    );
-  }
+  const assignOrder = async (orderId) => {
+    setSavingId(orderId);
+    setError('');
+    setMessage('');
+    try {
+      await assignWarehouseOrder(orderId);
+      setMessage(`El pedido #${orderId} quedó asignado a tu usuario.`);
+      await loadOrders();
+    } catch (err) {
+      setError(err.message || 'No se pudo asignar el pedido.');
+      await loadOrders();
+    } finally {
+      setSavingId(null);
+    }
+  };
+
+  const changeChecklist = (order, productId, changes) => {
+    const current = checklists[order.id] || initialChecklist(order);
+    setChecklists((previous) => ({
+      ...previous,
+      [order.id]: current.map((line) => (
+        line.idProducto === productId
+          ? {
+            ...line,
+            ...changes,
+            ...(changes.encontrado ? { tipoNovedad: '', descripcion: '' } : {})
+          }
+          : line
+      ))
+    }));
+  };
+
+  const submitChecklist = async (order) => {
+    setSavingId(order.id);
+    setError('');
+    setMessage('');
+    try {
+      const result = await submitOrderPreparation(order.id, checklists[order.id] || initialChecklist(order));
+      setMessage(result.estadoPreparacion === 'Listo para despacho'
+        ? `El pedido #${order.id} está listo para despacho.`
+        : `Se registraron novedades para el pedido #${order.id}; Administración debe revisarlas.`);
+      await loadOrders(false);
+    } catch (err) {
+      setError(err.message || 'No se pudo guardar la preparación.');
+    } finally {
+      setSavingId(null);
+    }
+  };
+
+  const renderProducts = (order) => (
+    <div className="bodeguero-list bodeguero-order-products">
+      {order.productos.map((product) => (
+        <div key={`${order.id}-${product.idProducto}`} className="bodeguero-item">
+          <div>
+            <strong>{product.nombre}</strong>
+            <small>
+              {product.cantidad} uds · Talla: {product.talla || 'No registrada'} · Color: {product.color || 'No registrado'}
+            </small>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
 
   return (
     <div className="bodeguero-section">
-      {error && <div className="bodeguero-message error">{error}</div>}
+      {error && <div className="bodeguero-message error" role="alert">{error}</div>}
+      {message && <div className="bodeguero-message" role="status">{message}</div>}
 
       <section className="bodeguero-panel">
         <div className="bodeguero-panel-header">
-          <h2>Pedidos pendientes</h2>
-          <span className="bodeguero-pill">{pedidosResumen.length} en preparación</span>
+          <h2>Pedidos disponibles</h2>
+          <span className="bodeguero-pill">{availableOrders.length} sin asignar</span>
         </div>
-
-        {pedidosResumen.length === 0 ? (
+        {loading ? (
+          <EmptyState>Cargando pedidos disponibles...</EmptyState>
+        ) : availableOrders.length === 0 ? (
           <EmptyState>No hay pedidos pendientes para preparar.</EmptyState>
         ) : (
           <div className="bodeguero-list">
-            {pedidosResumen.map((pedido) => (
-              <article key={pedido.id} className="bodeguero-item bodeguero-order-card">
+            {availableOrders.map((order) => (
+              <article key={order.id} className="bodeguero-item bodeguero-order-card">
                 <div className="bodeguero-order-header">
                   <div>
-                    <strong>Pedido #{pedido.id}</strong>
-                    <small>{pedido.fecha}</small>
+                    <strong>Pedido #{order.id}</strong>
+                    <small>{order.fecha} · {order.cliente}</small>
                   </div>
-                  <StatusBadge tone={pedido.estado?.toLowerCase() === 'pendiente' ? 'warning' : 'success'}>
-                    {pedido.estado || 'Pendiente'}
-                  </StatusBadge>
+                  <StatusBadge tone="warning">Pendiente de preparación</StatusBadge>
                 </div>
-
-                <div className="bodeguero-list bodeguero-order-products">
-                  {pedido.productosList.length === 0 ? (
-                    <EmptyState>Sin productos asociados.</EmptyState>
-                  ) : (
-                    pedido.productosList.map((producto) => (
-                      <div key={`${pedido.id}-${producto.nombre}`} className="bodeguero-item">
-                        <div>
-                          <strong>{producto.nombre}</strong>
-                          <small>{producto.cantidad} uds</small>
-                        </div>
-                        <StatusBadge tone="success">Preparar</StatusBadge>
-                      </div>
-                    ))
-                  )}
-                </div>
-
                 <div className="bodeguero-order-meta">
-                  <span>Cliente: {pedido.cliente || 'No registrado'}</span>
-                  <span>Ciudad: {pedido.ciudad || 'Sin ciudad'}</span>
+                  <span>Teléfono: {order.telefono || 'No registrado'}</span>
+                  <span>Entrega: {order.direccion || 'Sin dirección'}, {order.ciudad || 'Sin ciudad'}</span>
                 </div>
+                <details>
+                  <summary>Consultar productos y detalle</summary>
+                  {renderProducts(order)}
+                </details>
+                <button type="button" className="btn-admin-primary" disabled={savingId === order.id} onClick={() => assignOrder(order.id)}>
+                  {savingId === order.id ? 'Asignando...' : 'Asignarme pedido'}
+                </button>
               </article>
             ))}
+          </div>
+        )}
+      </section>
+
+      <section className="bodeguero-panel">
+        <div className="bodeguero-panel-header">
+          <h2>Mis pedidos asignados</h2>
+          <span className="bodeguero-pill">{assignedOrders.length} activos</span>
+        </div>
+        {loading ? (
+          <EmptyState>Cargando tus pedidos...</EmptyState>
+        ) : assignedOrders.length === 0 ? (
+          <EmptyState>Aún no tienes pedidos asignados.</EmptyState>
+        ) : (
+          <div className="bodeguero-list">
+            {assignedOrders.map((order) => {
+              const checklist = checklists[order.id] || initialChecklist(order);
+              return (
+                <article key={order.id} className="bodeguero-item bodeguero-order-card">
+                  <div className="bodeguero-order-header">
+                    <div>
+                      <strong>Pedido #{order.id}</strong>
+                      <small>{order.fecha} · {order.cliente}</small>
+                    </div>
+                    <StatusBadge tone={order.estadoPreparacion === 'Novedad' ? 'warning' : 'success'}>
+                      {order.estadoPreparacion}
+                    </StatusBadge>
+                  </div>
+                  <div className="bodeguero-order-meta">
+                    <span>Asignado: {new Date(order.fechaAsignacionBodega).toLocaleString('es-CO')}</span>
+                    <span>{order.direccion || 'Sin dirección'}, {order.ciudad || 'Sin ciudad'}</span>
+                  </div>
+                  {order.novedades?.length > 0 && (
+                    <div className="bodeguero-message">
+                      {order.novedades.map((novelty) => (
+                        <p key={novelty.id}>
+                          {novelty.tipo}: {novelty.descripcion} · {novelty.estado}
+                          {novelty.decision ? ` · Decisión: ${novelty.decision}` : ''}
+                        </p>
+                      ))}
+                    </div>
+                  )}
+                  <details>
+                    <summary>Historial del pedido</summary>
+                    <ul>
+                      {order.historial.map((entry) => (
+                        <li key={entry.id}>
+                          {entry.evento} · {entry.usuario} · {new Date(entry.fecha).toLocaleString('es-CO')}
+                          {entry.observacion ? ` · ${entry.observacion}` : ''}
+                        </li>
+                      ))}
+                    </ul>
+                  </details>
+                  <div className="bodeguero-list bodeguero-order-products">
+                    {order.productos.map((product) => {
+                      const line = checklist.find((item) => item.idProducto === product.idProducto)
+                        || { idProducto: product.idProducto, encontrado: true, tipoNovedad: '', descripcion: '' };
+                      return (
+                        <div key={`${order.id}-${product.idProducto}`} className="bodeguero-item">
+                          <div>
+                            <strong>{product.nombre}</strong>
+                            <small>
+                              Solicitadas: {product.cantidad} · Talla: {product.talla || 'No registrada'} · Color: {product.color || 'No registrado'}
+                            </small>
+                            <label>
+                              <input
+                                type="checkbox"
+                                checked={line.encontrado}
+                                onChange={(event) => changeChecklist(order, product.idProducto, { encontrado: event.target.checked })}
+                              />
+                              {' '}Producto encontrado y verificado
+                            </label>
+                            {!line.encontrado && (
+                              <div>
+                                <label>
+                                  Tipo de novedad
+                                  <select value={line.tipoNovedad} onChange={(event) => changeChecklist(order, product.idProducto, { tipoNovedad: event.target.value })}>
+                                    <option value="">Selecciona una opción</option>
+                                    {issueTypes.map((type) => <option key={type} value={type}>{type}</option>)}
+                                  </select>
+                                </label>
+                                <label>
+                                  Descripción
+                                  <textarea
+                                    maxLength={1000}
+                                    value={line.descripcion}
+                                    onChange={(event) => changeChecklist(order, product.idProducto, { descripcion: event.target.value })}
+                                  />
+                                </label>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <button type="button" className="btn-admin-primary" disabled={savingId === order.id} onClick={() => submitChecklist(order)}>
+                    {savingId === order.id ? 'Guardando...' : 'Guardar verificación'}
+                  </button>
+                </article>
+              );
+            })}
           </div>
         )}
       </section>

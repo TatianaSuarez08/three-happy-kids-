@@ -1,32 +1,171 @@
-import { useEffect, useState } from "react";
-import { getLogistica } from "../../services/logisticaService";
+import { useCallback, useEffect, useRef, useState } from 'react';
+import EmptyState from '../../components/EmptyState';
+import StatusBadge from '../../components/StatusBadge';
+import {
+  getDeliveryEvidenceObjectUrl,
+  getMyCourierOrders,
+  updateCourierOrderStatus,
+  uploadDeliveryEvidence
+} from '../../services/pedidoService';
 
-const coloresEstado = {
-  Pendiente: ["#fff8e0", "#b87800"],
-  "En camino": ["#e9f5ff", "#2774a8"],
-  Entregado: ["#eafbea", "#3a7d44"],
-  Cancelado: ["#fff0f0", "#c62828"],
-};
+const badgeTone = (status) => (
+  status === 'Entregado' ? 'success'
+    : ['Entrega fallida', 'Novedad'].includes(status) ? 'warning'
+      : 'info'
+);
 
 export default function EntregasMensajeria() {
-  const [entregas, setEntregas] = useState([]);
-  const [cargando, setCargando] = useState(true);
-  const [error, setError] = useState("");
+  const [orders, setOrders] = useState([]);
+  const [evidenceUrls, setEvidenceUrls] = useState({});
+  const [selectedFiles, setSelectedFiles] = useState({});
+  const [previewUrls, setPreviewUrls] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [savingId, setSavingId] = useState(null);
+  const [error, setError] = useState('');
+  const [message, setMessage] = useState('');
+  const evidenceUrlsRef = useRef({});
+  const previewUrlsRef = useRef({});
 
   useEffect(() => {
-    const cargarEntregas = async () => {
+    evidenceUrlsRef.current = evidenceUrls;
+  }, [evidenceUrls]);
+
+  useEffect(() => {
+    previewUrlsRef.current = previewUrls;
+  }, [previewUrls]);
+
+  const loadOrders = useCallback(async () => {
+    try {
+      setOrders(await getMyCourierOrders());
+      setError('');
+    } catch (err) {
+      setError(err.message || 'No se pudieron cargar tus entregas.');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+    const fetchOrders = async () => {
       try {
-        const data = await getLogistica();
-        setEntregas(data.tasks);
+        const result = await getMyCourierOrders();
+        if (!active) return;
+        setOrders(result);
+        setError('');
       } catch (err) {
-        setError(err.message || "Base de datos no disponible.");
+        if (active) setError(err.message || 'No se pudieron cargar tus entregas.');
       } finally {
-        setCargando(false);
+        if (active) setLoading(false);
       }
     };
-
-    cargarEntregas();
+    fetchOrders();
+    const refreshInterval = window.setInterval(fetchOrders, 15000);
+    return () => {
+      active = false;
+      window.clearInterval(refreshInterval);
+    };
   }, []);
+
+  useEffect(() => {
+    let active = true;
+    const loadEvidence = async () => {
+      const withEvidence = orders.filter((order) => order.evidencia && !evidenceUrls[order.id]);
+      if (!withEvidence.length) return;
+      const results = await Promise.all(withEvidence.map(async (order) => {
+        try {
+          return [order.id, await getDeliveryEvidenceObjectUrl(order.id)];
+        } catch (err) {
+          return [order.id, null, err];
+        }
+      }));
+      if (!active) {
+        results.forEach(([, url]) => url && URL.revokeObjectURL(url));
+        return;
+      }
+      setEvidenceUrls((previous) => ({
+        ...previous,
+        ...Object.fromEntries(results.filter(([, url]) => url).map(([id, url]) => [id, url]))
+      }));
+      const failed = results.find(([, url]) => !url);
+      if (failed) setError(failed[2]?.message || 'No se pudo cargar una fotografía de evidencia.');
+    };
+    loadEvidence();
+    return () => { active = false; };
+  }, [orders, evidenceUrls]);
+
+  useEffect(() => () => {
+    Object.values(evidenceUrlsRef.current).forEach((url) => URL.revokeObjectURL(url));
+    Object.values(previewUrlsRef.current).forEach((url) => URL.revokeObjectURL(url));
+  }, []);
+
+  const setFile = (orderId, file) => {
+    const previousPreview = previewUrls[orderId];
+    if (previousPreview) URL.revokeObjectURL(previousPreview);
+    if (!file) {
+      setSelectedFiles((previous) => ({ ...previous, [orderId]: null }));
+      setPreviewUrls((previous) => {
+        const next = { ...previous };
+        delete next[orderId];
+        return next;
+      });
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setSelectedFiles((previous) => ({ ...previous, [orderId]: null }));
+      setPreviewUrls((previous) => {
+        const next = { ...previous };
+        delete next[orderId];
+        return next;
+      });
+      setError('La fotografía no puede superar 5 MB.');
+      return;
+    }
+    setError('');
+    setSelectedFiles((previous) => ({ ...previous, [orderId]: file }));
+    setPreviewUrls((previous) => ({ ...previous, [orderId]: URL.createObjectURL(file) }));
+  };
+
+  const saveEvidence = async (orderId) => {
+    const file = selectedFiles[orderId];
+    if (!file) {
+      setError('Selecciona una fotografía antes de guardar la evidencia.');
+      return;
+    }
+    setSavingId(orderId);
+    setError('');
+    setMessage('');
+    try {
+      await uploadDeliveryEvidence(orderId, file);
+      setMessage(`Evidencia del pedido #${orderId} guardada correctamente.`);
+      setSelectedFiles((previous) => ({ ...previous, [orderId]: null }));
+      await loadOrders();
+    } catch (err) {
+      setError(err.message || 'No se pudo guardar la fotografía.');
+    } finally {
+      setSavingId(null);
+    }
+  };
+
+  const changeStatus = async (order, status) => {
+    let observation = '';
+    if (status === 'Entrega fallida') {
+      observation = window.prompt('Describe el motivo de la entrega fallida:') || '';
+      if (!observation.trim()) return;
+    }
+    setSavingId(order.id);
+    setError('');
+    setMessage('');
+    try {
+      await updateCourierOrderStatus(order.id, status, observation);
+      setMessage(`El pedido #${order.id} ahora está en estado ${status}.`);
+      await loadOrders();
+    } catch (err) {
+      setError(err.message || 'No se pudo actualizar el estado.');
+    } finally {
+      setSavingId(null);
+    }
+  };
 
   return (
     <div className="admin-page">
@@ -34,65 +173,123 @@ export default function EntregasMensajeria() {
         <div className="admin-header">
           <div>
             <h2 className="admin-titulo">Mis entregas</h2>
-            <p className="admin-sub">Consulta y organiza los pedidos asignados a tu ruta.</p>
+            <p className="admin-sub">Pedidos asignados a tu usuario, con seguimiento y evidencia.</p>
           </div>
-          <strong className="admin-contador">{entregas.length} entrega(s)</strong>
+          <strong className="admin-contador">{orders.length} entrega(s)</strong>
         </div>
 
-        {cargando ? (
-          <div style={{ background: "#fff", border: "1px solid #eee", borderRadius: "12px", padding: "3rem", textAlign: "center", color: "#888" }}>
-            Esperando datos del servidor...
-          </div>
-        ) : error ? (
-          <div style={{ background: "#fff", border: "1px solid #eee", borderRadius: "12px", padding: "3rem", textAlign: "center", color: "#a32d2d" }}>
-            {error}
-          </div>
-        ) : entregas.length === 0 ? (
-          <div style={{ background: "#fff", border: "1px solid #eee", borderRadius: "12px", padding: "3rem", textAlign: "center", color: "#888" }}>
-            No hay entregas disponibles.
-          </div>
+        {error && <div className="login-error" role="alert">{error}</div>}
+        {message && <div className="bodeguero-message" role="status">{message}</div>}
+        {loading ? (
+          <EmptyState>Cargando tus entregas...</EmptyState>
+        ) : orders.length === 0 ? (
+          <EmptyState>No tienes entregas asignadas.</EmptyState>
         ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
-          {entregas.map((item) => {
-            const estado = coloresEstado[item.estadoEntrega] || ["#f5f5f5", "#555"];
-
-            return (
-              <div key={item.idPedido} style={{ background: "#fff", border: "1px solid #eee", borderRadius: "12px", overflow: "hidden", boxShadow: "0 8px 20px rgba(26, 26, 26, 0.04)", padding: "1.25rem 1.35rem" }}>
-                <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "1rem", marginBottom: "1rem", flexWrap: "wrap" }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+            {orders.map((order) => (
+              <article key={order.id} className="admin-order-card">
+                <div className="admin-order-header">
                   <div>
-                    <h3 style={{ margin: 0, color: "#1a1a1a", fontSize: "18px" }}>Pedido #{item.idPedido}</h3>
-                    <p style={{ margin: "5px 0 0", color: "#888", fontSize: "13px" }}>{item.cliente} · {item.fecha}</p>
+                    <h3>Pedido #{order.id}</h3>
+                    <p>{order.cliente} · Compra {order.fecha} · Asignación {new Date(order.fechaAsignacionMensajero).toLocaleString('es-CO')}</p>
                   </div>
-                  <span className="status-badge" style={{ background: estado[0], color: estado[1] }}>{item.estadoEntrega}</span>
+                  <StatusBadge tone={badgeTone(order.estadoEntrega)}>{order.estadoEntrega}</StatusBadge>
+                </div>
+                <div className="admin-order-summary">
+                  <p><strong>Dirección:</strong> {order.direccion || 'No registrada'}, {order.ciudad || 'Sin ciudad'}</p>
+                  <p><strong>Teléfono:</strong> {order.telefono || 'No registrado'}</p>
+                  <p><strong>Preparación:</strong> {order.estadoPreparacion} · {order.fechaPreparacion || 'Sin fecha'}</p>
                 </div>
 
-                <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) 280px", gap: "1.5rem", alignItems: "start" }}>
-                  <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "1rem", padding: "13px 16px", border: "1px solid #eee", borderRadius: "8px", background: "#fafafa" }}>
-                      <span style={{ color: "#1a1a1a", fontWeight: 600, fontSize: "14px" }}>Productos del pedido ({item.cantidadProductos})</span>
-                      <strong style={{ color: "#ff8c42", fontSize: "15px" }}>{Number(item.total || 0).toLocaleString("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 })}</strong>
-                    </div>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "1rem", padding: "13px 16px", border: "1px solid #eee", borderRadius: "8px", background: "#fff" }}>
-                      <span style={{ color: "#1a1a1a", fontWeight: 600, fontSize: "14px" }}>{item.direccion || "Dirección no registrada"}</span>
-                      <strong style={{ color: "#777", fontSize: "15px" }}>{item.ciudad || "Ciudad no registrada"}</strong>
-                    </div>
-                  </div>
+                <h4>Productos</h4>
+                <ul>
+                  {order.productos.map((product) => (
+                    <li key={product.idProducto}>
+                      {product.nombre} · {product.cantidad} uds · Talla {product.talla || 'N/D'} · Color {product.color || 'N/D'}
+                    </li>
+                  ))}
+                </ul>
 
-                  <aside style={{ borderLeft: "1px solid #eee", paddingLeft: "1.25rem" }}>
-                    <h4 style={{ margin: "0 0 1rem", paddingBottom: "10px", borderBottom: "1px solid #eee", fontSize: "15px", color: "#1a1a1a" }}>Detalle del pedido #{item.idPedido}</h4>
-                    <p style={{ margin: "0 0 8px", color: "#555", fontSize: "13px" }}><strong>Cliente:</strong> {item.cliente}</p>
-                    <p style={{ margin: "0 0 8px", color: "#555", fontSize: "13px" }}><strong>Dirección:</strong> {item.direccion || "No registrada"}</p>
-                    <p style={{ margin: "0 0 8px", color: "#555", fontSize: "13px" }}><strong>Ciudad:</strong> {item.ciudad || "No registrada"}</p>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: "1px solid #eee", marginTop: "1rem", paddingTop: "1rem", color: "#1a1a1a", fontSize: "15px", fontWeight: 700 }}>
-                      <span>Total</span>
-                      <strong>{Number(item.total || 0).toLocaleString("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 })}</strong>
-                    </div>
-                  </aside>
+                {order.novedades?.length > 0 && (
+                  <section>
+                    <h4>Novedades</h4>
+                    {order.novedades.map((novelty) => (
+                      <p key={novelty.id}>{novelty.tipo}: {novelty.descripcion} · {novelty.estado}</p>
+                    ))}
+                  </section>
+                )}
+
+                <details>
+                  <summary>Historial del pedido</summary>
+                  <ul>
+                    {order.historial.map((event) => (
+                      <li key={event.id}>
+                        {event.evento} · {event.usuario} · {new Date(event.fecha).toLocaleString('es-CO')}
+                        {event.observacion ? ` · ${event.observacion}` : ''}
+                      </li>
+                    ))}
+                  </ul>
+                </details>
+
+                {evidenceUrls[order.id] && (
+                  <figure>
+                    <img src={evidenceUrls[order.id]} alt={`Evidencia de entrega del pedido ${order.id}`} style={{ maxWidth: '100%', maxHeight: 320 }} />
+                    <figcaption>Evidencia guardada: {new Date(order.fechaEvidencia).toLocaleString('es-CO')}</figcaption>
+                  </figure>
+                )}
+
+                {order.estadoEntrega !== 'Entregado' && !order.evidencia && (
+                  <section>
+                    <h4>Evidencia fotográfica</h4>
+                    <label>
+                      Tomar o seleccionar imagen (JPEG, PNG o WebP; máximo 5 MB)
+                      <input
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp"
+                        capture="environment"
+                        onChange={(event) => setFile(order.id, event.target.files?.[0])}
+                      />
+                    </label>
+                    {previewUrls[order.id] && (
+                      <img src={previewUrls[order.id]} alt="Vista previa de la evidencia seleccionada" style={{ display: 'block', maxWidth: '100%', maxHeight: 320, marginTop: 12 }} />
+                    )}
+                    <button type="button" className="btn-admin-primary" disabled={savingId === order.id || !selectedFiles[order.id]} onClick={() => saveEvidence(order.id)}>
+                      {savingId === order.id ? 'Guardando...' : 'Guardar evidencia'}
+                    </button>
+                  </section>
+                )}
+
+                <div className="admin-order-action">
+                  {order.estadoEntrega === 'Asignado' && (
+                    <button type="button" className="btn-admin-primary" disabled={savingId === order.id} onClick={() => changeStatus(order, 'En camino')}>
+                      Iniciar recorrido
+                    </button>
+                  )}
+                  {order.estadoEntrega === 'En camino' && (
+                    <>
+                      <button
+                        type="button"
+                        className="btn-admin-primary"
+                        disabled={savingId === order.id || !order.evidencia}
+                        title={!order.evidencia ? 'Primero guarda una fotografía de evidencia' : ''}
+                        onClick={() => changeStatus(order, 'Entregado')}
+                      >
+                        Marcar como entregado
+                      </button>
+                      <button type="button" className="btn-admin-editar" disabled={savingId === order.id} onClick={() => changeStatus(order, 'Entrega fallida')}>
+                        Registrar entrega fallida
+                      </button>
+                    </>
+                  )}
+                  {order.estadoEntrega === 'Entrega fallida' && (
+                    <button type="button" className="btn-admin-primary" disabled={savingId === order.id} onClick={() => changeStatus(order, 'En camino')}>
+                      Reintentar entrega
+                    </button>
+                  )}
                 </div>
-              </div>
-            );
-          })}
-        </div>
+              </article>
+            ))}
+          </div>
         )}
       </div>
     </div>

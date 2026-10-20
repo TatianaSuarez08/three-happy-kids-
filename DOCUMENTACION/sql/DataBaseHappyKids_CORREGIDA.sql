@@ -2,6 +2,8 @@
 -- Este archivo es la fuente de verdad vigente. El esquema histórico está en sql/legacy/.
 -- No elimina la base de datos ni incluye consultas de lectura ni datos de prueba.
 -- Usar en una base de datos nueva o después de realizar una copia de seguridad.
+-- En bases existentes, CREATE TABLE IF NOT EXISTS no modifica tablas ya creadas:
+-- aplicar las migraciones incrementales documentadas por separado.
 
 CREATE DATABASE IF NOT EXISTS happykids
 CHARACTER SET utf8mb4
@@ -311,11 +313,119 @@ CREATE TABLE IF NOT EXISTS pago (
 CREATE TABLE IF NOT EXISTS entrega (
     id INT AUTO_INCREMENT PRIMARY KEY,
     fecha_entrega DATE,
-    estado ENUM('Pendiente', 'En camino', 'Entregado', 'Cancelado') NOT NULL DEFAULT 'Pendiente',
+    estado ENUM('Pendiente', 'Por recoger', 'En camino', 'Entregado', 'Cancelado', 'Entrega fallida') NOT NULL DEFAULT 'Pendiente',
     empresa_transportadora VARCHAR(100),
     numero_guia VARCHAR(100),
     id_factura INT NOT NULL,
     CONSTRAINT uq_entrega_factura UNIQUE (id_factura),
     CONSTRAINT fk_entrega_factura
         FOREIGN KEY (id_factura) REFERENCES factura(id)
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS pedido_flujo (
+    id_factura INT NOT NULL PRIMARY KEY,
+    estado_preparacion ENUM(
+        'Pendiente',
+        'Asignado',
+        'En preparación',
+        'Novedad',
+        'Listo para despacho'
+    ) NOT NULL DEFAULT 'Pendiente',
+    id_bodeguero INT NULL,
+    fecha_asignacion_bodega DATETIME NULL,
+    fecha_preparacion DATETIME NULL,
+    id_mensajero INT NULL,
+    fecha_asignacion_mensajero DATETIME NULL,
+    estado_entrega ENUM(
+        'Pendiente',
+        'Asignado',
+        'En camino',
+        'Entrega fallida',
+        'Entregado',
+        'Cancelado'
+    ) NOT NULL DEFAULT 'Pendiente',
+    evidencia_path VARCHAR(255) NULL,
+    evidencia_fecha DATETIME NULL,
+    evidencia_usuario INT NULL,
+    creado_en TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    actualizado_en TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_pedido_flujo_factura
+        FOREIGN KEY (id_factura) REFERENCES factura(id) ON DELETE RESTRICT,
+    CONSTRAINT fk_pedido_flujo_bodeguero
+        FOREIGN KEY (id_bodeguero) REFERENCES usuario(id) ON DELETE RESTRICT,
+    CONSTRAINT fk_pedido_flujo_mensajero
+        FOREIGN KEY (id_mensajero) REFERENCES usuario(id) ON DELETE RESTRICT,
+    CONSTRAINT fk_pedido_flujo_evidencia_usuario
+        FOREIGN KEY (evidencia_usuario) REFERENCES usuario(id) ON DELETE RESTRICT,
+    INDEX idx_pedido_flujo_bodega (estado_preparacion, id_bodeguero),
+    INDEX idx_pedido_flujo_mensajeria (estado_preparacion, estado_entrega, id_mensajero)
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS pedido_preparacion_detalle (
+    id_factura INT NOT NULL,
+    id_producto INT NOT NULL,
+    encontrado BOOLEAN NOT NULL,
+    cantidad_preparada INT NOT NULL,
+    observacion VARCHAR(1000) NOT NULL DEFAULT '',
+    id_bodeguero INT NOT NULL,
+    actualizado_en TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id_factura, id_producto),
+    CONSTRAINT fk_pedido_preparacion_factura
+        FOREIGN KEY (id_factura) REFERENCES factura(id) ON DELETE RESTRICT,
+    CONSTRAINT fk_pedido_preparacion_producto
+        FOREIGN KEY (id_producto) REFERENCES producto(id) ON DELETE RESTRICT,
+    CONSTRAINT fk_pedido_preparacion_bodeguero
+        FOREIGN KEY (id_bodeguero) REFERENCES usuario(id) ON DELETE RESTRICT,
+    CONSTRAINT chk_pedido_preparacion_cantidad
+        CHECK (cantidad_preparada >= 0)
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS pedido_novedad (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    id_factura INT NOT NULL,
+    id_producto INT NULL,
+    etapa ENUM('Bodega', 'Mensajería') NOT NULL,
+    tipo VARCHAR(60) NOT NULL,
+    descripcion VARCHAR(1000) NOT NULL,
+    estado ENUM('Pendiente', 'Resuelta', 'Cerrada') NOT NULL DEFAULT 'Pendiente',
+    decision VARCHAR(1000) NULL,
+    id_reporta INT NOT NULL,
+    id_resuelve INT NULL,
+    creada_en TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    resuelta_en DATETIME NULL,
+    CONSTRAINT fk_pedido_novedad_factura
+        FOREIGN KEY (id_factura) REFERENCES factura(id) ON DELETE RESTRICT,
+    CONSTRAINT fk_pedido_novedad_producto
+        FOREIGN KEY (id_producto) REFERENCES producto(id) ON DELETE RESTRICT,
+    CONSTRAINT fk_pedido_novedad_reporta
+        FOREIGN KEY (id_reporta) REFERENCES usuario(id) ON DELETE RESTRICT,
+    CONSTRAINT fk_pedido_novedad_resuelve
+        FOREIGN KEY (id_resuelve) REFERENCES usuario(id) ON DELETE RESTRICT,
+    INDEX idx_pedido_novedad_estado (estado, etapa, creada_en),
+    INDEX idx_pedido_novedad_factura (id_factura, creada_en)
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS pedido_historial (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    id_factura INT NOT NULL,
+    id_usuario INT NOT NULL,
+    evento VARCHAR(80) NOT NULL,
+    observacion VARCHAR(1000) NOT NULL DEFAULT '',
+    creado_en TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_pedido_historial_factura
+        FOREIGN KEY (id_factura) REFERENCES factura(id) ON DELETE RESTRICT,
+    CONSTRAINT fk_pedido_historial_usuario
+        FOREIGN KEY (id_usuario) REFERENCES usuario(id) ON DELETE RESTRICT,
+    INDEX idx_pedido_historial_factura (id_factura, creado_en)
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS api_idempotency (
+    idempotency_key VARCHAR(128) NOT NULL PRIMARY KEY,
+    request_hash CHAR(64) NOT NULL,
+    status ENUM('processing', 'completed') NOT NULL DEFAULT 'processing',
+    response_status SMALLINT NULL,
+    response_body LONGTEXT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_api_idempotency_updated_at (updated_at)
 ) ENGINE=InnoDB;

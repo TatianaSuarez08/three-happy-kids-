@@ -6,6 +6,7 @@ import { verifyDatabaseConnection } from './src/db.js';
 import userRoutes from './src/routes/UsuarioRoute.js'; // Importa las rutas relacionadas con usuarios
 import productRoutes from './src/routes/ProductoRoute.js'; // Importa las rutas relacionadas con productos
 import orderRoutes from './src/routes/PedidoRoute.js';
+import orderWorkflowRoutes from './src/routes/PedidoFlujoRoute.js';
 import adminUserRoutes from './src/routes/AdminUsuarioRoute.js';
 import dashboardRoutes from './src/routes/DashboardRoute.js';
 import catalogRoutes from './src/routes/CatalogoRoute.js';
@@ -51,6 +52,7 @@ app.get('/', (req, res) => {
 app.use('/api/v1', userRoutes);
 app.use('/api/v1', productRoutes);
 app.use('/api/v1', orderRoutes);
+app.use('/api/v1', orderWorkflowRoutes);
 app.use('/api/v1', adminUserRoutes);
 app.use('/api/v1', dashboardRoutes);
 app.use('/api/v1', catalogRoutes);
@@ -71,4 +73,3 @@ const server = app.listen(PORT, async () => {
         server.close(() => process.exitCode = 1);
     }
 });
-

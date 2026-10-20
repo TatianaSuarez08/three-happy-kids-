@@ -25,6 +25,7 @@ import Registro from './pages/publicas/Registro';
 // Vistas de Admin (SIN .jsx al final)
 import Dashboard from './pages/administracion/page-Dashboard';
 import Pedidos from './pages/administracion/page-PedidosBD';
+import NovedadesPedidos from './pages/administracion/page-NovedadesPedidos';
 import Inventario from './pages/administracion/page-producto';
 import AgregarProducto from './pages/administracion/page-AgregarProducto';
 import EditarProducto from './pages/administracion/page-EditarProducto';
@@ -141,6 +142,14 @@ function App() {
           element={
             <ProtectedRoute allowedRoles={["administrador"]}>
               <Pedidos />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/novedades-pedidos"
+          element={
+            <ProtectedRoute allowedRoles={["administrador"]}>
+              <NovedadesPedidos />
             </ProtectedRoute>
           }
         />

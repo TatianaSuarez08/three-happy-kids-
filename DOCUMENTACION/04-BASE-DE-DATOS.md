@@ -18,16 +18,9 @@ USE happykids;
 ```
 
 2. Asegúrate de que existan las tablas requeridas.
-3. Ejecuta `documentacion/sql/USUARIOS_SHA2_SETUP.sql`.
+3. En una base aislada de desarrollo, ejecuta `documentacion/sql/dml.sql`.
 
-Usuarios de prueba definidos por el script:
-
-- Cliente: `cliente@example.com` / `cliente123`.
-- Administrador: `admin@example.com` / `admin123`.
-- Bodeguero: `bodeguero@example.com` / `bodeguero123`.
-- Mensajero: `mensajero@example.com` / `mensajero123`.
-
-Los hashes incluidos corresponden a esas contraseñas y no deben usarse en producción.
+El seed añade ejemplos ficticios con hashes en formato legado, sin contraseñas en texto plano. Para autenticación interactiva, registra cuentas desde la aplicación. No uses los archivos de SQL legacy ni ejecutes el seed en producción.
 
 ## Verificar roles
 

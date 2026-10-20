@@ -1,4 +1,4 @@
-const API_BASE_URLS = [...new Set([
+export const API_BASE_URLS = [...new Set([
   import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000',
   import.meta.env.VITE_API_BACKUP_URL || 'http://localhost:3001'
 ])];

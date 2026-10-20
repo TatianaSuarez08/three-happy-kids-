@@ -5,6 +5,6 @@ import permitRoles from '../middleware/role.js';
 
 const router = Router();
 
-router.get('/logistica', auth, permitRoles('administrador', 'bodeguero', 'mensajero', { permission: 'pedidos:read' }), getLogistica);
+router.get('/logistica', auth, permitRoles('administrador'), getLogistica);
 
 export default router;

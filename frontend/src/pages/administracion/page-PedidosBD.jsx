@@ -1,12 +1,13 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import "../../styles/style.css";
 import EmptyState from "../../components/EmptyState";
-import { getOrders, updateOrderStatus } from "../../services/pedidoService";
+import { getDeliveryEvidenceObjectUrl, getOrders, updateOrderStatus } from "../../services/pedidoService";
 
-const estados = ["Pendiente", "En camino", "Entregado", "Cancelado"];
+const estados = ["Pendiente", "En camino", "Entrega fallida", "Entregado", "Cancelado"];
 const estadoColor = {
   Pendiente: { icon: "bi-hourglass-split", className: "status-warning" },
   "En camino": { icon: "bi-truck", className: "status-info" },
+  "Entrega fallida": { icon: "bi-exclamation-triangle-fill", className: "status-danger" },
   Entregado: { icon: "bi-check-circle-fill", className: "status-success" },
   Cancelado: { icon: "bi-x-circle-fill", className: "status-danger" },
 };
@@ -16,6 +17,44 @@ const formatoPrecio = new Intl.NumberFormat("es-CO", {
   currencyDisplay: "code",
   maximumFractionDigits: 0,
 });
+
+function EvidencePreview({ orderId }) {
+  const [imageUrl, setImageUrl] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const imageUrlRef = useRef('');
+
+  useEffect(() => () => {
+    if (imageUrlRef.current) URL.revokeObjectURL(imageUrlRef.current);
+  }, []);
+
+  const loadEvidence = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const nextUrl = await getDeliveryEvidenceObjectUrl(orderId);
+      if (imageUrlRef.current) URL.revokeObjectURL(imageUrlRef.current);
+      imageUrlRef.current = nextUrl;
+      setImageUrl(nextUrl);
+    } catch (err) {
+      setError(err.message || 'No se pudo consultar la evidencia.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div>
+      {!imageUrl && (
+        <button type="button" className="btn-admin-editar" onClick={loadEvidence} disabled={loading}>
+          {loading ? 'Cargando evidencia...' : 'Consultar evidencia'}
+        </button>
+      )}
+      {error && <p role="alert">{error}</p>}
+      {imageUrl && <img src={imageUrl} alt={`Evidencia de entrega del pedido ${orderId}`} style={{ display: 'block', maxWidth: '100%', maxHeight: 320, marginTop: 12 }} />}
+    </div>
+  );
+}
 
 function Pedidos() {
   const [pedidos, setPedidos] = useState([]);
@@ -115,7 +154,7 @@ function Pedidos() {
                     <div className="admin-order-products">
                       {pedido.productos.map((producto) => (
                         <div key={`${pedido.id}-${producto.nombre}`} className="admin-order-product">
-                          <div><strong style={{ color: "#1a1a1a", fontSize: "14px" }}>{producto.nombre}</strong><small style={{ display: "block", color: "#888", marginTop: "4px" }}>Cantidad: {producto.cantidad}</small></div>
+                          <div><strong style={{ color: "#1a1a1a", fontSize: "14px" }}>{producto.nombre}</strong><small style={{ display: "block", color: "#888", marginTop: "4px" }}>Cantidad: {producto.cantidad} · Talla: {producto.talla || "N/D"} · Color: {producto.color || "N/D"}</small></div>
                           <strong style={{ color: "#ff8c42", whiteSpace: "nowrap" }}>{formatoPrecio.format(Number(producto.subtotal) || 0)}</strong>
                         </div>
                       ))}
@@ -127,20 +166,28 @@ function Pedidos() {
                       <p style={{ fontSize: "13px", color: "#555", margin: "0 0 8px" }}><strong>Correo:</strong> {pedido.correo}</p>
                       <p style={{ fontSize: "13px", color: "#555", margin: "0 0 8px" }}><strong>Entrega:</strong> {pedido.direccion || "Sin dirección"}{pedido.ciudad ? `, ${pedido.ciudad}` : ""}</p>
                       <p style={{ fontSize: "13px", color: "#555", margin: "0 0 8px" }}><strong>Pago:</strong> {pedido.pago || "Sin registrar"}</p>
+                      <p style={{ fontSize: "13px", color: "#555", margin: "0 0 8px" }}><strong>Preparación:</strong> {pedido.estadoPreparacion || "Pendiente"} · <strong>Entrega:</strong> {pedido.estadoEntrega || pedido.estado}</p>
                       <div style={{ display: "flex", justifyContent: "space-between", borderTop: "1px solid #eee", marginTop: "1rem", paddingTop: "1rem", fontSize: "18px", fontWeight: 700, color: "#1a1a1a" }}><span>Total</span><span>{formatoPrecio.format(Number(pedido.total) || 0)}</span></div>
                     </aside>
                   </div>
 
                   <div className="admin-order-action">
-                    <span style={{ fontSize: "13px", color: "#888" }}>Cambiar estado del pedido</span>
+                    <span style={{ fontSize: "13px", color: "#888" }}>Acción administrativa</span>
                     <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-                      {estados.filter((opcion) => opcion !== pedido.estado).map((opcion) => (
-                        <button key={opcion} type="button" className="btn-admin-editar" onClick={() => { setPedidoSeleccionado(pedido); setEstadoNuevo(opcion); }}>
-                          <><i className={`bi ${estadoColor[opcion].icon}`} aria-hidden="true" /> {opcion}</>
+                      {pedido.estado !== "Cancelado" && pedido.estado !== "Entregado" && pedido.estado !== "En camino" && (
+                        <button key="cancelar" type="button" className="btn-admin-editar" onClick={() => { setPedidoSeleccionado(pedido); setEstadoNuevo("Cancelado"); }}>
+                          <><i className={`bi ${estadoColor.Cancelado.icon}`} aria-hidden="true" /> Cancelar pedido</>
                         </button>
-                      ))}
+                      )}
                     </div>
                   </div>
+                  {pedido.evidencia && (
+                    <section>
+                      <h4>Evidencia de entrega</h4>
+                      <p>Guardada {pedido.fechaEvidencia ? new Date(pedido.fechaEvidencia).toLocaleString("es-CO") : ""}</p>
+                      <EvidencePreview orderId={pedido.id} />
+                    </section>
+                  )}
                 </section>
               );
             })}

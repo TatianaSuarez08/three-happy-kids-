@@ -60,3 +60,16 @@ export const uploadProfileImage = multer({
   fileFilter,
   limits: { fileSize: 5 * 1024 * 1024 }
 });
+
+const deliveryImageMimeTypes = new Set(['image/jpeg', 'image/png', 'image/webp']);
+export const uploadDeliveryEvidence = multer({
+  storage: multer.memoryStorage(),
+  fileFilter: (_req, file, callback) => {
+    if (!deliveryImageMimeTypes.has(file.mimetype)) {
+      callback(new Error('La evidencia debe ser una imagen JPG, PNG o WEBP'));
+      return;
+    }
+    callback(null, true);
+  },
+  limits: { fileSize: 5 * 1024 * 1024, files: 1 }
+});

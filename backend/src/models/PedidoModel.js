@@ -17,12 +17,17 @@ const pedidosBaseQuery = `
     c.telefono,
     c.direccion,
     c.ciudad,
-    p.metodo_pago AS pago
+    p.metodo_pago AS pago,
+    pf.estado_preparacion AS estadoPreparacion,
+    pf.estado_entrega AS estadoEntrega,
+    pf.evidencia_path AS evidencia,
+    pf.evidencia_fecha AS fechaEvidencia
   FROM factura f
   JOIN cliente c ON c.id = f.id_cliente
   JOIN usuario u ON u.id = c.id_usuario
   LEFT JOIN entrega e ON e.id_factura = f.id
   LEFT JOIN pago p ON p.id_factura = f.id
+  LEFT JOIN pedido_flujo pf ON pf.id_factura = f.id
 `;
 
 const cargarDetalles = async (orders) => {
@@ -33,12 +38,17 @@ const cargarDetalles = async (orders) => {
   const [details] = await pool.execute(
     `SELECT
        dp.id_factura,
-       dp.cantidad,
-       dp.precio_unitario AS precio,
-       dp.subtotal,
-       pr.nombre_producto AS nombre
-     FROM detalle_pedido dp
-     JOIN producto pr ON pr.id = dp.id_producto
+         dp.id_producto AS idProducto,
+         dp.cantidad,
+         dp.precio_unitario AS precio,
+         dp.subtotal,
+         pr.nombre_producto AS nombre,
+         t.nombre_talla AS talla,
+         c.nombre_color AS color
+       FROM detalle_pedido dp
+       JOIN producto pr ON pr.id = dp.id_producto
+       JOIN talla t ON t.id = pr.id_talla
+       JOIN color c ON c.id = pr.id_color
      WHERE dp.id_factura IN (${placeholders})
      ORDER BY dp.id_factura DESC, pr.nombre_producto`,
     ids
@@ -161,6 +171,15 @@ export const createOrder = async ({ userId, userEmail, direccion, ciudad, telefo
       `INSERT INTO entrega (estado, id_factura) VALUES ('Pendiente', ?)`,
       [invoice.insertId]
     );
+    await connection.execute(
+      `INSERT INTO pedido_flujo (id_factura) VALUES (?)`,
+      [invoice.insertId]
+    );
+    await connection.execute(
+      `INSERT INTO pedido_historial (id_factura, id_usuario, evento, observacion)
+       VALUES (?, ?, 'Pedido recibido', 'Pendiente de preparación')`,
+      [invoice.insertId, userId]
+    );
     await connection.commit();
     return invoice.insertId;
   } catch (error) {
@@ -171,24 +190,49 @@ export const createOrder = async ({ userId, userEmail, direccion, ciudad, telefo
   }
 };
 
-export const updateOrderStatus = async (id, status) => {
+export const updateOrderStatus = async (id, status, userId) => {
   const connection = await pool.getConnection();
 
   try {
     await connection.beginTransaction();
-    const [orders] = await connection.execute('SELECT id FROM factura WHERE id = ?', [id]);
-    if (orders.length === 0) return false;
+    const [orders] = await connection.execute(
+      'SELECT id, estado FROM factura WHERE id = ? FOR UPDATE',
+      [id]
+    );
+    if (orders.length === 0) {
+      await connection.rollback();
+      return false;
+    }
+    const [flows] = await connection.execute(
+      'SELECT estado_entrega FROM pedido_flujo WHERE id_factura = ? FOR UPDATE',
+      [id]
+    );
+    const [deliveries] = await connection.execute(
+      'SELECT estado FROM entrega WHERE id_factura = ? FOR UPDATE',
+      [id]
+    );
+    const currentDeliveryStatus = flows[0]?.estado_entrega || deliveries[0]?.estado || 'Pendiente';
+    if (status !== 'Cancelado' || currentDeliveryStatus === 'Entregado'
+      || currentDeliveryStatus === 'En camino' || orders[0].estado === 'Anulada') {
+      const error = new Error('El pedido no puede cambiarse a ese estado desde Administración');
+      error.code = 'ORDER_STATUS_CONFLICT';
+      throw error;
+    }
 
     await connection.execute(
-      `INSERT INTO entrega (estado, id_factura)
-       VALUES (?, ?)
-       ON DUPLICATE KEY UPDATE estado = VALUES(estado)`,
-      [status, id]
+      `UPDATE entrega SET estado = 'Cancelado' WHERE id_factura = ?`,
+      [id]
     );
-
-    if (status === 'Cancelado') {
-      await connection.execute(`UPDATE factura SET estado = 'Anulada' WHERE id = ?`, [id]);
-    }
+    await connection.execute(`UPDATE factura SET estado = 'Anulada' WHERE id = ?`, [id]);
+    await connection.execute(
+      `UPDATE pedido_flujo SET estado_entrega = 'Cancelado' WHERE id_factura = ?`,
+      [id]
+    );
+    await connection.execute(
+      `INSERT INTO pedido_historial (id_factura, id_usuario, evento)
+       VALUES (?, ?, 'Pedido cancelado por Administración')`,
+      [id, userId]
+    );
 
     await connection.commit();
     return true;

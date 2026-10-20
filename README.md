@@ -16,6 +16,7 @@ Variables principales:
 
 ```env
 PORT=3000
+API_PORT=3001
 DB_HOST=localhost
 DB_USER=root
 DB_PASSWORD=
@@ -24,6 +25,18 @@ CORS_ORIGIN=http://localhost:5173
 JWT_SECRET=three-happy-kids-dev-secret-2026-change-me
 VITE_BACKEND_URL=http://localhost:3000
 ```
+
+## Inicio automático en VS Code
+
+Al abrir la carpeta del proyecto en VS Code se inician automáticamente el frontend, el backend y `API`. La primera vez, VS Code puede pedir permiso para ejecutar las tareas automáticas; acepta la solicitud.
+
+Instala primero las dependencias de los tres servicios desde la raíz:
+
+```bash
+npm run install:all
+```
+
+El backend usa el puerto `3000` y es el servidor al que se conecta el frontend. `API` usa el puerto `3001` para evitar conflictos. Ambos requieren las variables de base de datos y `JWT_SECRET` configuradas en el `.env` raíz, además de MySQL activo.
 
 ## Backend
 

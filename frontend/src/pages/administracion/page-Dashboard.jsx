@@ -9,6 +9,8 @@ const estadoColor = {
   "En camino": { bg: "#e8f4ff", color: "#4a90d9" },
   "Pendiente": { bg: "#fff8e0", color: "#f0a500" },
   "Cancelado": { bg: "#fff0f0", color: "#e53935" },
+  "Por recoger": { bg: "#f5f0ff", color: "#7c3aed" },
+  "Entrega fallida": { bg: "#fff0f0", color: "#e53935" },
 };
 
 const estadoEmoji = {
@@ -16,7 +18,12 @@ const estadoEmoji = {
   "En camino": "bi-truck",
   "Pendiente": "bi-hourglass-split",
   "Cancelado": "bi-x-circle-fill",
+  "Por recoger": "bi-box-seam",
+  "Entrega fallida": "bi-exclamation-triangle-fill",
 };
+
+const estadoColorDefault = { bg: "#f3f4f6", color: "#555" };
+const estadoEmojiDefault = "bi-question-circle";
 
 function Dashboard() {
   const navigate = useNavigate();
@@ -126,9 +133,9 @@ function Dashboard() {
                   <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                     <span
                       className="status-badge"
-                      style={{ background: estadoColor[p.estado].bg, color: estadoColor[p.estado].color }}
+                      style={estadoColor[p.estado] || estadoColorDefault}
                     >
-                      <i className={`bi ${estadoEmoji[p.estado]}`} aria-hidden="true" /> {p.estado}
+                      <i className={`bi ${estadoEmoji[p.estado] || estadoEmojiDefault}`} aria-hidden="true" /> {p.estado || "Sin estado"}
                     </span>
                     <span style={{ fontSize: "14px", fontWeight: 700, color: "#ff8c42" }}>{formatoPrecio.format(Number(p.total) || 0)}</span>
                   </div>

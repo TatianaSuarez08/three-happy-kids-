@@ -31,8 +31,14 @@ jest.mock('../../controllers/HealthController.js', () => ({
   getHealth: jest.fn()
 }));
 jest.mock('../../controllers/InventarioController.js', () => ({
+  createActivityReport: jest.fn(),
   createInventoryMovement: jest.fn(),
-  getInventoryHistory: jest.fn()
+  createPurchase: jest.fn(),
+  getInventoryActivity: jest.fn(),
+  getInventoryHistory: jest.fn(),
+  getPurchaseCreationOptions: jest.fn(),
+  getPurchasesForReceipt: jest.fn(),
+  receivePurchase: jest.fn()
 }));
 jest.mock('../../controllers/LogisticaController.js', () => ({
   getLogistica: jest.fn()
@@ -49,10 +55,13 @@ jest.mock('../../controllers/PedidoFlujoController.js', () => ({
   changeCourierStatus: jest.fn(),
   getAdminNovelties: jest.fn(),
   getCourierAssigned: jest.fn(),
+  getCourierActivityHistory: jest.fn(),
   getCourierAvailable: jest.fn(),
   getCourierEvidence: jest.fn(),
   getWarehouseAssigned: jest.fn(),
   getWarehouseAvailable: jest.fn(),
+  releaseCourier: jest.fn(),
+  releaseWarehouse: jest.fn(),
   resolveAdminNovelty: jest.fn(),
   submitPreparation: jest.fn(),
   uploadCourierEvidence: jest.fn()
@@ -136,7 +145,9 @@ const controllers = {
 const controllerMocks = Object.values(controllers).filter(jest.isMockFunction);
 
 const app = express();
-app.use(cors({ origin: parseCorsOrigins('http://localhost:5173,http://localhost:3001') }));
+app.use(cors({
+  origin: parseCorsOrigins('http://localhost:5173,http://127.0.0.1:5173,http://localhost:3001')
+}));
 app.use(express.json());
 
 const routers = [
@@ -176,8 +187,14 @@ const endpoints = [
   ['post', '/favoritos', 'createFavorite'],
   ['delete', '/favoritos/12', 'deleteFavorite'],
   ['get', '/health', 'getHealth'],
+  ['get', '/inventario/actividad', 'getInventoryActivity'],
+  ['post', '/inventario/actividad/reportes', 'createActivityReport'],
   ['get', '/inventario/12/historial', 'getInventoryHistory'],
   ['post', '/inventario/movimiento', 'createInventoryMovement'],
+  ['get', '/admin/compras/opciones', 'getPurchaseCreationOptions'],
+  ['post', '/admin/compras', 'createPurchase'],
+  ['get', '/bodega/compras', 'getPurchasesForReceipt'],
+  ['post', '/bodega/compras/12/recepcion', 'receivePurchase'],
   ['get', '/logistica', 'getLogistica'],
   ['get', '/pedidos', 'getOrders'],
   ['post', '/pedidos', 'placeOrder'],
@@ -186,10 +203,13 @@ const endpoints = [
   ['get', '/bodega/pedidos/disponibles', 'getWarehouseAvailable'],
   ['get', '/bodega/pedidos/mios', 'getWarehouseAssigned'],
   ['post', '/bodega/pedidos/12/asignar', 'assignWarehouse'],
+  ['post', '/bodega/pedidos/12/liberar', 'releaseWarehouse'],
   ['put', '/bodega/pedidos/12/preparacion', 'submitPreparation'],
   ['get', '/mensajeria/pedidos/disponibles', 'getCourierAvailable'],
   ['get', '/mensajeria/mis-entregas', 'getCourierAssigned'],
+  ['get', '/mensajeria/historial', 'getCourierActivityHistory'],
   ['post', '/mensajeria/pedidos/12/asignar', 'assignCourier'],
+  ['post', '/mensajeria/pedidos/12/liberar', 'releaseCourier'],
   ['put', '/mensajeria/pedidos/12/estado', 'changeCourierStatus'],
   ['post', '/mensajeria/pedidos/12/evidencia', 'uploadCourierEvidence'],
   ['get', '/mensajeria/pedidos/12/evidencia', 'getCourierEvidence'],
@@ -248,7 +268,7 @@ describe('rutas de la API', () => {
     expect(controllers[controllerName]).toHaveBeenCalledTimes(2);
   });
 
-  test.each(['http://localhost:5173', 'http://localhost:3001'])(
+  test.each(['http://localhost:5173', 'http://127.0.0.1:5173', 'http://localhost:3001'])(
     'permite CORS para el frontend en %s sin concatenar orígenes',
     async (origin) => {
       const response = await request(app)
@@ -262,8 +282,8 @@ describe('rutas de la API', () => {
   );
 
   test('parsea varios orígenes CORS separados por comas', () => {
-    expect(parseCorsOrigins(' http://localhost:5173, http://localhost:3001 , '))
-      .toEqual(['http://localhost:5173', 'http://localhost:3001']);
+    expect(parseCorsOrigins(' http://localhost:5173, http://127.0.0.1:5173, http://localhost:3001 , '))
+      .toEqual(['http://localhost:5173', 'http://127.0.0.1:5173', 'http://localhost:3001']);
   });
 
   test('las rutas protegidas detienen la solicitud si falla la autenticación', async () => {

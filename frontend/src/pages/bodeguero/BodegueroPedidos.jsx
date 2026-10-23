@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useState } from 'react';
 import EmptyState from '../../components/EmptyState';
+import { ProductImage, ProductImageCredits } from '../../components/ProductImage';
 import StatusBadge from '../../components/StatusBadge';
 import {
   assignWarehouseOrder,
   getAvailableWarehouseOrders,
   getMyWarehouseOrders,
+  releaseWarehouseOrder,
   submitOrderPreparation
 } from '../../services/pedidoService';
 
@@ -22,7 +24,7 @@ const initialChecklist = (order) => order.productos.map((product) => {
   const novelty = order.novedades?.find((line) => line.idProducto === product.idProducto && line.etapa === 'Bodega');
   return {
     idProducto: product.idProducto,
-    encontrado: Boolean(preparation?.encontrado),
+    encontrado: preparation ? Boolean(preparation.encontrado) : !novelty,
     tipoNovedad: novelty?.tipo || '',
     descripcion: preparation?.observacion || novelty?.descripcion || ''
   };
@@ -109,6 +111,25 @@ export default function BodegueroPedidos() {
     }
   };
 
+  const releaseOrder = async (orderId) => {
+    if (!window.confirm(`¿Deseas no asignar el pedido #${orderId}? Volverá a estar disponible para Bodega.`)) {
+      return;
+    }
+    setSavingId(orderId);
+    setError('');
+    setMessage('');
+    try {
+      await releaseWarehouseOrder(orderId);
+      setMessage(`El pedido #${orderId} quedó disponible nuevamente.`);
+      await loadOrders();
+    } catch (err) {
+      setError(err.message || 'No se pudo liberar el pedido.');
+      await loadOrders();
+    } finally {
+      setSavingId(null);
+    }
+  };
+
   const changeChecklist = (order, productId, changes) => {
     const current = checklists[order.id] || initialChecklist(order);
     setChecklists((previous) => ({
@@ -134,7 +155,7 @@ export default function BodegueroPedidos() {
       setMessage(result.estadoPreparacion === 'Listo para despacho'
         ? `El pedido #${order.id} está listo para despacho.`
         : `Se registraron novedades para el pedido #${order.id}; Administración debe revisarlas.`);
-      await loadOrders(false);
+      await loadOrders();
     } catch (err) {
       setError(err.message || 'No se pudo guardar la preparación.');
     } finally {
@@ -146,10 +167,15 @@ export default function BodegueroPedidos() {
     <div className="bodeguero-list bodeguero-order-products">
       {order.productos.map((product) => (
         <div key={`${order.id}-${product.idProducto}`} className="bodeguero-item">
+          <ProductImage
+            product={product}
+            className="bodeguero-order-product-image-container"
+            imageClassName="bodeguero-order-product-image"
+          />
           <div>
             <strong>{product.nombre}</strong>
             <small>
-              {product.cantidad} uds · Talla: {product.talla || 'No registrada'} · Color: {product.color || 'No registrado'}
+              {product.cantidad} uds · Talla: {product.talla || 'No registrada'} · Color: {product.color || 'No registrado'} · Stock disponible: {product.stockDisponible} uds
             </small>
           </div>
         </div>
@@ -224,9 +250,20 @@ export default function BodegueroPedidos() {
                     </StatusBadge>
                   </div>
                   <div className="bodeguero-order-meta">
+                    <span>Responsable: {order.bodeguero || 'No identificado'}</span>
                     <span>Asignado: {new Date(order.fechaAsignacionBodega).toLocaleString('es-CO')}</span>
                     <span>{order.direccion || 'Sin dirección'}, {order.ciudad || 'Sin ciudad'}</span>
                   </div>
+                  {order.estadoPreparacion === 'Asignado' && (
+                    <button
+                      type="button"
+                      className="bodeguero-button-secondary"
+                      disabled={savingId === order.id}
+                      onClick={() => releaseOrder(order.id)}
+                    >
+                      {savingId === order.id ? 'Cancelando...' : 'No asignar pedido'}
+                    </button>
+                  )}
                   {order.novedades?.length > 0 && (
                     <div className="bodeguero-message">
                       {order.novedades.map((novelty) => (
@@ -254,10 +291,15 @@ export default function BodegueroPedidos() {
                         || { idProducto: product.idProducto, encontrado: true, tipoNovedad: '', descripcion: '' };
                       return (
                         <div key={`${order.id}-${product.idProducto}`} className="bodeguero-item">
+                          <ProductImage
+                            product={product}
+                            className="bodeguero-order-product-image-container"
+                            imageClassName="bodeguero-order-product-image"
+                          />
                           <div>
                             <strong>{product.nombre}</strong>
                             <small>
-                              Solicitadas: {product.cantidad} · Talla: {product.talla || 'No registrada'} · Color: {product.color || 'No registrado'}
+                              Solicitadas: {product.cantidad} · Talla: {product.talla || 'No registrada'} · Color: {product.color || 'No registrado'} · Stock disponible: {product.stockDisponible} uds
                             </small>
                             <label>
                               <input
@@ -300,6 +342,9 @@ export default function BodegueroPedidos() {
           </div>
         )}
       </section>
+      <ProductImageCredits
+        products={[...availableOrders, ...assignedOrders].flatMap((order) => order.productos)}
+      />
     </div>
   );
 }

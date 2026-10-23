@@ -1,26 +1,112 @@
+import { useCallback, useEffect, useState } from 'react';
+import EmptyState from '../../components/EmptyState';
+import StatusBadge from '../../components/StatusBadge';
+import { getMyCourierOrders } from '../../services/pedidoService';
+
+const addressFor = (order) => [order.direccion, order.ciudad].filter(Boolean).join(', ');
+
+const directionsUrlFor = (order) => {
+  const address = addressFor(order).trim();
+  if (!address || !order.direccion?.trim() || !order.ciudad?.trim()) return null;
+
+  const params = new URLSearchParams({
+    api: '1',
+    destination: address,
+    travelmode: 'driving'
+  });
+  return `https://www.google.com/maps/dir/?${params.toString()}`;
+};
+
 export default function RutaMensajeria() {
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  const loadOrders = useCallback(async () => {
+    try {
+      setOrders(await getMyCourierOrders());
+      setError('');
+    } catch (err) {
+      setError(err.message || 'No se pudieron cargar tus destinos asignados.');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+    const refresh = async () => {
+      try {
+        const assignedOrders = await getMyCourierOrders();
+        if (active) {
+          setOrders(assignedOrders);
+          setError('');
+        }
+      } catch (err) {
+        if (active) setError(err.message || 'No se pudieron cargar tus destinos asignados.');
+      } finally {
+        if (active) setLoading(false);
+      }
+    };
+    void refresh();
+    const interval = window.setInterval(refresh, 15000);
+    return () => {
+      active = false;
+      window.clearInterval(interval);
+    };
+  }, []);
+
   return (
     <div className="admin-page">
       <div className="admin-container">
         <div className="admin-header">
           <div>
             <h2 className="admin-titulo">Ruta / Mapa</h2>
-            <p className="admin-sub">Vista general de tus paradas programadas.</p>
+            <p className="admin-sub">Consulta cada destino real en Google Maps. La ruta se abrirá en una pestaña nueva.</p>
           </div>
+          <button type="button" className="btn-admin-editar" onClick={loadOrders} disabled={loading}>
+            Actualizar
+          </button>
         </div>
 
-        <div style={{ background: "#fff", border: "1px solid #eee", borderRadius: "12px", overflow: "hidden", boxShadow: "0 8px 20px rgba(26, 26, 26, 0.04)", padding: "1.25rem 1.35rem" }}>
-          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "1rem", marginBottom: "1rem", flexWrap: "wrap" }}>
-            <div>
-              <h3 style={{ margin: 0, color: "#1a1a1a", fontSize: "18px" }}>Ruta de entregas</h3>
-              <p style={{ margin: "5px 0 0", color: "#888", fontSize: "13px" }}>La ruta estará disponible cuando exista la información logística correspondiente.</p>
-            </div>
-          </div>
-
-          <div style={{ borderRadius: "12px", background: "#fafafa", overflow: "hidden", border: "1px solid #e7e7e7", padding: "4rem 1rem", textAlign: "center", color: "#777" }}>
-            No hay datos de ruta disponibles.
-          </div>
-        </div>
+        {error && <div className="login-error" role="alert">{error}</div>}
+        {loading ? (
+          <EmptyState>Cargando pedidos asignados...</EmptyState>
+        ) : orders.length === 0 ? (
+          <EmptyState>No tienes envíos asignados para mostrar en el mapa.</EmptyState>
+        ) : (
+          <section className="admin-order-card">
+            {orders.map((order) => (
+              <article className="admin-order-card" key={order.id} style={{ marginBottom: '0.75rem' }}>
+                <div className="admin-order-header">
+                  <div>
+                    <h3>Pedido #{order.id}</h3>
+                    <p><strong>Destino:</strong> {addressFor(order) || 'Dirección no registrada'}</p>
+                    {!directionsUrlFor(order) && (
+                      <small role="status">
+                        Este pedido no tiene una dirección de entrega completa. Revisa los datos antes de abrir la ruta.
+                      </small>
+                    )}
+                  </div>
+                  <StatusBadge tone={order.estadoEntrega === 'Entregado' ? 'success' : 'info'}>
+                    {order.estadoEntrega}
+                  </StatusBadge>
+                </div>
+                {directionsUrlFor(order) && (
+                  <a
+                    className="btn-admin-primary"
+                    href={directionsUrlFor(order)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={`Ver ruta del pedido ${order.id} en Google Maps`}
+                  >
+                    Ver ruta en Google Maps
+                  </a>
+                )}
+              </article>
+            ))}
+          </section>
+        )}
       </div>
     </div>
   );

@@ -11,7 +11,9 @@ export const findColors = async () => {
   return rows;
 };
 
-export const findProducts = async () => {
+export const findProducts = async (categoryId) => {
+  const categoryClause = categoryId ? ' AND p.id_categoria = ?' : '';
+  const params = categoryId ? [categoryId] : [];
   const [rows] = await pool.execute(
     `SELECT
        p.id,
@@ -32,8 +34,9 @@ export const findProducts = async () => {
      JOIN talla t ON t.id = p.id_talla
      JOIN color co ON co.id = p.id_color
     LEFT JOIN inventario i ON i.id_producto = p.id
-    WHERE p.estado = 'Activo'
-     ORDER BY p.id DESC`
+    WHERE p.estado = 'Activo'${categoryClause}
+    ORDER BY p.id DESC`,
+    params
   );
 
   return rows;

@@ -24,10 +24,12 @@ const generateToken = (user) => {
 // Controlador para registrar un nuevo usuario
 export const registerUser = async (req, res) => {
   try {
-    const { nombre_usuario, email, password, confirmar_password } = req.body;
+    const nombreUsuario = typeof req.body.nombre_usuario === 'string' ? req.body.nombre_usuario.trim() : '';
+    const email = typeof req.body.email === 'string' ? req.body.email.trim().toLowerCase() : '';
+    const { password, confirmar_password } = req.body;
     
     // Validaciones básicas
-    if (!nombre_usuario || !email || !password || !confirmar_password) {
+    if (!nombreUsuario || !email || !password || !confirmar_password) {
       return res.status(400).json({ error: 'Faltan datos obligatorios' });
     }
 
@@ -39,18 +41,25 @@ export const registerUser = async (req, res) => {
       return res.status(400).json({ error: 'La contraseña debe tener al menos 6 caracteres' });
     }
 
-    if (nombre_usuario.length < 3) {
-      return res.status(400).json({ error: 'El nombre de usuario debe tener al menos 3 caracteres' });
+    if (nombreUsuario.length < 3 || nombreUsuario.length > 50
+      || !/^[\p{L}\p{M}][\p{L}\p{M} .'_-]{2,49}$/u.test(nombreUsuario)) {
+      return res.status(400).json({ error: 'El nombre solo puede contener letras, espacios, puntos, guiones, guiones bajos o apóstrofes y debe tener entre 3 y 50 caracteres' });
     }
 
     // Validar formato de email
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
+    if (email.length > 100 || !emailRegex.test(email)) {
       return res.status(400).json({ error: 'Formato de email inválido' });
     }
 
     // Verificar si el email ya existe
-    const usuarioExistente = await findUserByEmail(email);
+    let usuarioExistente;
+    try {
+      usuarioExistente = await findUserByEmail(email);
+    } catch (error) {
+      if (error.message !== 'El usuario está inactivo') throw error;
+      usuarioExistente = true;
+    }
     if (usuarioExistente) {
       return res.status(409).json({ error: 'El email ya está registrado' });
     }
@@ -60,7 +69,7 @@ export const registerUser = async (req, res) => {
 
     // Crear el usuario en la base de datos
     const nuevoUsuario = await createUser({
-      nombre_usuario,
+      nombre_usuario: nombreUsuario,
       email,
       contrasena: hashedPassword,
       idioma: 'es'
@@ -99,7 +108,8 @@ export const registerUser = async (req, res) => {
 // Controlador para el login de usuarios existentes
 export const loginUser = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const email = typeof req.body.email === 'string' ? req.body.email.trim().toLowerCase() : '';
+    const { password } = req.body;
     
     // Validación básica: email y password son obligatorios
     if (!email || !password) {

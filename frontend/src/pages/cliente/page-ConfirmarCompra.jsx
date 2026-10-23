@@ -1,8 +1,7 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCarrito } from "../../context/useCarrito";
 import { createOrder } from "../../services/pedidoService";
-import "../../styles/style.css";
 
 function ConfirmarCompra() {
   const { carrito, total, vaciarCarrito } = useCarrito();
@@ -10,6 +9,9 @@ function ConfirmarCompra() {
   const [modal, setModal] = useState(null);
   const [error, setError] = useState("");
   const [guardando, setGuardando] = useState(false);
+  const [mensajePago, setMensajePago] = useState("");
+  const envioEnCurso = useRef(false);
+  const claveIdempotencia = useRef({ payload: "", key: "" });
   const [form, setForm] = useState({
     direccion: "",
     ciudad: "",
@@ -24,20 +26,50 @@ function ConfirmarCompra() {
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
+    claveIdempotencia.current = { payload: "", key: "" };
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.direccion || !form.ciudad || !form.telefono) return;
+    if (envioEnCurso.current) return;
+    const direccion = form.direccion.trim();
+    const ciudad = form.ciudad.trim();
+    const telefono = form.telefono.trim();
+    if (!direccion || !ciudad || !telefono) {
+      setError("Completa la dirección, la ciudad y el teléfono de contacto.");
+      return;
+    }
+    if (!/^[0-9]{10}$/.test(telefono)) {
+      setError("El teléfono debe tener exactamente 10 números, sin espacios ni símbolos.");
+      return;
+    }
     setError("");
+    envioEnCurso.current = true;
     setGuardando(true);
 
     try {
-      await createOrder({ ...form, productos: carrito.map((producto) => ({ id: producto.id, cantidad: producto.cantidad })) });
+      const pedido = {
+        direccion,
+        ciudad,
+        telefono,
+        pago: form.pago,
+        productos: carrito.map((producto) => ({ id: producto.id, cantidad: producto.cantidad }))
+      };
+      const payload = JSON.stringify(pedido);
+      if (claveIdempotencia.current.payload !== payload) {
+        claveIdempotencia.current = { payload, key: crypto.randomUUID() };
+      }
+      const resultado = await createOrder(pedido, claveIdempotencia.current.key);
+      setMensajePago(resultado.estadoPago === "Pendiente"
+        ? form.pago === "efectivo"
+          ? "Tu pedido está pendiente. El pago será contra entrega."
+          : "Tu pedido está pendiente. El pago requiere verificación manual; no se procesó un pago electrónico."
+        : "Tu pedido fue recibido.");
       setModal("exito");
     } catch (err) {
       setError(err.message || "No se pudo crear el pedido");
     } finally {
+      envioEnCurso.current = false;
       setGuardando(false);
     }
   };
@@ -75,6 +107,7 @@ function ConfirmarCompra() {
                   placeholder="Ej: Calle 123 # 45-67"
                   value={form.direccion}
                   onChange={handleChange}
+                  maxLength={150}
                   required
                 />
               </div>
@@ -87,20 +120,29 @@ function ConfirmarCompra() {
                   placeholder="Ej: Bogotá"
                   value={form.ciudad}
                   onChange={handleChange}
+                  maxLength={60}
                   required
                 />
               </div>
 
               <div className="confirmar-field">
-                <label>Teléfono de contacto</label>
+                <label htmlFor="telefono-contacto">Teléfono de contacto</label>
                 <input
+                  id="telefono-contacto"
                   type="tel"
                   name="telefono"
                   placeholder="Ej: 3001234567"
                   value={form.telefono}
                   onChange={handleChange}
+                  pattern="[0-9]{10}"
+                  maxLength={10}
+                  inputMode="tel"
                   required
                 />
+                <small className="confirmar-ayuda-telefono" id="ayuda-telefono">
+                  <i className="bi bi-telephone" aria-hidden="true" />
+                  Ingresa exactamente 10 números, sin espacios, guiones ni indicativo.
+                </small>
               </div>
 
               <h3 className="confirmar-subtitulo" style={{ marginTop: "1.5rem" }}>
@@ -173,7 +215,7 @@ function ConfirmarCompra() {
         <div className="modal-overlay">
           <div className="modal-box">
             <h4 style={{ color: "#3a7d44" }}>¡Pedido realizado!</h4>
-            <p>Tu pedido ha sido confirmado. Pronto nos pondremos en contacto contigo.</p>
+            <p>{mensajePago} Pronto nos pondremos en contacto contigo.</p>
             <button className="btn-ingresar" onClick={modalExito}>Ver mis pedidos</button>
           </div>
         </div>

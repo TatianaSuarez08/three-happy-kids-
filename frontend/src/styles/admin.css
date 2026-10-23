@@ -39,13 +39,6 @@
 }
 
 .btn-admin-primary {
-  background: var(--color-brand);
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  padding: 10px 20px;
-  font-size: 14px;
-  font-weight: 600;
   cursor: pointer;
 }
 
@@ -100,49 +93,6 @@
   color: #fff;
 }
 
-.admin-tabla-wrap {
-  background: var(--color-surface);
-  border-radius: 16px;
-  border: 1px solid var(--color-border);
-  overflow: hidden;
-  box-shadow: var(--shadow-soft);
-}
-
-.admin-tabla {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.admin-tabla thead {
-  background: var(--color-surface-soft);
-  border-bottom: 1px solid var(--color-border);
-}
-
-.admin-tabla th {
-  padding: 12px 16px;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--color-muted);
-  text-align: left;
-  text-transform: uppercase;
-}
-
-.admin-tabla td {
-  padding: 12px 16px;
-  font-size: 14px;
-  color: var(--color-ink);
-  border-bottom: 1px solid var(--color-border);
-}
-
-.admin-tabla tbody tr:hover {
-  background: var(--color-brand-soft);
-}
-
-.admin-tabla-nombre {
-  font-weight: 600;
-  color: var(--color-ink) !important;
-}
-
 .admin-stock {
   display: inline-flex;
   align-items: center;
@@ -168,24 +118,6 @@
 
 .admin-acciones button {
   min-height: 34px;
-}
-
-.status-badge {
-  display: inline-block;
-  padding: 4px 10px;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.status-badge.is-active {
-  background: var(--color-success-soft);
-  color: var(--color-success);
-}
-
-.status-badge.is-inactive {
-  background: var(--color-danger-soft);
-  color: var(--color-danger);
 }
 
 .admin-empty-state {
@@ -533,6 +465,9 @@
 }
 
 @media (max-width: 768px) {
+  .admin-purchase-line {
+    grid-template-columns: 1fr;
+  }
   .admin-form {
     padding: 1rem;
   }

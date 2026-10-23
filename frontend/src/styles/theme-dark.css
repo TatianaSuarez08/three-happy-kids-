@@ -1,9 +1,9 @@
-[data-theme="dark"] html {
+html[data-theme="dark"] {
   color-scheme: dark;
 }
 
 [data-theme="dark"] body {
-  background: linear-gradient(180deg, var(--color-page-soft) 0%, var(--color-page) 100%);
+  background: var(--color-page);
   color: var(--color-ink);
 }
 
@@ -74,7 +74,6 @@
   color: var(--color-subtle);
 }
 
-[data-theme="dark"] a,
 [data-theme="dark"] .nav-link-item,
 [data-theme="dark"] .catalogo-nav-link,
 [data-theme="dark"] .nav-dropdown-menu,

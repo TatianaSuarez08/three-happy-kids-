@@ -1,5 +1,5 @@
 .app-container {
-  width: min(100% - 1.5rem, 1280px);
+  width: min(100% - 2rem, 1280px);
   margin-inline: auto;
 }
 
@@ -9,13 +9,34 @@
   gap: var(--space-6);
 }
 
+.admin-page {
+  min-height: calc(100vh - 7rem);
+  padding: clamp(1.25rem, 3vw, 2.5rem) 1rem 3rem;
+  background: var(--color-page);
+}
+
+.admin-container {
+  width: min(100%, 1280px);
+  margin-inline: auto;
+}
+
+.bodeguero-shell {
+  width: min(100%, 1280px);
+  padding: clamp(1.25rem, 3vw, 2.5rem) 1rem 3rem;
+}
+
+.login-page {
+  min-height: calc(100vh - 7rem);
+  background: var(--color-page);
+}
+
 main,
 .page-shell,
 .login-page,
 .admin-page,
 .carrito-page,
 .perfil-page {
-  min-height: calc(100vh - 120px);
+  min-height: calc(100vh - 7rem);
 }
 
 @media (min-width: 768px) {
@@ -26,6 +47,10 @@ main,
 
 @media (max-width: 767px) {
   .app-container {
-    width: min(100% - 1rem, 1280px);
+    width: min(100% - 1.25rem, 1280px);
+  }
+
+  .bodeguero-shell {
+    padding-inline: 0.75rem;
   }
 }

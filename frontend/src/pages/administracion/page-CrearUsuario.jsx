@@ -1,7 +1,6 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { createUser } from "../../services/usuarioService";
-import "../../styles/style.css";
 
 const roles = ["Administrador", "Bodeguero", "Mensajero"];
 
@@ -11,16 +10,35 @@ function CrearUsuario() {
   const [vistaPrevia, setVistaPrevia] = useState("");
   const [error, setError] = useState("");
   const [guardando, setGuardando] = useState(false);
+  const vistaPreviaRef = useRef("");
+
+  useEffect(() => () => {
+    if (vistaPreviaRef.current) URL.revokeObjectURL(vistaPreviaRef.current);
+  }, []);
 
   const cambiar = (event) => {
     const { name, value, files } = event.target;
     if (name === "foto") {
       const archivo = files?.[0] || null;
-      setFormulario({ ...formulario, foto: archivo });
-      setVistaPrevia(archivo ? URL.createObjectURL(archivo) : "");
+      if (archivo && !["image/jpeg", "image/png", "image/webp", "image/gif"].includes(archivo.type)) {
+        setError("La fotografía debe ser JPG, PNG, WEBP o GIF.");
+        event.target.value = "";
+        return;
+      }
+      if (archivo && archivo.size > 5 * 1024 * 1024) {
+        setError("La fotografía no puede superar 5 MB.");
+        event.target.value = "";
+        return;
+      }
+      if (vistaPreviaRef.current) URL.revokeObjectURL(vistaPreviaRef.current);
+      const nextPreview = archivo ? URL.createObjectURL(archivo) : "";
+      vistaPreviaRef.current = nextPreview;
+      setFormulario((previous) => ({ ...previous, foto: archivo }));
+      setVistaPrevia(nextPreview);
+      setError("");
       return;
     }
-    setFormulario({ ...formulario, [name]: value });
+    setFormulario((previous) => ({ ...previous, [name]: value }));
   };
 
   const guardar = async (event) => {

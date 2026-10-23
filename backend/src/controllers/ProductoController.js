@@ -25,9 +25,16 @@ export const getColors = async (_req, res) => {
   }
 };
 
-export const getProducts = async (_req, res) => {
+export const getProducts = async (req, res) => {
+  const categoryId = req.query.categoria === undefined
+    ? undefined
+    : Number(req.query.categoria);
+  if (categoryId !== undefined && (!Number.isSafeInteger(categoryId) || categoryId <= 0)) {
+    return res.status(400).json({ error: 'La categoría no es válida' });
+  }
+
   try {
-    const products = await findProducts();
+    const products = await findProducts(categoryId);
     res.json({ success: true, products });
   } catch (error) {
     console.error('Error al consultar productos:', error);

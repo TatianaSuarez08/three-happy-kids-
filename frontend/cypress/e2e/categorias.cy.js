@@ -8,10 +8,13 @@ describe('Pruebas de caja negra - categorías', () => {
       }
     }).as('categorias');
 
-    cy.intercept('GET', '**/api/v1/productos-publicos', {
-      statusCode: 200,
-      body: { success: true, products: [] }
-    }).as('productos');
+    cy.intercept('GET', '**/api/v1/productos-publicos*', (request) => {
+      request.alias = request.query.categoria ? 'productosCategoria' : 'productosInicio';
+      request.reply({
+        statusCode: 200,
+        body: { success: true, products: [] }
+      });
+    });
 
     cy.visit('/', {
       onBeforeLoad(window) {
@@ -23,6 +26,7 @@ describe('Pruebas de caja negra - categorías', () => {
       }
     });
     cy.wait('@categorias');
+    cy.wait('@productosInicio');
   });
 
   it('muestra las categorías disponibles en el menú del catálogo', () => {
@@ -36,7 +40,9 @@ describe('Pruebas de caja negra - categorías', () => {
 
     cy.location('pathname').should('equal', '/catalogo');
     cy.location('search').should('equal', '?categoria=4');
-    cy.wait('@productos');
+    cy.wait('@productosCategoria')
+      .its('request.query.categoria')
+      .should('equal', '4');
     cy.contains('No hay productos disponibles.').should('be.visible');
   });
 });

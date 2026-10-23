@@ -55,7 +55,9 @@ export default function NovedadesPedidos() {
     setMessage('');
     try {
       await resolveOrderNovelty(novelty.id, decision);
-      setMessage(`Novedad del pedido #${novelty.idPedido} resuelta. Bodega debe verificar nuevamente los productos antes del despacho.`);
+      setMessage(novelty.idCompra
+        ? `Novedad de la compra #${novelty.idCompra} resuelta.`
+        : `Novedad del pedido #${novelty.idPedido} resuelta. Bodega debe verificar nuevamente los productos antes del despacho.`);
       await loadNovelties();
     } catch (err) {
       setError(err.message || 'No se pudo resolver la novedad.');
@@ -87,12 +89,25 @@ export default function NovedadesPedidos() {
               <article className="admin-order-card" key={novelty.id}>
                 <div className="admin-order-header">
                   <div>
-                    <h3>Pedido #{novelty.idPedido} · {novelty.producto || 'Novedad de entrega'}</h3>
-                    <p>{novelty.cliente} · {novelty.etapa} · {new Date(novelty.fecha).toLocaleString('es-CO')}</p>
+                    <h3>
+                      {novelty.idCompra
+                        ? `Compra #${novelty.idCompra} · ${novelty.proveedor}`
+                        : `Pedido #${novelty.idPedido} · ${novelty.producto || 'Novedad de entrega'}`}
+                    </h3>
+                    <p>
+                      {novelty.idCompra ? 'Recepción de compra' : novelty.cliente}
+                      {' · '}{novelty.etapa} · {new Date(novelty.fecha).toLocaleString('es-CO')}
+                    </p>
                   </div>
                   <StatusBadge tone={novelty.estado === 'Pendiente' ? 'warning' : 'success'}>{novelty.estado}</StatusBadge>
                 </div>
                 <p><strong>Tipo:</strong> {novelty.tipo}</p>
+                {novelty.idCompra && novelty.producto && (
+                  <p>
+                    <strong>Producto:</strong> {novelty.producto}
+                    {novelty.cantidad ? ` · ${novelty.cantidad} unidad(es)` : ''}
+                  </p>
+                )}
                 <p><strong>Descripción:</strong> {novelty.descripcion}</p>
                 <p><strong>Reportado por:</strong> {novelty.reportadoPor}</p>
                 {novelty.decision && <p><strong>Decisión:</strong> {novelty.decision} · {novelty.resueltoPor || ''}</p>}

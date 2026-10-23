@@ -18,6 +18,7 @@ const pedidosBaseQuery = `
     c.direccion,
     c.ciudad,
     p.metodo_pago AS pago,
+    e.fecha_entrega AS fechaEntrega,
     pf.estado_preparacion AS estadoPreparacion,
     pf.estado_entrega AS estadoEntrega,
     pf.evidencia_path AS evidencia,
@@ -35,7 +36,8 @@ const cargarDetalles = async (orders) => {
 
   const ids = orders.map((order) => order.id);
   const placeholders = ids.map(() => '?').join(', ');
-  const [details] = await pool.execute(
+  const [[details], [history]] = await Promise.all([
+    pool.execute(
     `SELECT
        dp.id_factura,
          dp.id_producto AS idProducto,
@@ -52,7 +54,25 @@ const cargarDetalles = async (orders) => {
      WHERE dp.id_factura IN (${placeholders})
      ORDER BY dp.id_factura DESC, pr.nombre_producto`,
     ids
-  );
+    ),
+    pool.execute(
+      `SELECT h.id, h.id_factura AS idPedido, h.evento, h.observacion,
+              h.creado_en AS fecha,
+              COALESCE(NULLIF(CONCAT_WS(' ', e.nombre, e.apellido), ''), u.nombre_usuario) AS usuario,
+              COALESCE((
+                SELECT GROUP_CONCAT(r.nombre_rol ORDER BY r.nombre_rol SEPARATOR ', ')
+                FROM usuario_rol ur
+                JOIN rol r ON r.id = ur.id_rol
+                WHERE ur.id_usuario = u.id
+              ), 'Sin rol') AS rol
+       FROM pedido_historial h
+       JOIN usuario u ON u.id = h.id_usuario
+       LEFT JOIN empleado e ON e.id_usuario = u.id
+       WHERE h.id_factura IN (${placeholders})
+       ORDER BY h.creado_en, h.id`,
+      ids
+    )
+  ]);
 
   const detailsByOrder = new Map();
   details.forEach((detail) => {
@@ -61,10 +81,18 @@ const cargarDetalles = async (orders) => {
     detailsByOrder.set(detail.id_factura, current);
   });
 
+  const historyByOrder = new Map();
+  history.forEach((event) => {
+    const current = historyByOrder.get(event.idPedido) || [];
+    current.push(event);
+    historyByOrder.set(event.idPedido, current);
+  });
+
   return orders.map((order) => ({
     ...order,
     cliente: `${order.primer_nombre} ${order.primer_apellido}`.trim(),
-    productos: detailsByOrder.get(order.id) || []
+    productos: detailsByOrder.get(order.id) || [],
+    historial: historyByOrder.get(order.id) || []
   }));
 };
 
@@ -110,28 +138,73 @@ export const createOrder = async ({ userId, userEmail, direccion, ciudad, telefo
     }
 
     const clientId = clients[0].id;
+    const consolidatedItems = new Map();
+    for (const item of productos) {
+      const productId = item?.id;
+      const quantity = item?.cantidad;
+      if (!Number.isSafeInteger(productId) || productId <= 0
+        || !Number.isSafeInteger(quantity) || quantity <= 0) {
+        const error = new Error('Los productos o cantidades del pedido no son válidos');
+        error.code = 'INVALID_ORDER_ITEMS';
+        throw error;
+      }
+      const consolidatedQuantity = (consolidatedItems.get(productId) || 0) + quantity;
+      if (!Number.isSafeInteger(consolidatedQuantity)) {
+        const error = new Error('La cantidad solicitada no es válida');
+        error.code = 'INVALID_ORDER_ITEMS';
+        throw error;
+      }
+      consolidatedItems.set(productId, consolidatedQuantity);
+    }
+
+    const [carts] = await connection.execute(
+      `SELECT c.id
+       FROM carrito c
+       WHERE c.id_cliente = ? AND c.estado = 'Activo'
+       ORDER BY c.id DESC
+       LIMIT 1 FOR UPDATE`,
+      [clientId]
+    );
+    if (carts[0]) {
+      const [cartItems] = await connection.execute(
+        `SELECT id_producto AS id, cantidad
+         FROM detalle_carrito
+         WHERE id_carrito = ?
+         FOR UPDATE`,
+        [carts[0].id]
+      );
+      if (cartItems.length > 0) {
+        const expectedItems = new Map(cartItems.map((item) => [Number(item.id), Number(item.cantidad)]));
+        const sameCart = expectedItems.size === consolidatedItems.size
+          && [...expectedItems].every(([id, quantity]) => consolidatedItems.get(id) === quantity);
+        if (!sameCart) {
+          const error = new Error('El carrito cambió. Actualízalo antes de confirmar el pedido.');
+          error.code = 'CART_CHANGED';
+          throw error;
+        }
+      }
+    }
+
     const normalizedPayment = {
       efectivo: 'Efectivo',
       transferencia: 'Transferencia',
       nequi: 'Nequi',
-      daviplata: 'Daviplata',
-      tarjeta: 'Tarjeta'
-    }[pago] || pago;
+      daviplata: 'Daviplata'
+    }[pago];
     const detailRows = [];
     let total = 0;
 
-    for (const item of productos) {
+    for (const [productId, quantity] of consolidatedItems) {
       const [rows] = await connection.execute(
         `SELECT p.id, p.precio_venta AS precio, i.cantidad_disponible AS stock
          FROM producto p
          JOIN inventario i ON i.id_producto = p.id
          WHERE p.id = ? AND p.estado = 'Activo' FOR UPDATE`,
-        [item.id]
+        [productId]
       );
       const product = rows[0];
-      const quantity = Number.parseInt(item.cantidad, 10);
-      if (!product || !Number.isInteger(quantity) || quantity <= 0 || product.stock < quantity) {
-        const error = new Error(`Stock insuficiente para el producto ${item.id}`);
+      if (!product || product.stock < quantity) {
+        const error = new Error(`Stock insuficiente para el producto ${productId}`);
         error.code = 'INSUFFICIENT_STOCK';
         throw error;
       }
@@ -180,6 +253,13 @@ export const createOrder = async ({ userId, userEmail, direccion, ciudad, telefo
        VALUES (?, ?, 'Pedido recibido', 'Pendiente de preparación')`,
       [invoice.insertId, userId]
     );
+    if (carts[0]) {
+      await connection.execute(
+        `UPDATE carrito SET estado = 'Finalizado'
+         WHERE id = ? AND estado = 'Activo'`,
+        [carts[0].id]
+      );
+    }
     await connection.commit();
     return invoice.insertId;
   } catch (error) {

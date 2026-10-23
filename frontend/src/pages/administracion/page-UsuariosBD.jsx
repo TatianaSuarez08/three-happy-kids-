@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import "../../styles/style.css";
 import { deactivateUser, getUsers, updateUserStatus } from "../../services/usuarioService";
 import { API_BASE_URL } from "../../services/httpClient";
 
@@ -117,7 +116,7 @@ function Usuarios() {
                 const color = rolColor[usuario.rol.split(", ")[0]] || { bg: "#f5f5f5", color: "#555" };
                 return <tr key={usuario.id}>
                   <td>{indice + 1}</td>
-                  <td className="admin-tabla-nombre"><div style={{ display: "flex", alignItems: "center", gap: "10px" }}><img src={usuario.fotoPerfil ? `${API_BASE_URL}${usuario.fotoPerfil}` : ""} alt="" style={{ width: "36px", height: "36px", borderRadius: "50%", objectFit: "cover", background: "#fff3e0" }} />{usuario.nombre} {usuario.apellido}</div></td>
+                  <td className="admin-tabla-nombre"><div style={{ display: "flex", alignItems: "center", gap: "10px" }}><img src={usuario.fotoPerfil ? `${API_BASE_URL}${usuario.fotoPerfil}` : null} alt="" style={{ width: "36px", height: "36px", borderRadius: "50%", objectFit: "cover", background: "#fff3e0" }} />{usuario.nombre} {usuario.apellido}</div></td>
                   <td>{usuario.correo}</td>
                   <td>{usuario.telefono || "Sin registrar"}</td>
                   <td><span className="status-badge" style={{ background: color.bg, color: color.color }}>{usuario.rol}</span></td>

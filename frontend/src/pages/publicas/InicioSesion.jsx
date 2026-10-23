@@ -76,7 +76,7 @@ function InicioSesion() {
     setError("");
 
     // Lectura de valores desde las refs
-    const correo = correoRef.current.value.trim();
+    const correo = correoRef.current.value.trim().toLowerCase();
     const contraseña = contraseñaRef.current.value;
 
     // Validaciones básicas en cliente
@@ -145,7 +145,7 @@ function InicioSesion() {
         {error && <div className="login-error">{error}</div>}
 
         {/* Formulario de inicio de sesión */}
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} noValidate>
 
           {/* Campo correo: input no controlado referenciado por `correoRef` */}
           <div className="login-field">
@@ -155,6 +155,8 @@ function InicioSesion() {
               ref={correoRef}
               type="email"
               placeholder="correo@ejemplo.com"
+              required
+              maxLength={100}
               disabled={loading}
               autoComplete="email"
             />
@@ -169,6 +171,8 @@ function InicioSesion() {
                 ref={contraseñaRef}
                 type={showPass ? "text" : "password"}
                 placeholder="Ingresa tu contraseña"
+                required
+                minLength={6}
                 disabled={loading}
                 autoComplete="current-password"
               />

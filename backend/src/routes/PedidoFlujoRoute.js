@@ -5,10 +5,13 @@ import {
   changeCourierStatus,
   getAdminNovelties,
   getCourierAssigned,
+  getCourierActivityHistory,
   getCourierAvailable,
   getCourierEvidence,
   getWarehouseAssigned,
   getWarehouseAvailable,
+  releaseWarehouse,
+  releaseCourier,
   resolveAdminNovelty,
   submitPreparation,
   uploadCourierEvidence
@@ -33,11 +36,14 @@ const uploadEvidence = (req, res, next) => {
 router.get('/bodega/pedidos/disponibles', auth, permitRoles('bodeguero', 'administrador'), getWarehouseAvailable);
 router.get('/bodega/pedidos/mios', auth, permitRoles('bodeguero'), getWarehouseAssigned);
 router.post('/bodega/pedidos/:id/asignar', auth, permitRoles('bodeguero'), assignWarehouse);
+router.post('/bodega/pedidos/:id/liberar', auth, permitRoles('bodeguero'), releaseWarehouse);
 router.put('/bodega/pedidos/:id/preparacion', auth, permitRoles('bodeguero'), submitPreparation);
 
 router.get('/mensajeria/pedidos/disponibles', auth, permitRoles('mensajero'), getCourierAvailable);
 router.get('/mensajeria/mis-entregas', auth, permitRoles('mensajero'), getCourierAssigned);
+router.get('/mensajeria/historial', auth, permitRoles('mensajero'), getCourierActivityHistory);
 router.post('/mensajeria/pedidos/:id/asignar', auth, permitRoles('mensajero'), assignCourier);
+router.post('/mensajeria/pedidos/:id/liberar', auth, permitRoles('mensajero'), releaseCourier);
 router.put('/mensajeria/pedidos/:id/estado', auth, permitRoles('mensajero'), changeCourierStatus);
 router.post('/mensajeria/pedidos/:id/evidencia', auth, permitRoles('mensajero'), uploadEvidence, uploadCourierEvidence);
 router.get('/mensajeria/pedidos/:id/evidencia', auth, permitRoles('mensajero', 'administrador'), getCourierEvidence);

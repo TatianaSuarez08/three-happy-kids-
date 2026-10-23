@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import "../../styles/style.css";
 import { getUsers, updateUser } from "../../services/usuarioService";
 
 const roles = ["Administrador", "Bodeguero", "Mensajero"];

@@ -1,3 +1,41 @@
 .mensajeria-page {
   min-width: 0;
 }
+
+.messaging-delivery-row {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.875rem 0;
+  border: 0;
+  border-bottom: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-brand-strong);
+  cursor: pointer;
+  text-align: left;
+}
+
+.messaging-delivery-row:hover,
+.messaging-delivery-row:focus-visible {
+  background: var(--color-surface-soft);
+}
+
+.messaging-delivery-main {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 0.25rem;
+  color: var(--color-ink);
+}
+
+.messaging-delivery-main strong {
+  overflow-wrap: anywhere;
+}
+
+.messaging-delivery-main small {
+  color: var(--color-muted);
+  line-height: 1.4;
+}

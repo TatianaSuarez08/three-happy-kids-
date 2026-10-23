@@ -1,4 +1,3 @@
-import "../../styles/style.css";
 import InicioMensajeria from "./page-InicioMensajeria";
 
 function Mensajeria() {

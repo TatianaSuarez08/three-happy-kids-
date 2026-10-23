@@ -26,6 +26,7 @@ import Registro from './pages/publicas/Registro';
 import Dashboard from './pages/administracion/page-Dashboard';
 import Pedidos from './pages/administracion/page-PedidosBD';
 import NovedadesPedidos from './pages/administracion/page-NovedadesPedidos';
+import Compras from './pages/administracion/page-Compras';
 import Inventario from './pages/administracion/page-producto';
 import AgregarProducto from './pages/administracion/page-AgregarProducto';
 import EditarProducto from './pages/administracion/page-EditarProducto';
@@ -38,6 +39,7 @@ import BodegueroDashboard from './pages/bodeguero/BodegueroDashboard';
 import BodegueroInventario from './pages/bodeguero/BodegueroInventario';
 import BodegueroPedidos from './pages/bodeguero/BodegueroPedidos';
 import BodegueroMovimientos from './pages/bodeguero/BodegueroMovimientos';
+import BodegueroCompras from './pages/bodeguero/BodegueroCompras';
 
 // Componentes globales
 import Nav from './components/Nav';
@@ -76,9 +78,9 @@ function App() {
 
         {/* Rutas Cliente */}
         <Route path="/" element={<EntradaPrincipal />} />
-        <Route path="/cliente/catalogo" element={<ProtectedRoute allowedRoles={["cliente", "administrador", "bodeguero", "mensajero"]}><Catalogo /></ProtectedRoute>} />
-        <Route path="/catalogo" element={<ProtectedRoute allowedRoles={["cliente", "administrador", "bodeguero", "mensajero"]}><Catalogo /></ProtectedRoute>} />
-        <Route path="/producto/:id" element={<ProtectedRoute allowedRoles={["cliente", "administrador", "bodeguero", "mensajero"]}><DetalleProducto /></ProtectedRoute>} />
+        <Route path="/cliente/catalogo" element={<Catalogo />} />
+        <Route path="/catalogo" element={<Catalogo />} />
+        <Route path="/producto/:id" element={<DetalleProducto />} />
         <Route path="/carrito" element={<ProtectedRoute allowedRoles={["cliente", "administrador", "bodeguero", "mensajero"]}><Carrito /></ProtectedRoute>} />
         <Route path="/confirmar-compra" element={<ProtectedRoute allowedRoles={["cliente", "administrador", "bodeguero", "mensajero"]}><ConfirmarCompra /></ProtectedRoute>} />
         <Route path="/favoritos" element={<ProtectedRoute allowedRoles={["cliente", "administrador", "bodeguero", "mensajero"]}><Favoritos /></ProtectedRoute>} />
@@ -125,15 +127,32 @@ function App() {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/admin/compras"
+          element={
+            <ProtectedRoute allowedRoles={["administrador"]}>
+              <Compras />
+            </ProtectedRoute>
+          }
+        />
         <Route path="/bodeguero" element={<ProtectedRoute allowedRoles={["bodeguero"]}><BodegueroLayout><BodegueroDashboard /></BodegueroLayout></ProtectedRoute>} />
         <Route path="/bodeguero/inventario" element={<ProtectedRoute allowedRoles={["bodeguero"]}><BodegueroLayout><BodegueroInventario /></BodegueroLayout></ProtectedRoute>} />
         <Route path="/bodeguero/pedidos" element={<ProtectedRoute allowedRoles={["bodeguero"]}><BodegueroLayout><BodegueroPedidos /></BodegueroLayout></ProtectedRoute>} />
         <Route path="/bodeguero/movimientos" element={<ProtectedRoute allowedRoles={["bodeguero"]}><BodegueroLayout><BodegueroMovimientos /></BodegueroLayout></ProtectedRoute>} />
+        <Route path="/bodeguero/compras" element={<ProtectedRoute allowedRoles={["bodeguero"]}><BodegueroLayout><BodegueroCompras /></BodegueroLayout></ProtectedRoute>} />
         <Route
           path="/bodega"
           element={
             <ProtectedRoute allowedRoles={["administrador"]}>
               <Inventario />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/actividad-empleados"
+          element={
+            <ProtectedRoute allowedRoles={["administrador"]}>
+              <BodegueroMovimientos />
             </ProtectedRoute>
           }
         />

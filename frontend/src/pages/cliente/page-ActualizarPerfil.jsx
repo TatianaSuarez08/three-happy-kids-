@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { API_BASE_URL } from "../../services/httpClient";
 import { getMyProfile, updateMyProfilePhoto } from "../../services/usuarioService";
-import "../../styles/style.css";
 
 function ActualizarPerfil() {
   const nombreRef = useRef(null);
@@ -33,9 +32,33 @@ function ActualizarPerfil() {
     e.preventDefault();
     setError("");
 
+    const nombre = nombreRef.current.value.trim();
+    const correo = correoRef.current.value.trim().toLowerCase();
+    const telefono = telefonoRef.current.value.trim();
+    const direccion = direccionRef.current.value.trim();
     const contraseña = contraseñaRef.current.value;
     const confirmar = confirmarRef.current.value;
 
+    if (nombre.length > 50 || !/^[\p{L}\p{M}]+(?:[ .'-][\p{L}\p{M}]+)*$/u.test(nombre)) {
+      return setError("Ingresa un nombre válido con letras, espacios, apóstrofes o guiones.");
+    }
+    if (correo.length > 100 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo)) {
+      return setError("Ingresa un correo electrónico válido.");
+    }
+    if (!/^[0-9]{10}$/.test(telefono)) {
+      return setError("El teléfono debe tener exactamente 10 números, sin espacios ni símbolos.");
+    }
+    if (!direccion || direccion.length > 150) {
+      return setError("Ingresa una dirección de hasta 150 caracteres.");
+    }
+    if (contraseña || confirmar) {
+      if (!contraseña || !confirmar) {
+        return setError("Ingresa y confirma la nueva contraseña.");
+      }
+      if (contraseña.length < 6) {
+        return setError("La contraseña debe tener al menos 6 caracteres.");
+      }
+    }
     if (contraseña && contraseña !== confirmar) {
       return setError("Las contraseñas no coinciden.");
     }
@@ -82,7 +105,7 @@ function ActualizarPerfil() {
 
         {perfil && <div className="perfil-summary">
           <div className="perfil-avatar-wrap">
-            <img className="perfil-avatar" src={vistaPrevia || (perfil.fotoPerfil ? `${API_BASE_URL}${perfil.fotoPerfil}` : "")} alt="Foto de perfil" />
+            <img className="perfil-avatar" src={vistaPrevia || (perfil.fotoPerfil ? `${API_BASE_URL}${perfil.fotoPerfil}` : null)} alt="Foto de perfil" />
           </div>
           <div className="perfil-summary-info"><strong>{perfil.nombre}</strong><div>{perfil.email}</div><div>{perfil.telefono || "Sin teléfono registrado"}</div><div className="perfil-summary-meta"><span>{perfil.rol}</span><span>{perfil.estado}</span></div><label className="perfil-photo-picker">Cambiar foto<input type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={seleccionarFoto} /></label></div>
         </div>}
@@ -97,6 +120,8 @@ function ActualizarPerfil() {
               ref={nombreRef}
               type="text"
               placeholder="Tu nombre completo"
+              maxLength={50}
+              pattern="[\p{L}\p{M} .'-]+"
               required
             />
           </div>
@@ -109,6 +134,7 @@ function ActualizarPerfil() {
               ref={correoRef}
               type="email"
               placeholder="correo@ejemplo.com"
+              maxLength={100}
               required
             />
           </div>
@@ -120,7 +146,10 @@ function ActualizarPerfil() {
               id="telefono"
               ref={telefonoRef}
               type="tel"
-              placeholder="Ej: 8888-8888"
+              placeholder="Ej: 3001234567"
+              pattern="[0-9]{10}"
+              maxLength={10}
+              inputMode="tel"
               required
             />
           </div>
@@ -133,6 +162,7 @@ function ActualizarPerfil() {
               ref={direccionRef}
               type="text"
               placeholder="Tu dirección"
+              maxLength={150}
               required
             />
           </div>
@@ -146,6 +176,7 @@ function ActualizarPerfil() {
                 ref={contraseñaRef}
                 type={showPass ? "text" : "password"}
                 placeholder="Deja en blanco para no cambiar"
+                minLength={6}
               />
               <button
                 type="button"
@@ -166,6 +197,7 @@ function ActualizarPerfil() {
                 ref={confirmarRef}
                 type={showConfirm ? "text" : "password"}
                 placeholder="Repite la nueva contraseña"
+                minLength={6}
               />
               <button
                 type="button"

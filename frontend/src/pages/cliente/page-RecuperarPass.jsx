@@ -1,6 +1,5 @@
 import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import "../../styles/style.css";
 
 function RecuperarPass() {
   const emailRef = useRef(null);

@@ -21,16 +21,19 @@ function Registro() {
 
     // Lectura de valores desde las refs
     const nombre_usuario = nombreUsuarioRef.current.value.trim();
-    const email = correoRef.current.value.trim();
+    const email = correoRef.current.value.trim().toLowerCase();
     const password = contraseñaRef.current.value;
     const confirmar_password = confirmarRef.current.value;
 
     // Validaciones básicas en cliente
     if (!nombre_usuario) return setError("Ingresa tu nombre de usuario.");
-    if (nombre_usuario.length < 3) return setError("El nombre de usuario debe tener al menos 3 caracteres.");
+    if (nombre_usuario.length < 3 || nombre_usuario.length > 50
+      || !/^[\p{L}\p{M}][\p{L}\p{M} .'_-]{2,49}$/u.test(nombre_usuario)) {
+      return setError("El nombre solo puede contener letras, espacios, puntos, guiones, guiones bajos o apóstrofes y debe tener entre 3 y 50 caracteres.");
+    }
     
     if (!email) return setError("Ingresa tu correo electrónico.");
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return setError("El correo no es válido.");
+    if (email.length > 100 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return setError("El correo no es válido.");
     
     if (!password) return setError("Ingresa tu contraseña.");
     if (password.length < 6) return setError("La contraseña debe tener al menos 6 caracteres.");
@@ -90,7 +93,7 @@ function Registro() {
 
         {error && <div className="login-error">{error}</div>}
 
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} noValidate>
 
           {/* Nombre de usuario */}
           <div className="login-field">
@@ -100,6 +103,9 @@ function Registro() {
               ref={nombreUsuarioRef}
               type="text"
               placeholder="Ej: juan_perez"
+              required
+              minLength={3}
+              maxLength={50}
               disabled={loading}
               autoComplete="username"
             />
@@ -113,6 +119,8 @@ function Registro() {
               ref={correoRef}
               type="email"
               placeholder="correo@ejemplo.com"
+              required
+              maxLength={100}
               disabled={loading}
               autoComplete="email"
             />
@@ -127,6 +135,8 @@ function Registro() {
                 ref={contraseñaRef}
                 type={showPass ? "text" : "password"}
                 placeholder="Mínimo 6 caracteres"
+                required
+                minLength={6}
                 disabled={loading}
                 autoComplete="new-password"
               />
@@ -150,6 +160,8 @@ function Registro() {
                 ref={confirmarRef}
                 type={showConfirm ? "text" : "password"}
                 placeholder="Repite tu contraseña"
+                required
+                minLength={6}
                 disabled={loading}
                 autoComplete="new-password"
               />

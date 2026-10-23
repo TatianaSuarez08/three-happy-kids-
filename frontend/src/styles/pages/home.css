@@ -1,0 +1,104 @@
+.hk-home {
+  min-height: calc(100vh - 7rem);
+}
+
+.hk-banner {
+  width: min(100% - 2rem, 1180px);
+  margin-inline: auto;
+  padding-block: clamp(2rem, 5vw, 4.5rem) 2rem;
+}
+
+.hk-banner-card {
+  display: flex;
+  min-height: 17rem;
+  max-width: 100%;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  padding: clamp(1.5rem, 5vw, 3.75rem);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-soft);
+}
+
+.hk-banner-kicker {
+  margin: 0 0 0.75rem;
+  color: var(--color-brand-strong);
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.hk-banner-title {
+  max-width: 18ch;
+  margin: 0 0 0.75rem;
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 700;
+  letter-spacing: -0.035em;
+}
+
+.hk-banner-sub {
+  max-width: 58ch;
+  margin: 0 0 1.5rem;
+  color: var(--color-muted);
+  font-size: clamp(0.95rem, 1.5vw, 1.05rem);
+}
+
+.hk-section {
+  width: min(100% - 2rem, 1180px);
+  margin-inline: auto;
+  padding-bottom: clamp(2rem, 5vw, 4rem);
+}
+
+.hk-section-heading {
+  margin-bottom: 1.5rem;
+}
+
+.hk-section-heading h2 {
+  margin: 0 0 0.3rem;
+  font-size: clamp(1.25rem, 2vw, 1.6rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.hk-section-heading p {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: var(--font-size-sm);
+}
+
+.hk-product-state {
+  display: grid;
+  min-height: 8rem;
+  place-items: center;
+  padding: 2rem 1rem;
+  color: var(--color-muted);
+  text-align: center;
+}
+
+.hk-product-state p {
+  margin: 0;
+}
+
+.hk-product-state--error {
+  color: var(--color-danger);
+}
+
+@media (max-width: 760px) {
+  .hk-banner,
+  .hk-section {
+    width: min(100% - 1.5rem, 1180px);
+  }
+}
+
+@media (max-width: 640px) {
+  .hk-banner {
+    padding-top: 1.25rem;
+  }
+
+  .hk-banner-card {
+    min-height: 15rem;
+  }
+}

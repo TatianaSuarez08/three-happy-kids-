@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import "../../styles/style.css";
 import EmptyState from "../../components/EmptyState";
-import { getDeliveryEvidenceObjectUrl, getOrders, updateOrderStatus } from "../../services/pedidoService";
+import { getDeliveryEvidenceObjectUrl, getOrders } from "../../services/pedidoService";
 
 const estados = ["Pendiente", "En camino", "Entrega fallida", "Entregado", "Cancelado"];
 const estadoColor = {
@@ -60,11 +59,8 @@ function Pedidos() {
   const [pedidos, setPedidos] = useState([]);
   const [busqueda, setBusqueda] = useState("");
   const [filtroEstado, setFiltroEstado] = useState("todos");
-  const [pedidoSeleccionado, setPedidoSeleccionado] = useState(null);
-  const [estadoNuevo, setEstadoNuevo] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
-  const [guardando, setGuardando] = useState(false);
 
   useEffect(() => {
     const cargarPedidos = async () => {
@@ -79,24 +75,6 @@ function Pedidos() {
 
     cargarPedidos();
   }, []);
-
-  const actualizarEstado = async () => {
-    if (!pedidoSeleccionado || !estadoNuevo) return;
-    setGuardando(true);
-    setError("");
-    try {
-      await updateOrderStatus(pedidoSeleccionado.id, estadoNuevo);
-      setPedidos((prev) => prev.map((pedido) => (
-        pedido.id === pedidoSeleccionado.id ? { ...pedido, estado: estadoNuevo } : pedido
-      )));
-      setPedidoSeleccionado(null);
-      setEstadoNuevo("");
-    } catch (err) {
-      setError(err.message || "No se pudo actualizar el pedido");
-    } finally {
-      setGuardando(false);
-    }
-  };
 
   const pedidosFiltrados = pedidos.filter((pedido) => {
     const texto = busqueda.toLowerCase();
@@ -172,14 +150,24 @@ function Pedidos() {
                   </div>
 
                   <div className="admin-order-action">
-                    <span style={{ fontSize: "13px", color: "#888" }}>Acción administrativa</span>
-                    <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-                      {pedido.estado !== "Cancelado" && pedido.estado !== "Entregado" && pedido.estado !== "En camino" && (
-                        <button key="cancelar" type="button" className="btn-admin-editar" onClick={() => { setPedidoSeleccionado(pedido); setEstadoNuevo("Cancelado"); }}>
-                          <><i className={`bi ${estadoColor.Cancelado.icon}`} aria-hidden="true" /> Cancelar pedido</>
-                        </button>
-                      )}
-                    </div>
+                    <h4 style={{ margin: 0 }}>Trazabilidad de actividades</h4>
+                    {pedido.historial.length === 0 ? (
+                      <p>No hay acciones históricas registradas para este pedido.</p>
+                    ) : (
+                      <ul>
+                        {pedido.historial.map((event) => (
+                          <li key={event.id}>
+                            <strong>{event.evento}</strong>
+                            {' · '}{event.usuario} ({event.rol})
+                            {' · '}{new Date(event.fecha).toLocaleString("es-CO")}
+                            {event.observacion ? ` · ${event.observacion}` : ""}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                    {pedido.fechaEntrega && (
+                      <p><strong>Fecha de entrega registrada:</strong> {new Date(pedido.fechaEntrega).toLocaleDateString("es-CO")}</p>
+                    )}
                   </div>
                   {pedido.evidencia && (
                     <section>
@@ -195,7 +183,6 @@ function Pedidos() {
         )}
       </div>
 
-      {pedidoSeleccionado && <div className="modal-overlay"><div className="modal-box"><h4>Actualizar pedido</h4><p>¿Cambiar el pedido #{pedidoSeleccionado.id} a <strong>{estadoNuevo}</strong>?</p><div className="admin-modal-actions"><button className="btn-admin-primary" style={{ height: "44px" }} onClick={actualizarEstado} disabled={guardando}>{guardando ? "Guardando..." : "Sí, cambiar"}</button><button className="btn-admin-cancelar" style={{ height: "44px" }} onClick={() => setPedidoSeleccionado(null)}>Cancelar</button></div></div></div>}
     </div>
   );
 }

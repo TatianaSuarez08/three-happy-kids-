@@ -11,10 +11,11 @@ export const getMyOrders = async () => {
   return data?.orders || [];
 };
 
-export const createOrder = async (order) => {
+export const createOrder = async (order, idempotencyKey) => {
   return request('/pedidos', {
     method: 'POST',
-    body: JSON.stringify(order)
+    body: JSON.stringify(order),
+    idempotencyKey
   });
 };
 
@@ -39,6 +40,10 @@ export const assignWarehouseOrder = (orderId) => request(`/bodega/pedidos/${orde
   method: 'POST'
 });
 
+export const releaseWarehouseOrder = (orderId) => request(`/bodega/pedidos/${orderId}/liberar`, {
+  method: 'POST'
+});
+
 export const submitOrderPreparation = (orderId, productos) => request(`/bodega/pedidos/${orderId}/preparacion`, {
   method: 'PUT',
   body: JSON.stringify({ productos })
@@ -54,7 +59,16 @@ export const getMyCourierOrders = async () => {
   return data?.orders || [];
 };
 
+export const getCourierHistory = async () => {
+  const data = await request('/mensajeria/historial');
+  return data?.history || [];
+};
+
 export const assignCourierOrder = (orderId) => request(`/mensajeria/pedidos/${orderId}/asignar`, {
+  method: 'POST'
+});
+
+export const releaseCourierOrder = (orderId) => request(`/mensajeria/pedidos/${orderId}/liberar`, {
   method: 'POST'
 });
 

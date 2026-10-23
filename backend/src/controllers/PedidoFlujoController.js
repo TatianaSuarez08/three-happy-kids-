@@ -2,13 +2,16 @@ import path from 'path';
 import {
   assignCourierOrder,
   assignWarehouseOrder,
+  releaseWarehouseOrder,
   getAvailableCourierOrders,
   getAvailableWarehouseOrders,
   getCourierOrders,
+  getCourierHistory,
   getDeliveryEvidence,
   getOrderNovelties,
   getWarehouseOrders,
   resolveOrderNovelty,
+  releaseCourierOrder,
   saveDeliveryEvidence,
   savePreparation,
   updateCourierOrderStatus
@@ -81,6 +84,17 @@ export const assignWarehouse = async (req, res) => {
   }
 };
 
+export const releaseWarehouse = async (req, res) => {
+  const id = readId(req, res);
+  if (!id) return;
+  try {
+    await releaseWarehouseOrder(id, req.user.id);
+    res.json({ success: true, message: 'El pedido volvió a quedar disponible para Bodega' });
+  } catch (error) {
+    handleError(res, error, 'Error al liberar pedido de Bodega:');
+  }
+};
+
 export const submitPreparation = async (req, res) => {
   const id = readId(req, res);
   if (!id) return;
@@ -119,6 +133,25 @@ export const assignCourier = async (req, res) => {
     res.json({ success: true, message: 'Pedido asignado a tu usuario' });
   } catch (error) {
     handleError(res, error, 'Error al asignar pedido a Mensajería:');
+  }
+};
+
+export const releaseCourier = async (req, res) => {
+  const id = readId(req, res);
+  if (!id) return;
+  try {
+    await releaseCourierOrder(id, req.user.id);
+    res.json({ success: true, message: 'La asignación se liberó y el pedido volvió a estar disponible' });
+  } catch (error) {
+    handleError(res, error, 'Error al liberar pedido de Mensajería:');
+  }
+};
+
+export const getCourierActivityHistory = async (req, res) => {
+  try {
+    res.json({ success: true, history: await getCourierHistory(req.user.id) });
+  } catch (error) {
+    handleError(res, error, 'Error al consultar el historial de Mensajería:');
   }
 };
 

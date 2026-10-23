@@ -1,76 +1,46 @@
-import { Link } from "react-router-dom";
-import { useEffect, useState } from "react";
-import { getPublicProducts } from "../../services/productoService";
-import { API_BASE_URL } from "../../services/httpClient";
-import "../../styles/style.css";
+import { useSearchParams } from "react-router-dom";
+import PublicProductList from "../../components/PublicProductList";
 
 function Catalogo() {
-  const [productos, setProductos] = useState([]);
-  const [cargando, setCargando] = useState(true);
-  const [error, setError] = useState("");
-  const formatoPrecio = new Intl.NumberFormat("es-CO", {
-    style: "currency",
-    currency: "COP",
-    maximumFractionDigits: 0,
-  });
+  const [searchParams, setSearchParams] = useSearchParams();
+  const categoria = searchParams.get("categoria");
+  const busquedaActiva = searchParams.get("buscar") || "";
 
-  useEffect(() => {
-    const cargarProductos = async () => {
-      try {
-        setProductos(await getPublicProducts());
-      } catch (err) {
-        setError(err.message || "Base de datos no disponible.");
-      } finally {
-        setCargando(false);
-      }
-    };
-
-    cargarProductos();
-  }, []);
+  const limpiarFiltros = () => {
+    setSearchParams({});
+  };
 
   return (
-    <div className="home-page">
+    <main className="hk-catalog">
+      <div className="hk-catalog__container">
+        <header className="hk-catalog__header">
+          <div>
+            <p className="hk-catalog__eyebrow">HappyKids · Colección</p>
+            <h1 className="hk-catalog__title">Catálogo</h1>
+            <p className="hk-catalog__description">
+              Encuentra prendas para cada día. Explora los productos disponibles y sus detalles.
+            </p>
+          </div>
+          {(categoria || busquedaActiva) && (
+            <div className="hk-catalog__active-filters" aria-live="polite">
+              {categoria && <span className="hk-catalog__filter-chip">Categoría seleccionada</span>}
+              {busquedaActiva && (
+                <span className="hk-catalog__filter-chip">
+                  Búsqueda: <strong>{busquedaActiva}</strong>
+                </span>
+              )}
+              <button className="hk-btn hk-btn--secondary" type="button" onClick={limpiarFiltros}>
+                Limpiar filtros
+              </button>
+            </div>
+          )}
+        </header>
 
-      <section className="home-section" style={{ paddingTop: "2rem" }}>
-        {cargando ? (
-          <div className="home-no-results">
-            <p>Esperando datos del servidor...</p>
-          </div>
-        ) : error ? (
-          <div className="home-no-results">
-            <p>{error}</p>
-          </div>
-        ) : productos.length === 0 ? (
-          <div className="home-no-results">
-            <span>😕</span>
-            <p>No hay productos disponibles.</p>
-          </div>
-        ) : (
-          <div className="home-productos">
-            {productos.map((p) => (
-              <div key={p.id} className="home-producto-card">
-                <div className="home-producto-img">
-                  <img
-                    src={p.imagen_producto
-                      ? `${API_BASE_URL}${p.imagen_producto.startsWith("/assets/") ? p.imagen_producto : `/assets/productos/${p.imagen_producto}`}`
-                      : ""}
-                    alt={p.nombre}
-                  />
-                </div>
-                <div className="home-producto-info">
-                  <span className="home-producto-nombre">{p.nombre}</span>
-                  <span className="home-producto-precio">{formatoPrecio.format(Number(p.precio) || 0)}</span>
-                  <Link to={`/producto/${p.id}`} className="home-producto-btn">
-                    Ver producto
-                  </Link>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
-
-    </div>
+        <section className="hk-catalog__results" aria-label="Productos disponibles">
+        <PublicProductList />
+        </section>
+      </div>
+    </main>
   );
 }
 

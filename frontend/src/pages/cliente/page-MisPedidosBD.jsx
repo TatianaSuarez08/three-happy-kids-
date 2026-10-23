@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getMyOrders } from "../../services/pedidoService";
-import "../../styles/style.css";
 
 const estados = ["Todos", "Pendiente", "En camino", "Entregado", "Cancelado"];
 const estadoColor = {
@@ -40,7 +39,6 @@ function MisPedidos() {
   }, []);
 
   const pedidosFiltrados = pedidos.filter((pedido) => filtroEstado === "Todos" || pedido.estado === filtroEstado);
-  const totalPedidos = pedidosFiltrados.reduce((total, pedido) => total + Number(pedido.total || 0), 0);
   const cantidadProductos = pedidosFiltrados.reduce((total, pedido) => total + pedido.productos.reduce((suma, producto) => suma + Number(producto.cantidad || 0), 0), 0);
 
   if (loading) {
@@ -99,7 +97,6 @@ function MisPedidos() {
               <h3>Resumen de compras</h3>
               <div style={{ display: "flex", justifyContent: "space-between", fontSize: "14px", color: "#555", marginBottom: "10px" }}><span>Pedidos</span><span>{pedidosFiltrados.length}</span></div>
               <div style={{ display: "flex", justifyContent: "space-between", fontSize: "14px", color: "#555", marginBottom: "12px" }}><span>Productos</span><span>{cantidadProductos}</span></div>
-              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "18px", fontWeight: 700, color: "#1a1a1a", paddingTop: "12px", borderTop: "1px solid #eee" }}><span>Total</span><span>{formatoPrecio.format(totalPedidos)}</span></div>
               <button onClick={() => navigate("/catalogo")} style={{ width: "100%", height: "44px", borderRadius: "8px", border: "none", background: "#ff8c42", color: "#fff", fontSize: "15px", fontWeight: 600, cursor: "pointer", marginTop: "1rem" }}>Seguir comprando</button>
             </div>
           </div>

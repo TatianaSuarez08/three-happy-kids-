@@ -1,7 +1,8 @@
 import { request } from './httpClient';
 
-export const getPublicProducts = async () => {
-  const data = await request('/productos-publicos');
+export const getPublicProducts = async ({ categoria } = {}) => {
+  const query = categoria ? `?${new URLSearchParams({ categoria })}` : '';
+  const data = await request(`/productos-publicos${query}`);
   return data?.products || [];
 };
 

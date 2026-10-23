@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import EmptyState from '../../components/EmptyState';
 import StatusBadge from '../../components/StatusBadge';
-import { getAllMovements } from '../../services/inventarioService';
+import { getEmployeeActivity } from '../../services/inventarioService';
 import { getAvailableWarehouseOrders, getMyWarehouseOrders } from '../../services/pedidoService';
 import { getProducts } from '../../services/productoService';
 
@@ -17,16 +17,16 @@ export default function BodegueroDashboard() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [productosList, available, assigned] = await Promise.all([
+        const [productosList, available, assigned, activityResult] = await Promise.all([
           getProducts(),
           getAvailableWarehouseOrders(),
-          getMyWarehouseOrders()
+          getMyWarehouseOrders(),
+          getEmployeeActivity()
         ]);
 
         setProductos(productosList);
         setPedidos([...available, ...assigned]);
-        const movimientos = await getAllMovements(productosList.slice(0, 5));
-        setMovimientos(movimientos.slice(0, 6));
+        setMovimientos(activityResult.activity.slice(0, 6));
       } catch (err) {
         setError(err.message || 'No se pudo cargar el resumen operativo.');
       } finally {
@@ -42,8 +42,12 @@ export default function BodegueroDashboard() {
     const stockBajo = productos.filter((producto) => Number(producto.stock) > 0 && Number(producto.stock) <= Number(producto.stockMin || 0)).length;
     const agotados = productos.filter((producto) => Number(producto.stock) === 0).length;
     const pedidosPendientes = pedidos.filter((pedido) => {
-      const estado = normalizeStatus(pedido.estado).toLowerCase();
-      return estado && !['entregado', 'cancelado', 'anulada'].includes(estado);
+      const estadoPreparacion = normalizeStatus(pedido.estadoPreparacion).toLowerCase();
+      const estadoFactura = normalizeStatus(pedido.estadoFactura).toLowerCase();
+      const estadoEntrega = normalizeStatus(pedido.estadoEntrega).toLowerCase();
+      return estadoPreparacion !== 'listo para despacho'
+        && !['entregado', 'cancelado', 'anulada'].includes(estadoFactura)
+        && !['entregado', 'cancelado'].includes(estadoEntrega);
     }).length;
 
     return { totalProductos, stockBajo, agotados, pedidosPendientes };
@@ -89,7 +93,7 @@ export default function BodegueroDashboard() {
 
       <section className="bodeguero-panel">
         <div className="bodeguero-panel-header">
-          <h2>Movimientos recientes</h2>
+          <h2>Mi actividad reciente</h2>
         </div>
 
         {movimientos.length === 0 ? (
@@ -97,16 +101,24 @@ export default function BodegueroDashboard() {
         ) : (
           <div className="bodeguero-list">
             {movimientos.map((movimiento) => (
-              <div key={`${movimiento.id}-${movimiento.nombreProducto}`} className="bodeguero-item">
+              <div key={movimiento.id} className="bodeguero-item">
                 <div>
-                  <strong>{movimiento.nombreProducto || 'Producto'}</strong>
+                  <strong>
+                    {movimiento.categoria === 'Pedido' && movimiento.pedidoId
+                      ? `Pedido #${movimiento.pedidoId}`
+                      : movimiento.producto || movimiento.categoria}
+                  </strong>
                   <small>
-                    {movimiento.tipo} · {movimiento.cantidad} uds · {new Date(movimiento.fecha_movimiento).toLocaleString('es-CL')}
+                    {movimiento.evento}
+                    {movimiento.descripcion ? ` · ${movimiento.descripcion}` : ''}
+                    {' · '}{new Date(movimiento.fecha).toLocaleString('es-CO')}
                   </small>
                 </div>
-                <StatusBadge tone={movimiento.delta > 0 ? 'success' : 'warning'}>
-                  {movimiento.delta > 0 ? '+' : ''}{movimiento.delta}
-                </StatusBadge>
+                {movimiento.cantidad !== null && movimiento.cantidad !== undefined && (
+                  <StatusBadge tone={movimiento.cantidad > 0 ? 'success' : 'warning'}>
+                    {movimiento.cantidad > 0 ? '+' : ''}{movimiento.cantidad}
+                  </StatusBadge>
+                )}
               </div>
             ))}
           </div>

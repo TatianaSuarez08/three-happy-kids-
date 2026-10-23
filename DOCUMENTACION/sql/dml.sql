@@ -1,5 +1,6 @@
 -- Datos ficticios para comprobar relaciones en una base de pruebas.
--- No actualiza ni elimina filas existentes. Las claves foraneas se resuelven
+-- No elimina filas existentes; agrega una recepcion demo de 3 unidades al
+-- inventario solo una vez. Las claves foraneas se resuelven
 -- por claves unicas de los ejemplos, nunca por IDs consecutivos.
 -- Antes de ejecutarlo, confirma que la conexion apunta a una base de pruebas.
 -- Las contrasenas son hashes SHA-256 en formato legado compatible con el
@@ -687,9 +688,153 @@ WHERE cliente_user.correo = 'demo.cliente@happykids.invalid'
         AND n.descripcion = 'No fue posible completar la entrega; ejemplo de incidencia para reintento'
   );
 
+-- Recepcion parcial de compra para comprobar las tablas añadidas por las migraciones.
+-- Se reciben 4 unidades de una linea de compra; 1 se reporta dañada y solo 3
+-- se suman al inventario. La clave fija y las comprobaciones evitan duplicados
+-- al volver a ejecutar este DML en la misma base de pruebas.
+INSERT IGNORE INTO compra_recepcion (id_compra, id_usuario, clave_idempotencia)
+SELECT co.id, bodega.id, 'DEMO-HK-RCP-001'
+FROM compra co
+JOIN proveedor prov ON prov.id = co.id_proveedor
+JOIN usuario bodega ON bodega.correo = 'demo.bodega@happykids.invalid'
+WHERE prov.correo = 'proveedor1@happykids.invalid'
+  AND co.fecha_compra = '2026-08-01'
+  AND NOT EXISTS (
+      SELECT 1
+      FROM compra_recepcion existente
+      WHERE existente.clave_idempotencia = 'DEMO-HK-RCP-001'
+  );
+
+INSERT INTO compra_recepcion_detalle
+    (id_recepcion, id_detalle_compra, cantidad_recibida, cantidad_danada)
+SELECT r.id, dc.id, 4, 1
+FROM compra_recepcion r
+JOIN compra co ON co.id = r.id_compra
+JOIN proveedor prov ON prov.id = co.id_proveedor
+JOIN detalle_compra dc ON dc.id_compra = co.id
+JOIN producto p ON p.id = dc.id_producto
+WHERE r.clave_idempotencia = 'DEMO-HK-RCP-001'
+  AND prov.correo = 'proveedor1@happykids.invalid'
+  AND co.fecha_compra = '2026-08-01'
+  AND p.nombre_producto = '[DEMO] Camiseta infantil talla 2'
+  AND dc.cantidad >= 4
+  AND NOT EXISTS (
+      SELECT 1
+      FROM compra_recepcion_detalle existente
+      WHERE existente.id_recepcion = r.id
+        AND existente.id_detalle_compra = dc.id
+  );
+
+INSERT INTO inventario (cantidad_disponible, cantidad_minima, id_producto)
+SELECT 3, 0, p.id
+FROM compra_recepcion r
+JOIN compra co ON co.id = r.id_compra
+JOIN detalle_compra dc ON dc.id_compra = co.id
+JOIN producto p ON p.id = dc.id_producto
+WHERE r.clave_idempotencia = 'DEMO-HK-RCP-001'
+  AND p.nombre_producto = '[DEMO] Camiseta infantil talla 2'
+  AND EXISTS (
+      SELECT 1
+      FROM compra_recepcion_detalle rd
+      WHERE rd.id_recepcion = r.id
+        AND rd.id_detalle_compra = dc.id
+        AND rd.cantidad_recibida = 4
+        AND rd.cantidad_danada = 1
+  )
+  AND NOT EXISTS (
+      SELECT 1
+      FROM inventario_movimiento m
+      WHERE m.referencia = CONCAT('RECEPCION_COMPRA:', co.id, ':', r.id)
+        AND m.motivo = 'Recepción de compra'
+  )
+ON DUPLICATE KEY UPDATE
+    cantidad_disponible = cantidad_disponible + VALUES(cantidad_disponible),
+    fecha_actualizacion = CURRENT_DATE;
+
+INSERT INTO inventario_movimiento
+    (id_producto, tipo, cantidad, delta, motivo, referencia, id_usuario, fecha_movimiento)
+SELECT p.id, 'entrada', 3, 3, 'Recepción de compra',
+       CONCAT('RECEPCION_COMPRA:', co.id, ':', r.id), bodega.id, NOW()
+FROM compra_recepcion r
+JOIN compra co ON co.id = r.id_compra
+JOIN proveedor prov ON prov.id = co.id_proveedor
+JOIN detalle_compra dc ON dc.id_compra = co.id
+JOIN producto p ON p.id = dc.id_producto
+JOIN usuario bodega ON bodega.id = r.id_usuario
+WHERE r.clave_idempotencia = 'DEMO-HK-RCP-001'
+  AND prov.correo = 'proveedor1@happykids.invalid'
+  AND p.nombre_producto = '[DEMO] Camiseta infantil talla 2'
+  AND EXISTS (
+      SELECT 1
+      FROM compra_recepcion_detalle rd
+      WHERE rd.id_recepcion = r.id
+        AND rd.id_detalle_compra = dc.id
+        AND rd.cantidad_recibida = 4
+        AND rd.cantidad_danada = 1
+  )
+  AND NOT EXISTS (
+      SELECT 1
+      FROM inventario_movimiento existente
+      WHERE existente.referencia = CONCAT('RECEPCION_COMPRA:', co.id, ':', r.id)
+        AND existente.motivo = 'Recepción de compra'
+  );
+
+INSERT INTO pedido_novedad
+    (id_factura, id_compra, id_detalle_compra, id_producto, etapa,
+     tipo, descripcion, cantidad, id_reporta)
+SELECT NULL, co.id, dc.id, p.id, 'Recepción', 'Dañado',
+       'Registro ficticio: 1 unidad recibida dañada', 1, bodega.id
+FROM compra_recepcion r
+JOIN compra co ON co.id = r.id_compra
+JOIN proveedor prov ON prov.id = co.id_proveedor
+JOIN detalle_compra dc ON dc.id_compra = co.id
+JOIN producto p ON p.id = dc.id_producto
+JOIN usuario bodega ON bodega.id = r.id_usuario
+WHERE r.clave_idempotencia = 'DEMO-HK-RCP-001'
+  AND prov.correo = 'proveedor1@happykids.invalid'
+  AND p.nombre_producto = '[DEMO] Camiseta infantil talla 2'
+  AND EXISTS (
+      SELECT 1
+      FROM compra_recepcion_detalle rd
+      WHERE rd.id_recepcion = r.id
+        AND rd.id_detalle_compra = dc.id
+        AND rd.cantidad_recibida = 4
+        AND rd.cantidad_danada = 1
+  )
+  AND NOT EXISTS (
+      SELECT 1
+      FROM pedido_novedad existente
+      WHERE existente.id_compra = co.id
+        AND existente.id_detalle_compra = dc.id
+        AND existente.tipo = 'Dañado'
+        AND existente.descripcion = 'Registro ficticio: 1 unidad recibida dañada'
+  );
+
+INSERT INTO admin_reporte_actividad
+    (id_administrador, id_usuario_reportado, rol_reportado, actividad_id,
+     id_factura, motivo, descripcion)
+SELECT administrador.id, n.id_reporta, 'Bodeguero',
+       CONCAT('novedad-compra-', n.id), NULL,
+       'Reporte de demostración de recepción',
+       'Reporte ficticio vinculado a la novedad de unidades dañadas de la compra demo.'
+FROM pedido_novedad n
+JOIN compra co ON co.id = n.id_compra
+JOIN proveedor prov ON prov.id = co.id_proveedor
+JOIN usuario administrador ON administrador.correo = 'demo.admin@happykids.invalid'
+WHERE prov.correo = 'proveedor1@happykids.invalid'
+  AND co.fecha_compra = '2026-08-01'
+  AND n.tipo = 'Dañado'
+  AND n.descripcion = 'Registro ficticio: 1 unidad recibida dañada'
+  AND NOT EXISTS (
+      SELECT 1
+      FROM admin_reporte_actividad existente
+      WHERE existente.actividad_id = CONCAT('novedad-compra-', n.id)
+        AND existente.motivo = 'Reporte de demostración de recepción'
+  );
+
 COMMIT;
 
--- Verificaciones: roles, volumen de datos ficticios y detalle de todos los pedidos.
+-- Verificaciones: resumen de datos, pedidos y resultados esperados de recepción/reporte.
 SELECT r.nombre_rol
 FROM rol r
 WHERE r.nombre_rol IN ('Administrador', 'Cliente', 'Bodeguero', 'Mensajero')
@@ -713,7 +858,44 @@ SELECT
      JOIN cliente c ON c.id = f.id_cliente
      JOIN usuario u ON u.id = c.id_usuario
      WHERE u.correo = 'demo.cliente@happykids.invalid'
-       AND f.fecha BETWEEN '2026-10-01' AND '2026-10-20') AS pedidos_adicionales_demo;
+       AND f.fecha BETWEEN '2026-10-01' AND '2026-10-20') AS pedidos_adicionales_demo,
+    (SELECT COUNT(*)
+     FROM compra_recepcion
+     WHERE clave_idempotencia = 'DEMO-HK-RCP-001') AS recepciones_demo,
+    (SELECT COUNT(*)
+     FROM admin_reporte_actividad
+     WHERE motivo = 'Reporte de demostración de recepción') AS reportes_recepcion_demo;
+
+SELECT
+    r.clave_idempotencia,
+    co.id AS id_compra,
+    p.nombre_producto,
+    rd.cantidad_recibida,
+    rd.cantidad_danada,
+    rd.cantidad_recibida - rd.cantidad_danada AS unidades_agregadas_a_inventario,
+    m.delta AS movimiento_inventario,
+    m.referencia
+FROM compra_recepcion r
+JOIN compra co ON co.id = r.id_compra
+JOIN compra_recepcion_detalle rd ON rd.id_recepcion = r.id
+JOIN detalle_compra dc ON dc.id = rd.id_detalle_compra
+JOIN producto p ON p.id = dc.id_producto
+LEFT JOIN inventario_movimiento m
+    ON m.referencia = CONCAT('RECEPCION_COMPRA:', co.id, ':', r.id)
+   AND m.id_producto = p.id
+WHERE r.clave_idempotencia = 'DEMO-HK-RCP-001';
+
+SELECT
+    r.actividad_id,
+    r.motivo,
+    r.descripcion,
+    r.estado,
+    reportado.nombre_usuario AS usuario_reportado,
+    administrador.nombre_usuario AS administrador
+FROM admin_reporte_actividad r
+JOIN usuario reportado ON reportado.id = r.id_usuario_reportado
+JOIN usuario administrador ON administrador.id = r.id_administrador
+WHERE r.motivo = 'Reporte de demostración de recepción';
 
 SELECT
     f.id AS id_factura,

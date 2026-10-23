@@ -1,4 +1,4 @@
-import { coloresEstado, styles } from "./mensajeriaData";
+import { tonoPorEstado } from "./mensajeriaData";
 
 export function VistaMensajeria({ children }) {
   return (
@@ -13,15 +13,28 @@ export function Encabezado({ titulo, subtitulo }) {
 }
 
 export function Panel({ titulo, children }) {
-  return <section className="mensajeria-panel"><div className="mensajeria-panel-body"><h2>{titulo}</h2>{children}</div></section>;
+  return <section className="hk-card mensajeria-panel"><div className="mensajeria-panel-body"><h2>{titulo}</h2>{children}</div></section>;
 }
 
 export function Estado({ estado }) {
-  const [background, color] = coloresEstado[estado] || ["#f2f2f2", "#555"];
+  const tone = tonoPorEstado[estado] || "info";
   const iconos = { Asignado: "bi-clipboard-check", Recogiendo: "bi-box-seam", "En camino": "bi-truck", Entregado: "bi-check-circle-fill", Fallido: "bi-exclamation-triangle-fill" };
-  return <span className="status-badge" style={{ background, color }}><i className={`bi ${iconos[estado] || "bi-dot"}`} aria-hidden="true" /> {estado}</span>;
+  return <span className={`status-badge is-${tone}`}><i className={`bi ${iconos[estado] || "bi-dot"}`} aria-hidden="true" /> {estado}</span>;
 }
 
 export function EntregaFila({ entrega, onClick }) {
-  return <button onClick={onClick} style={styles.entregaFila}><i className="bi bi-box-seam icon-lg" aria-hidden="true" /><div style={{ textAlign: "left", flex: 1 }}><strong style={{ color: "#1a1a1a" }}>{entrega.id} - {entrega.cliente}</strong><small style={{ display: "block", color: "#888", marginTop: "5px" }}><i className="bi bi-geo-alt" aria-hidden="true" /> {entrega.direccion} · <i className="bi bi-clock" aria-hidden="true" /> {entrega.hora}</small></div><Estado estado={entrega.estado} /></button>;
+  return (
+    <button className="messaging-delivery-row" onClick={onClick}>
+      <i className="bi bi-box-seam icon-lg" aria-hidden="true" />
+      <span className="messaging-delivery-main">
+        <strong>{entrega.id} - {entrega.cliente}</strong>
+        <small>
+          <i className="bi bi-geo-alt" aria-hidden="true" /> {entrega.direccion}
+          {" · "}
+          <i className="bi bi-clock" aria-hidden="true" /> {entrega.hora}
+        </small>
+      </span>
+      <Estado estado={entrega.estado} />
+    </button>
+  );
 }

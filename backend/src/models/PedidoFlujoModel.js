@@ -32,6 +32,7 @@ const orderQuery = `
     c.ciudad,
     pf.estado_preparacion AS estadoPreparacion,
     pf.id_bodeguero AS idBodeguero,
+    COALESCE(NULLIF(CONCAT_WS(' ', empleadoBodega.nombre, empleadoBodega.apellido), ''), bodeguero.nombre_usuario) AS bodeguero,
     pf.fecha_asignacion_bodega AS fechaAsignacionBodega,
     pf.fecha_preparacion AS fechaPreparacion,
     pf.id_mensajero AS idMensajero,
@@ -44,6 +45,8 @@ const orderQuery = `
   JOIN usuario u ON u.id = c.id_usuario
   JOIN pedido_flujo pf ON pf.id_factura = f.id
   LEFT JOIN entrega e ON e.id_factura = f.id
+  LEFT JOIN usuario bodeguero ON bodeguero.id = pf.id_bodeguero
+  LEFT JOIN empleado empleadoBodega ON empleadoBodega.id_usuario = bodeguero.id
 `;
 
 const attachOrderDetails = async (connection, orders) => {
@@ -59,12 +62,15 @@ const attachOrderDetails = async (connection, orders) => {
        dp.precio_unitario AS precio,
        dp.subtotal,
        pr.nombre_producto AS nombre,
+       pr.imagen_producto AS imagen,
        t.nombre_talla AS talla,
-       c.nombre_color AS color
+       c.nombre_color AS color,
+       COALESCE(i.cantidad_disponible, 0) AS stockDisponible
      FROM detalle_pedido dp
      JOIN producto pr ON pr.id = dp.id_producto
      JOIN talla t ON t.id = pr.id_talla
      JOIN color c ON c.id = pr.id_color
+     LEFT JOIN inventario i ON i.id_producto = pr.id
      WHERE dp.id_factura IN (${placeholders})
      ORDER BY dp.id_factura DESC, pr.nombre_producto`,
     ids
@@ -218,6 +224,64 @@ export const assignWarehouseOrder = async (invoiceId, userId) => {
   }
 };
 
+export const releaseWarehouseOrder = async (invoiceId, userId) => {
+  const connection = await pool.getConnection();
+  try {
+    await connection.beginTransaction();
+    await ensureWorkflowRows(connection);
+    const [flows] = await connection.execute(
+      `SELECT pf.estado_preparacion, f.estado AS estadoFactura, e.estado AS estadoEntrega
+       FROM pedido_flujo pf
+       JOIN factura f ON f.id = pf.id_factura
+       LEFT JOIN entrega e ON e.id_factura = f.id
+       WHERE pf.id_factura = ? AND pf.id_bodeguero = ?
+       FOR UPDATE`,
+      [invoiceId, userId]
+    );
+    if (!flows.length) {
+      const [orders] = await connection.execute('SELECT id FROM factura WHERE id = ?', [invoiceId]);
+      throw workflowError(
+        orders.length ? 'ORDER_NOT_ASSIGNED' : 'ORDER_NOT_FOUND',
+        orders.length ? 'El pedido no está asignado a tu usuario' : 'El pedido no existe'
+      );
+    }
+    if (flows[0].estado_preparacion !== 'Asignado') {
+      throw workflowError('INVALID_ORDER_STATE', 'Solo puedes liberar un pedido antes de iniciar su preparación');
+    }
+    if (!['Pendiente', 'Pagada'].includes(flows[0].estadoFactura)
+      || (flows[0].estadoEntrega && flows[0].estadoEntrega !== 'Pendiente')) {
+      throw workflowError('INVALID_ORDER_STATE', 'El estado actual del pedido no permite liberar la asignación');
+    }
+
+    const [result] = await connection.execute(
+      `UPDATE pedido_flujo
+       SET id_bodeguero = NULL, fecha_asignacion_bodega = NULL,
+           estado_preparacion = 'Pendiente'
+       WHERE id_factura = ? AND id_bodeguero = ? AND estado_preparacion = 'Asignado'
+         AND NOT EXISTS (
+           SELECT 1 FROM pedido_preparacion_detalle d
+           WHERE d.id_factura = pedido_flujo.id_factura
+         )
+         AND NOT EXISTS (
+           SELECT 1 FROM pedido_novedad n
+           WHERE n.id_factura = pedido_flujo.id_factura
+             AND n.etapa = 'Bodega' AND n.estado = 'Pendiente'
+         )`,
+      [invoiceId, userId]
+    );
+    if (result.affectedRows !== 1) {
+      throw workflowError('INVALID_ORDER_STATE', 'El pedido ya tiene actividad y no se puede liberar');
+    }
+    await insertHistory(connection, invoiceId, userId, 'Pedido liberado por Bodega');
+    await connection.commit();
+  } catch (error) {
+    await connection.rollback();
+    throw error;
+  } finally {
+    connection.release();
+  }
+};
+
 export const savePreparation = async (invoiceId, userId, checklist) => {
   const connection = await pool.getConnection();
   try {
@@ -354,6 +418,106 @@ export const assignCourierOrder = async (invoiceId, userId) => {
   }
 };
 
+export const releaseCourierOrder = async (invoiceId, userId) => {
+  const connection = await pool.getConnection();
+  try {
+    await connection.beginTransaction();
+    const [flows] = await connection.execute(
+      `SELECT pf.estado_entrega, pf.evidencia_path,
+              f.estado AS estadoFactura, e.estado AS estadoRegistroEntrega
+       FROM pedido_flujo pf
+       JOIN factura f ON f.id = pf.id_factura
+       LEFT JOIN entrega e ON e.id_factura = f.id
+       WHERE pf.id_factura = ? AND pf.id_mensajero = ?
+       FOR UPDATE`,
+      [invoiceId, userId]
+    );
+    if (!flows.length) {
+      throw workflowError('ORDER_NOT_ASSIGNED', 'El pedido no está asignado a tu usuario');
+    }
+    const flow = flows[0];
+    if (flow.estado_entrega !== 'Asignado'
+      || flow.evidencia_path
+      || flow.estadoFactura === 'Anulada'
+      || (flow.estadoRegistroEntrega !== null && flow.estadoRegistroEntrega !== 'Pendiente')) {
+      throw workflowError(
+        'INVALID_ORDER_STATE',
+        'Solo puedes liberar un envío aún asignado y sin evidencia; los envíos iniciados o finalizados no se pueden liberar'
+      );
+    }
+
+    const [result] = await connection.execute(
+      `UPDATE pedido_flujo
+       SET id_mensajero = NULL,
+           fecha_asignacion_mensajero = NULL,
+           estado_entrega = 'Pendiente'
+       WHERE id_factura = ? AND id_mensajero = ? AND estado_entrega = 'Asignado'`,
+      [invoiceId, userId]
+    );
+    if (result.affectedRows !== 1) {
+      throw workflowError('ORDER_NOT_ASSIGNED', 'El pedido ya no está asignado a tu usuario');
+    }
+    await insertHistory(connection, invoiceId, userId, 'Asignación de Mensajería liberada');
+    await connection.commit();
+  } catch (error) {
+    await connection.rollback();
+    throw error;
+  } finally {
+    connection.release();
+  }
+};
+
+export const getCourierHistory = async (userId) => {
+  const connection = await pool.getConnection();
+  try {
+    const [events] = await connection.execute(
+      `SELECT h.id, h.id_factura AS idPedido, h.evento, h.observacion,
+              h.creado_en AS fecha, f.estado AS estadoPedido,
+              pf.estado_entrega AS estadoEntrega,
+              pf.fecha_asignacion_mensajero AS fechaAsignacionActual,
+              c.direccion, c.ciudad,
+              COALESCE(NULLIF(CONCAT_WS(' ', e.nombre, e.apellido), ''), actual.nombre_usuario) AS mensajeroActual
+       FROM pedido_historial h
+       JOIN factura f ON f.id = h.id_factura
+       JOIN cliente c ON c.id = f.id_cliente
+       LEFT JOIN pedido_flujo pf ON pf.id_factura = f.id
+       LEFT JOIN usuario actual ON actual.id = pf.id_mensajero
+       LEFT JOIN empleado e ON e.id_usuario = actual.id
+       WHERE h.id_usuario = ?
+       ORDER BY h.creado_en DESC, h.id DESC`,
+      [userId]
+    );
+    if (!events.length) return [];
+
+    const invoiceIds = [...new Set(events.map(({ idPedido }) => idPedido))];
+    const placeholders = invoiceIds.map(() => '?').join(', ');
+    const [products] = await connection.execute(
+      `SELECT dp.id_factura AS idPedido, dp.id_producto AS idProducto,
+              dp.cantidad, p.nombre_producto AS nombre,
+              t.nombre_talla AS talla, co.nombre_color AS color
+       FROM detalle_pedido dp
+       JOIN producto p ON p.id = dp.id_producto
+       LEFT JOIN talla t ON t.id = p.id_talla
+       LEFT JOIN color co ON co.id = p.id_color
+       WHERE dp.id_factura IN (${placeholders})
+       ORDER BY dp.id_factura, p.nombre_producto`,
+      invoiceIds
+    );
+    const productsByOrder = new Map();
+    products.forEach((product) => {
+      const orderProducts = productsByOrder.get(product.idPedido) || [];
+      orderProducts.push(product);
+      productsByOrder.set(product.idPedido, orderProducts);
+    });
+    return events.map((event) => ({
+      ...event,
+      productos: productsByOrder.get(event.idPedido) || []
+    }));
+  } finally {
+    connection.release();
+  }
+};
+
 export const updateCourierOrderStatus = async (invoiceId, userId, status, observation = '') => {
   const connection = await pool.getConnection();
   try {
@@ -447,15 +611,20 @@ export const getDeliveryEvidence = async (invoiceId, userId, isAdmin) => {
 
 export const getOrderNovelties = async () => {
   const [rows] = await pool.execute(
-    `SELECT n.id, n.id_factura AS idPedido, n.id_producto AS idProducto,
+    `SELECT n.id, n.id_factura AS idPedido, n.id_compra AS idCompra,
+            n.id_detalle_compra AS idDetalleCompra, n.cantidad,
+            n.id_producto AS idProducto,
             pr.nombre_producto AS producto, n.etapa, n.tipo, n.descripcion,
             n.estado, n.decision, n.creada_en AS fecha,
             reporta.nombre_usuario AS reportadoPor,
             resuelve.nombre_usuario AS resueltoPor,
-            CONCAT(c.primer_nombre, ' ', c.primer_apellido) AS cliente
+            CONCAT(c.primer_nombre, ' ', c.primer_apellido) AS cliente,
+            prov.nombre AS proveedor
      FROM pedido_novedad n
-     JOIN factura f ON f.id = n.id_factura
-     JOIN cliente c ON c.id = f.id_cliente
+     LEFT JOIN factura f ON f.id = n.id_factura
+     LEFT JOIN cliente c ON c.id = f.id_cliente
+     LEFT JOIN compra co ON co.id = n.id_compra
+     LEFT JOIN proveedor prov ON prov.id = co.id_proveedor
      LEFT JOIN producto pr ON pr.id = n.id_producto
      JOIN usuario reporta ON reporta.id = n.id_reporta
      LEFT JOIN usuario resuelve ON resuelve.id = n.id_resuelve
@@ -482,10 +651,44 @@ export const resolveOrderNovelty = async (noveltyId, adminId, decision) => {
       );
     }
     const [rows] = await connection.execute(
-      'SELECT id_factura FROM pedido_novedad WHERE id = ?',
+      'SELECT id_factura, id_compra FROM pedido_novedad WHERE id = ?',
       [noveltyId]
     );
-    await insertHistory(connection, rows[0].id_factura, adminId, 'Novedad resuelta', decision);
+    if (rows[0].id_factura !== null) {
+      await insertHistory(connection, rows[0].id_factura, adminId, 'Novedad resuelta', decision);
+    } else if (rows[0].id_compra !== null) {
+      await connection.execute(
+        `UPDATE compra c
+         SET estado = 'Recibida'
+         WHERE c.id = ? AND c.estado NOT IN ('Recibida', 'Cancelada')
+           AND NOT EXISTS (
+             SELECT 1
+             FROM detalle_compra dc
+             WHERE dc.id_compra = c.id
+               AND dc.cantidad > (
+                 COALESCE((
+                   SELECT SUM(rd.cantidad_recibida)
+                   FROM compra_recepcion_detalle rd
+                   JOIN compra_recepcion r ON r.id = rd.id_recepcion
+                   WHERE r.id_compra = c.id AND rd.id_detalle_compra = dc.id
+                 ), 0)
+                 + COALESCE((
+                   SELECT SUM(m.delta)
+                   FROM inventario_movimiento m
+                   WHERE m.id_producto = dc.id_producto
+                     AND m.tipo = 'entrada'
+                     AND m.motivo = 'Recepción de compra'
+                     AND m.referencia = CONCAT('COMPRA:', c.id)
+                 ), 0)
+               )
+           )
+           AND NOT EXISTS (
+             SELECT 1 FROM pedido_novedad n
+             WHERE n.id_compra = c.id AND n.estado = 'Pendiente'
+           )`,
+        [rows[0].id_compra]
+      );
+    }
     await connection.commit();
   } catch (error) {
     await connection.rollback();

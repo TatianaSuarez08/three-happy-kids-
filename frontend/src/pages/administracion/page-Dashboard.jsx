@@ -1,8 +1,8 @@
 
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-import "../../styles/style.css";
 import { getDashboard, getLogistica } from "../../services/dashboardService";
+import { getOrderNovelties } from "../../services/pedidoService";
 
 const estadoColor = {
   "Entregado": { bg: "#eafbea", color: "#3a7d44" },
@@ -29,6 +29,8 @@ function Dashboard() {
   const navigate = useNavigate();
   const [dashboard, setDashboard] = useState({ stats: {}, recentOrders: [], lowStock: [] });
   const [logistica, setLogistica] = useState({ summary: {}, tasks: [] });
+  const [notificaciones, setNotificaciones] = useState([]);
+  const [errorNotificaciones, setErrorNotificaciones] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
 
@@ -41,6 +43,13 @@ function Dashboard() {
 
         const dataLogistica = await getLogistica();
         setLogistica({ summary: dataLogistica.summary || {}, tasks: dataLogistica.tasks || [] });
+        try {
+          const novedades = await getOrderNovelties();
+          setNotificaciones(novedades.filter((item) => item.estado === "Pendiente").slice(0, 6));
+          setErrorNotificaciones("");
+        } catch (notificationError) {
+          setErrorNotificaciones(notificationError.message || "No se pudieron consultar las novedades pendientes.");
+        }
       } catch (err) {
         setError(err.message || "No se pudo cargar el dashboard");
       } finally {
@@ -165,6 +174,34 @@ function Dashboard() {
             </div>
           </div>
 
+        </div>
+
+        <div className="section-panel" style={{ marginTop: "1.5rem" }}>
+          <div className="section-header">
+            <h3 className="section-title">Avisos pendientes de revisión</h3>
+            <button className="btn-link" onClick={() => navigate("/admin/novedades-pedidos")}>Ver novedades →</button>
+          </div>
+          {errorNotificaciones && <div className="login-error" role="alert">{errorNotificaciones}</div>}
+          {!errorNotificaciones && notificaciones.length === 0 ? (
+            <p className="admin-sub">No hay novedades pendientes registradas.</p>
+          ) : (
+            <div className="list-body">
+              {notificaciones.map((item) => (
+                <div key={item.id} className="list-row">
+                  <div className="list-main">
+                    <strong>
+                      {item.idCompra
+                        ? `Recepción de compra #${item.idCompra}`
+                        : `Pedido #${item.idPedido}`}
+                      {' · '}{item.tipo}
+                    </strong>
+                    <small>{item.descripcion} · {new Date(item.fecha).toLocaleString("es-CO")}</small>
+                  </div>
+                  <span className="status-badge is-warning">Pendiente</span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Cadena operativa */}

@@ -4,7 +4,101 @@
   border-radius: var(--radius-md);
 }
 
-.ds-table {
+.ds-table,
+.admin-tabla,
+.bodeguero-table {
   width: 100%;
   border-collapse: collapse;
+}
+
+.admin-tabla {
+  min-width: 640px;
+}
+
+.bodeguero-table {
+  min-width: 760px;
+}
+
+.admin-tabla-wrap,
+.bodeguero-table-wrap {
+  overflow-x: auto;
+}
+
+.admin-tabla-wrap {
+  overflow-y: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-soft);
+}
+
+.admin-tabla thead,
+.bodeguero-table th {
+  background: var(--color-surface-soft);
+  color: var(--color-muted);
+}
+
+.admin-tabla thead {
+  border-bottom: 1px solid var(--color-border);
+}
+
+.admin-tabla th,
+.admin-tabla td {
+  padding: 0.75rem 1rem;
+  text-align: left;
+}
+
+.admin-tabla th,
+.bodeguero-table th {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.admin-tabla td,
+.bodeguero-table td,
+.bodeguero-table th {
+  border-bottom: 1px solid var(--color-border);
+  vertical-align: top;
+}
+
+.admin-tabla td {
+  color: var(--color-ink);
+  font-size: 0.875rem;
+}
+
+.bodeguero-table th,
+.bodeguero-table td {
+  padding: 0.9rem 0.8rem;
+  text-align: left;
+}
+
+.bodeguero-table td {
+  color: var(--color-muted);
+  font-size: 0.92rem;
+}
+
+.admin-tabla tbody tr:hover {
+  background: var(--color-brand-soft);
+}
+
+.admin-tabla-nombre {
+  color: var(--color-ink);
+  font-weight: 600;
+}
+
+.bodeguero-table input[type="number"],
+.bodeguero-table select,
+.bodeguero-table textarea {
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-ink);
+}
+
+.bodeguero-table input[type="number"] {
+  width: 110px;
+  min-height: 38px;
+  padding: 0.4rem 0.55rem;
 }

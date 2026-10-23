@@ -7,13 +7,21 @@ const cartQuery = `
     p.descripcion,
     p.precio_venta AS precioVenta,
     p.imagen_producto AS imagen,
+    p.id_talla AS idTalla,
+    t.nombre_talla AS talla,
+    p.id_color AS idColor,
+    co.nombre_color AS color,
     dc.cantidad,
     dc.precio,
-    dc.subtotal
+    dc.cantidad * p.precio_venta AS subtotal,
+    COALESCE(i.cantidad_disponible, 0) AS stock
   FROM detalle_carrito dc
   JOIN carrito c ON c.id = dc.id_carrito
   JOIN cliente cl ON cl.id = c.id_cliente
   JOIN producto p ON p.id = dc.id_producto
+  JOIN talla t ON t.id = p.id_talla
+  JOIN color co ON co.id = p.id_color
+  JOIN inventario i ON i.id_producto = p.id
   WHERE cl.id_usuario = ? AND c.estado = 'Activo'
   ORDER BY dc.id`;
 
@@ -84,18 +92,41 @@ export const addCartItem = async (userId, productId, quantity) => {
   try {
     await connection.beginTransaction();
     const [products] = await connection.execute(
-      `SELECT id, precio_venta AS precio
-       FROM producto
-       WHERE id = ? AND estado = 'Activo'`,
+      `SELECT p.id, p.precio_venta AS precio,
+              COALESCE(i.cantidad_disponible, 0) AS stock
+       FROM producto p
+       JOIN inventario i ON i.id_producto = p.id
+       WHERE p.id = ? AND p.estado = 'Activo'
+       FOR UPDATE`,
       [productId]
     );
     const product = products[0];
-    if (!product) return null;
+    if (!product) {
+      await connection.rollback();
+      return null;
+    }
+    if (product.stock < quantity) {
+      const error = new Error(`Solo hay ${product.stock} unidades disponibles de este producto`);
+      error.code = 'INSUFFICIENT_STOCK';
+      throw error;
+    }
 
     const cartId = await findActiveCartId(connection, userId, true);
     if (!cartId) {
       const error = new Error('El usuario no tiene un perfil de cliente');
       error.code = 'CLIENT_NOT_FOUND';
+      throw error;
+    }
+
+    const [existingItems] = await connection.execute(
+      `SELECT cantidad FROM detalle_carrito
+       WHERE id_carrito = ? AND id_producto = ?
+       FOR UPDATE`,
+      [cartId, productId]
+    );
+    if ((Number(existingItems[0]?.cantidad) || 0) + quantity > product.stock) {
+      const error = new Error(`Solo hay ${product.stock} unidades disponibles de este producto`);
+      error.code = 'INSUFFICIENT_STOCK';
       throw error;
     }
 
@@ -119,16 +150,47 @@ export const addCartItem = async (userId, productId, quantity) => {
 };
 
 export const updateCartItem = async (userId, productId, quantity) => {
-  const [result] = await pool.execute(
-    `UPDATE detalle_carrito dc
-     JOIN carrito c ON c.id = dc.id_carrito AND c.estado = 'Activo'
-     JOIN cliente cl ON cl.id = c.id_cliente AND cl.id_usuario = ?
-     JOIN producto p ON p.id = dc.id_producto
-     SET dc.cantidad = ?, dc.precio = p.precio_venta, dc.subtotal = ? * p.precio_venta
-     WHERE dc.id_producto = ?`,
-    [userId, quantity, quantity, productId]
-  );
-  if (result.affectedRows === 0) return null;
+  const connection = await pool.getConnection();
+  try {
+    await connection.beginTransaction();
+    const [products] = await connection.execute(
+      `SELECT p.precio_venta AS precio,
+              COALESCE(i.cantidad_disponible, 0) AS stock
+       FROM producto p
+       LEFT JOIN inventario i ON i.id_producto = p.id
+       WHERE p.id = ? AND p.estado = 'Activo'
+       FOR UPDATE`,
+      [productId]
+    );
+    if (!products[0]) {
+      await connection.rollback();
+      return null;
+    }
+    if (products[0].stock < quantity) {
+      const error = new Error(`Solo hay ${products[0].stock} unidades disponibles de este producto`);
+      error.code = 'INSUFFICIENT_STOCK';
+      throw error;
+    }
+
+    const [result] = await connection.execute(
+      `UPDATE detalle_carrito dc
+       JOIN carrito c ON c.id = dc.id_carrito AND c.estado = 'Activo'
+       JOIN cliente cl ON cl.id = c.id_cliente AND cl.id_usuario = ?
+       SET dc.cantidad = ?, dc.precio = ?, dc.subtotal = ? * ?
+       WHERE dc.id_producto = ?`,
+      [userId, quantity, products[0].precio, quantity, products[0].precio, productId]
+    );
+    if (result.affectedRows === 0) {
+      await connection.rollback();
+      return null;
+    }
+    await connection.commit();
+  } catch (error) {
+    await connection.rollback();
+    throw error;
+  } finally {
+    connection.release();
+  }
   return findCartByUser(userId);
 };
 

@@ -6,8 +6,8 @@ import {
   updateCartItem
 } from '../models/CarritoModel.js';
 
-const parseId = (value) => Number.parseInt(value, 10);
-const parseQuantity = (value) => Number.parseInt(value, 10);
+const parseId = (value) => Number(value);
+const parseQuantity = (value) => Number(value);
 
 export const getCart = async (req, res) => {
   try {
@@ -22,7 +22,8 @@ export const getCart = async (req, res) => {
 export const createCartItem = async (req, res) => {
   const productId = parseId(req.body.productId ?? req.body.id_producto ?? req.body.id);
   const quantity = parseQuantity(req.body.quantity ?? req.body.cantidad ?? 1);
-  if (!Number.isInteger(productId) || !Number.isInteger(quantity) || quantity < 1) {
+  if (!Number.isSafeInteger(productId) || productId <= 0
+    || !Number.isSafeInteger(quantity) || quantity < 1) {
     return res.status(400).json({ error: 'Producto o cantidad no válidos' });
   }
 
@@ -35,6 +36,9 @@ export const createCartItem = async (req, res) => {
     if (error.code === 'CLIENT_NOT_FOUND') {
       return res.status(400).json({ error: error.message });
     }
+    if (error.code === 'INSUFFICIENT_STOCK') {
+      return res.status(409).json({ error: error.message });
+    }
     res.status(500).json({ error: 'No se pudo agregar el producto al carrito' });
   }
 };
@@ -42,7 +46,8 @@ export const createCartItem = async (req, res) => {
 export const changeCartItem = async (req, res) => {
   const productId = parseId(req.params.productId);
   const quantity = parseQuantity(req.body.quantity ?? req.body.cantidad);
-  if (!Number.isInteger(productId) || !Number.isInteger(quantity) || quantity < 1) {
+  if (!Number.isSafeInteger(productId) || productId <= 0
+    || !Number.isSafeInteger(quantity) || quantity < 1) {
     return res.status(400).json({ error: 'Producto o cantidad no válidos' });
   }
 
@@ -52,13 +57,16 @@ export const changeCartItem = async (req, res) => {
     res.json({ success: true, cart });
   } catch (error) {
     console.error('Error al actualizar carrito:', error);
+    if (error.code === 'INSUFFICIENT_STOCK') {
+      return res.status(409).json({ error: error.message });
+    }
     res.status(500).json({ error: 'No se pudo actualizar el carrito' });
   }
 };
 
 export const deleteCartItem = async (req, res) => {
   const productId = parseId(req.params.productId);
-  if (!Number.isInteger(productId)) {
+  if (!Number.isSafeInteger(productId) || productId <= 0) {
     return res.status(400).json({ error: 'El ID del producto no es válido' });
   }
 

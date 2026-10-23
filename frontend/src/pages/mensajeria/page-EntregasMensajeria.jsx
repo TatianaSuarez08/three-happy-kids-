@@ -4,6 +4,7 @@ import StatusBadge from '../../components/StatusBadge';
 import {
   getDeliveryEvidenceObjectUrl,
   getMyCourierOrders,
+  releaseCourierOrder,
   updateCourierOrderStatus,
   uploadDeliveryEvidence
 } from '../../services/pedidoService';
@@ -167,6 +168,25 @@ export default function EntregasMensajeria() {
     }
   };
 
+  const releaseAssignment = async (order) => {
+    if (!window.confirm(`¿Deseas liberar la asignación del pedido #${order.id}? El pedido no se cancelará y volverá a estar disponible para Mensajería.`)) {
+      return;
+    }
+    setSavingId(order.id);
+    setError('');
+    setMessage('');
+    try {
+      await releaseCourierOrder(order.id);
+      setMessage(`La asignación del pedido #${order.id} se liberó. El pedido sigue activo y volvió a estar disponible.`);
+      await loadOrders();
+    } catch (err) {
+      setError(err.message || 'No se pudo liberar la asignación.');
+      await loadOrders();
+    } finally {
+      setSavingId(null);
+    }
+  };
+
   return (
     <div className="admin-page">
       <div className="admin-container">
@@ -260,6 +280,16 @@ export default function EntregasMensajeria() {
                 )}
 
                 <div className="admin-order-action">
+                  {order.estadoEntrega === 'Asignado' && !order.evidencia && (
+                    <button
+                      type="button"
+                      className="btn-admin-editar"
+                      disabled={savingId === order.id}
+                      onClick={() => releaseAssignment(order)}
+                    >
+                      {savingId === order.id ? 'Liberando...' : 'Cancelar asignación'}
+                    </button>
+                  )}
                   {order.estadoEntrega === 'Asignado' && (
                     <button type="button" className="btn-admin-primary" disabled={savingId === order.id} onClick={() => changeStatus(order, 'En camino')}>
                       Iniciar recorrido

@@ -1,35 +1,95 @@
+.hk-btn,
 .ds-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: var(--space-2);
-  min-height: 2.5rem;
-  padding: 0.7rem 1.05rem;
+  min-height: 2.75rem;
+  padding: 0.65rem 1rem;
   border: 1px solid transparent;
   border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-ink);
   font-weight: 700;
   cursor: pointer;
-  transition: background-color 0.18s ease, border-color 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
+  line-height: 1.25;
+  text-decoration: none;
+  transition: background-color 0.18s ease, border-color 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
 }
 
+.hk-btn:hover,
 .ds-button:hover {
-  transform: translateY(-1px);
+  text-decoration: none;
 }
 
-.ds-button--primary {
-  background: linear-gradient(135deg, var(--color-brand) 0%, var(--color-brand-strong) 100%);
+.hk-btn--primary,
+.ds-button--primary,
+.btn-admin-primary,
+.btn-ingresar,
+.primary-cta {
+  border-color: var(--color-brand-strong);
+  background: var(--color-brand-strong);
   color: #fff;
-  box-shadow: 0 10px 18px rgba(255, 140, 66, 0.22);
 }
 
-.ds-button--primary:hover {
-  background: linear-gradient(135deg, var(--color-brand-strong) 0%, var(--color-brand) 100%);
+.hk-btn--primary:hover,
+.ds-button--primary:hover,
+.btn-admin-primary:hover,
+.btn-ingresar:hover,
+.primary-cta:hover {
+  border-color: var(--color-brand);
+  background: var(--color-brand);
+  color: #fff;
 }
 
-.ds-button--secondary {
+.hk-btn--secondary,
+.ds-button--secondary,
+.btn-registro,
+.bodeguero-button-secondary {
   background: var(--color-surface);
   border-color: var(--color-border);
   color: var(--color-ink);
+}
+
+.hk-btn--secondary:hover,
+.ds-button--secondary:hover,
+.btn-registro:hover,
+.bodeguero-button-secondary:hover,
+.home-producto-btn:hover {
+  background: var(--color-brand-soft);
+  border-color: var(--color-brand);
+  color: var(--color-brand-strong);
+}
+
+.home-producto-btn {
+  width: 100%;
+}
+
+.btn-admin-primary,
+.btn-ingresar,
+.bodeguero-button-secondary {
+  min-height: 2.75rem;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+}
+
+.btn-admin-primary,
+.btn-ingresar {
+  padding: 0.65rem 1rem;
+}
+
+.btn-registro {
+  padding: 0.65rem 1rem;
+}
+
+.btn-ingresar {
+  width: 100%;
+}
+
+.btn-ingresar:disabled {
+  border-color: var(--color-border-strong);
+  background: var(--color-border-strong);
+  color: var(--color-surface);
 }
 
 button:disabled,
@@ -43,3 +103,11 @@ textarea:disabled {
 .icon-sm { font-size: var(--icon-size-sm); }
 .icon-md { font-size: var(--icon-size-md); }
 .icon-lg { font-size: var(--icon-size-lg); }
+
+@media (max-width: 640px) {
+  .hk-btn,
+  .bodeguero-button-secondary,
+  .btn-admin-primary {
+    min-height: 2.75rem;
+  }
+}

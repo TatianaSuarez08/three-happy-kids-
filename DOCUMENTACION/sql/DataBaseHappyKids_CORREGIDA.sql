@@ -1,9 +1,11 @@
 -- Esquema corregido de Three Happy Kids
 -- Este archivo es la fuente de verdad vigente. El esquema histórico está en sql/legacy/.
 -- No elimina la base de datos ni incluye consultas de lectura ni datos de prueba.
--- Usar en una base de datos nueva o después de realizar una copia de seguridad.
--- En bases existentes, CREATE TABLE IF NOT EXISTS no modifica tablas ya creadas:
--- aplicar las migraciones incrementales documentadas por separado.
+-- Integra las estructuras de MIGRACION_RECEPCION_COMPRAS.sql y
+-- MIGRACION_REPORTES_ADMIN.sql. Para una base nueva, ejecutar este archivo
+-- y no volver a ejecutar esas migraciones.
+-- En bases existentes, CREATE TABLE IF NOT EXISTS no modifica tablas ya creadas;
+-- inspeccionar el esquema y aplicar solo las migraciones incrementales pendientes.
 
 CREATE DATABASE IF NOT EXISTS happykids
 CHARACTER SET utf8mb4
@@ -257,6 +259,38 @@ CREATE TABLE IF NOT EXISTS detalle_compra (
         CHECK (subtotal >= 0)
 ) ENGINE=InnoDB;
 
+CREATE TABLE IF NOT EXISTS compra_recepcion (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    id_compra INT NOT NULL,
+    id_usuario INT NOT NULL,
+    clave_idempotencia VARCHAR(128) NOT NULL UNIQUE,
+    recibida_en DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_compra_recepcion_compra
+        FOREIGN KEY (id_compra) REFERENCES compra(id) ON DELETE RESTRICT,
+    CONSTRAINT fk_compra_recepcion_usuario
+        FOREIGN KEY (id_usuario) REFERENCES usuario(id) ON DELETE RESTRICT,
+    INDEX idx_compra_recepcion_compra (id_compra, recibida_en)
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS compra_recepcion_detalle (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    id_recepcion BIGINT NOT NULL,
+    id_detalle_compra INT NOT NULL,
+    cantidad_recibida INT NOT NULL,
+    cantidad_danada INT NOT NULL DEFAULT 0,
+    CONSTRAINT fk_compra_recepcion_detalle_recepcion
+        FOREIGN KEY (id_recepcion) REFERENCES compra_recepcion(id) ON DELETE RESTRICT,
+    CONSTRAINT fk_compra_recepcion_detalle_compra
+        FOREIGN KEY (id_detalle_compra) REFERENCES detalle_compra(id) ON DELETE RESTRICT,
+    CONSTRAINT chk_compra_recepcion_cantidades
+        CHECK (
+            cantidad_recibida > 0
+            AND cantidad_danada >= 0
+            AND cantidad_danada <= cantidad_recibida
+        ),
+    INDEX idx_compra_recepcion_detalle (id_detalle_compra, id_recepcion)
+) ENGINE=InnoDB;
+
 CREATE TABLE IF NOT EXISTS factura (
     id INT AUTO_INCREMENT PRIMARY KEY,
     fecha DATE NOT NULL DEFAULT (CURRENT_DATE),
@@ -382,11 +416,14 @@ CREATE TABLE IF NOT EXISTS pedido_preparacion_detalle (
 
 CREATE TABLE IF NOT EXISTS pedido_novedad (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    id_factura INT NOT NULL,
+    id_factura INT NULL,
+    id_compra INT NULL,
+    id_detalle_compra INT NULL,
     id_producto INT NULL,
-    etapa ENUM('Bodega', 'Mensajería') NOT NULL,
+    etapa ENUM('Bodega', 'Mensajería', 'Recepción') NOT NULL,
     tipo VARCHAR(60) NOT NULL,
     descripcion VARCHAR(1000) NOT NULL,
+    cantidad INT NULL,
     estado ENUM('Pendiente', 'Resuelta', 'Cerrada') NOT NULL DEFAULT 'Pendiente',
     decision VARCHAR(1000) NULL,
     id_reporta INT NOT NULL,
@@ -395,14 +432,24 @@ CREATE TABLE IF NOT EXISTS pedido_novedad (
     resuelta_en DATETIME NULL,
     CONSTRAINT fk_pedido_novedad_factura
         FOREIGN KEY (id_factura) REFERENCES factura(id) ON DELETE RESTRICT,
+    CONSTRAINT fk_pedido_novedad_compra
+        FOREIGN KEY (id_compra) REFERENCES compra(id) ON DELETE RESTRICT,
+    CONSTRAINT fk_pedido_novedad_detalle_compra
+        FOREIGN KEY (id_detalle_compra) REFERENCES detalle_compra(id) ON DELETE RESTRICT,
     CONSTRAINT fk_pedido_novedad_producto
         FOREIGN KEY (id_producto) REFERENCES producto(id) ON DELETE RESTRICT,
     CONSTRAINT fk_pedido_novedad_reporta
         FOREIGN KEY (id_reporta) REFERENCES usuario(id) ON DELETE RESTRICT,
     CONSTRAINT fk_pedido_novedad_resuelve
         FOREIGN KEY (id_resuelve) REFERENCES usuario(id) ON DELETE RESTRICT,
+    CONSTRAINT chk_pedido_novedad_origen
+        CHECK (
+            (id_factura IS NOT NULL AND id_compra IS NULL)
+            OR (id_factura IS NULL AND id_compra IS NOT NULL)
+        ),
     INDEX idx_pedido_novedad_estado (estado, etapa, creada_en),
-    INDEX idx_pedido_novedad_factura (id_factura, creada_en)
+    INDEX idx_pedido_novedad_factura (id_factura, creada_en),
+    INDEX idx_pedido_novedad_compra (id_compra, creada_en)
 ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS pedido_historial (
@@ -417,6 +464,28 @@ CREATE TABLE IF NOT EXISTS pedido_historial (
     CONSTRAINT fk_pedido_historial_usuario
         FOREIGN KEY (id_usuario) REFERENCES usuario(id) ON DELETE RESTRICT,
     INDEX idx_pedido_historial_factura (id_factura, creado_en)
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS admin_reporte_actividad (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    id_administrador INT NOT NULL,
+    id_usuario_reportado INT NOT NULL,
+    rol_reportado VARCHAR(50) NOT NULL,
+    actividad_id VARCHAR(64) NOT NULL,
+    id_factura INT NULL,
+    motivo VARCHAR(150) NOT NULL,
+    descripcion VARCHAR(1000) NOT NULL,
+    estado ENUM('Pendiente', 'En revisión', 'Cerrado') NOT NULL DEFAULT 'Pendiente',
+    creado_en TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_admin_reporte_administrador
+        FOREIGN KEY (id_administrador) REFERENCES usuario(id) ON DELETE RESTRICT,
+    CONSTRAINT fk_admin_reporte_usuario
+        FOREIGN KEY (id_usuario_reportado) REFERENCES usuario(id) ON DELETE RESTRICT,
+    CONSTRAINT fk_admin_reporte_factura
+        FOREIGN KEY (id_factura) REFERENCES factura(id) ON DELETE RESTRICT,
+    INDEX idx_admin_reporte_estado (estado, creado_en),
+    INDEX idx_admin_reporte_usuario (id_usuario_reportado, creado_en),
+    INDEX idx_admin_reporte_factura (id_factura)
 ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS api_idempotency (

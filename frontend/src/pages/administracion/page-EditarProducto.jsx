@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { getColors, getProduct, updateProduct } from "../../services/productoAdminService";
-import { API_BASE_URL } from "../../services/httpClient";
+import { ProductImage, ProductImageCredits } from "../../components/ProductImage";
 
 const camposProducto = [
   ["nombre", "Nombre del producto", "text", true],
@@ -165,16 +165,19 @@ function EditarProducto() {
                 onChange={(event) => setImagen(event.target.files?.[0] || null)}
                 className="admin-form-file"
               />
-              {(imagen || imagenActual) && (
-                <div className="admin-form-preview">
-                  <img
-                    src={imagen ? URL.createObjectURL(imagen) : `${API_BASE_URL}${imagenActual}`}
-                    alt="Imagen del producto"
-                  />
-                </div>
-              )}
-              <small>Deja vacío el campo si deseas conservar la imagen actual.</small>
+              <div className="admin-form-preview">
+                <ProductImage
+                  product={{ id: Number(id), nombre: formulario.nombre, imagen: imagenActual }}
+                  source={imagen ? URL.createObjectURL(imagen) : undefined}
+                  style={{ width: "100%", height: "100%" }}
+                  imageStyle={{ width: "100%", height: "100%", objectFit: "cover" }}
+                />
+              </div>
+              {imagenActual
+                ? <small>Deja vacío el campo si deseas conservar la imagen actual.</small>
+                : <small>La imagen ilustrativa no se guardará. Sube una foto para asignarla al producto.</small>}
             </label>
+            <ProductImageCredits products={imagen ? [] : [{ id: Number(id), imagen: imagenActual }]} />
             <label className="admin-form-field admin-form-field--description">
               Descripción
               <textarea name="descripcion" value={formulario.descripcion} onChange={actualizarCampo} rows="4" />

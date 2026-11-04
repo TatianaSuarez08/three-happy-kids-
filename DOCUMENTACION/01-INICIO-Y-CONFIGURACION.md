@@ -18,22 +18,15 @@ npm install
 
 ## Variables de entorno
 
-Edita `backend/.env`:
+Desde la raíz del repositorio, copia `.env.example` a `.env` y edítalo:
 
-```env
-PORT=3000
-DB_HOST=localhost
-DB_USER=root
-DB_PASSWORD=
-DB_DATABASE=happykids
-CORS_ORIGIN=http://localhost:5173
-JWT_SECRET=change_this_secret_in_production
-NODE_ENV=development
+```powershell
+Copy-Item .env.example .env
 ```
 
-`DB_PASSWORD` debe contener la contraseña de MySQL si el usuario la tiene. `JWT_SECRET` debe cambiarse por una clave privada antes de publicar el sistema.
+Configura `DB_PASSWORD` con la contraseña de MySQL si el usuario la tiene. Reemplaza también el valor de ejemplo de `JWT_SECRET` por una clave aleatoria; nunca publiques `.env`.
 
-El frontend usa `VITE_BACKEND_URL` si existe; de lo contrario utiliza `http://localhost:3000`.
+El archivo raíz es compartido por `backend`, `API` y frontend. Los servicios backend pueden usar sus `.env` locales si el archivo compartido no define alguna variable. El frontend usa `VITE_BACKEND_URL` y `VITE_API_BACKUP_URL`; sus valores predeterminados son `http://localhost:3000` y `http://localhost:3001`.
 
 ## Ejecutar
 

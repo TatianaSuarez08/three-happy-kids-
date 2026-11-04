@@ -2,7 +2,7 @@ import {
   validatePreparation,
   validatePreparationDecision,
   validatePreparationChecklist
-} from '../../services/preparacionPedidoService.js';
+} from '../../../services/preparacionPedidoService.js';
 
 const requestedLines = [
   { idProducto: 10, cantidad: 2, nombre: 'Camiseta' },

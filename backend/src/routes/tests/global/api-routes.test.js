@@ -2,35 +2,35 @@ import express from 'express';
 import request from 'supertest';
 import cors from 'cors';
 
-jest.mock('../../controllers/AdminUsuarioController.js', () => ({
+jest.mock('../../../controllers/AdminUsuarioController.js', () => ({
   changeUserStatus: jest.fn(),
   createUser: jest.fn(),
   editUser: jest.fn(),
   getUsers: jest.fn(),
   removeUser: jest.fn()
 }));
-jest.mock('../../controllers/CarritoController.js', () => ({
+jest.mock('../../../controllers/CarritoController.js', () => ({
   changeCartItem: jest.fn(),
   createCartItem: jest.fn(),
   deleteCart: jest.fn(),
   deleteCartItem: jest.fn(),
   getCart: jest.fn()
 }));
-jest.mock('../../controllers/CatalogoController.js', () => ({
+jest.mock('../../../controllers/CatalogoController.js', () => ({
   getCategories: jest.fn()
 }));
-jest.mock('../../controllers/DashboardController.js', () => ({
+jest.mock('../../../controllers/DashboardController.js', () => ({
   getDashboard: jest.fn()
 }));
-jest.mock('../../controllers/FavoritoController.js', () => ({
+jest.mock('../../../controllers/FavoritoController.js', () => ({
   createFavorite: jest.fn(),
   deleteFavorite: jest.fn(),
   getFavorites: jest.fn()
 }));
-jest.mock('../../controllers/HealthController.js', () => ({
+jest.mock('../../../controllers/HealthController.js', () => ({
   getHealth: jest.fn()
 }));
-jest.mock('../../controllers/InventarioController.js', () => ({
+jest.mock('../../../controllers/InventarioController.js', () => ({
   createActivityReport: jest.fn(),
   createInventoryMovement: jest.fn(),
   createPurchase: jest.fn(),
@@ -40,16 +40,16 @@ jest.mock('../../controllers/InventarioController.js', () => ({
   getPurchasesForReceipt: jest.fn(),
   receivePurchase: jest.fn()
 }));
-jest.mock('../../controllers/LogisticaController.js', () => ({
+jest.mock('../../../controllers/LogisticaController.js', () => ({
   getLogistica: jest.fn()
 }));
-jest.mock('../../controllers/PedidoController.js', () => ({
+jest.mock('../../../controllers/PedidoController.js', () => ({
   changeOrderStatus: jest.fn(),
   getMyOrders: jest.fn(),
   getOrders: jest.fn(),
   placeOrder: jest.fn()
 }));
-jest.mock('../../controllers/PedidoFlujoController.js', () => ({
+jest.mock('../../../controllers/PedidoFlujoController.js', () => ({
   assignCourier: jest.fn(),
   assignWarehouse: jest.fn(),
   changeCourierStatus: jest.fn(),
@@ -66,7 +66,7 @@ jest.mock('../../controllers/PedidoFlujoController.js', () => ({
   submitPreparation: jest.fn(),
   uploadCourierEvidence: jest.fn()
 }));
-jest.mock('../../controllers/ProductoController.js', () => ({
+jest.mock('../../../controllers/ProductoController.js', () => ({
   addProduct: jest.fn(),
   editProduct: jest.fn(),
   getColors: jest.fn(),
@@ -74,20 +74,20 @@ jest.mock('../../controllers/ProductoController.js', () => ({
   getProducts: jest.fn(),
   removeProduct: jest.fn()
 }));
-jest.mock('../../controllers/UsuarioController.js', () => ({
+jest.mock('../../../controllers/UsuarioController.js', () => ({
   getMyProfile: jest.fn(),
   loginUser: jest.fn(),
   registerUser: jest.fn(),
   updateMyProfilePhoto: jest.fn()
 }));
-jest.mock('../../middleware/autenticacion.js', () => jest.fn((_req, _res, next) => next()));
-jest.mock('../../middleware/role.js', () => {
+jest.mock('../../../middleware/autenticacion.js', () => jest.fn((_req, _res, next) => next()));
+jest.mock('../../../middleware/role.js', () => {
   const roleGate = jest.fn((_req, _res, next) => next());
   const permitRoles = jest.fn(() => roleGate);
   permitRoles.roleGate = roleGate;
   return { __esModule: true, default: permitRoles };
 });
-jest.mock('../../middleware/subidaImagen.js', () => ({
+jest.mock('../../../middleware/subidaImagen.js', () => ({
   uploadProductImage: {
     single: jest.fn(() => (_req, _res, next) => next())
   },
@@ -99,34 +99,34 @@ jest.mock('../../middleware/subidaImagen.js', () => ({
   }
 }));
 
-import * as adminUsuarioController from '../../controllers/AdminUsuarioController.js';
-import * as carritoController from '../../controllers/CarritoController.js';
-import * as catalogoController from '../../controllers/CatalogoController.js';
-import * as dashboardController from '../../controllers/DashboardController.js';
-import * as favoritoController from '../../controllers/FavoritoController.js';
-import * as healthController from '../../controllers/HealthController.js';
-import * as inventarioController from '../../controllers/InventarioController.js';
-import * as logisticaController from '../../controllers/LogisticaController.js';
-import * as pedidoController from '../../controllers/PedidoController.js';
-import * as pedidoFlujoController from '../../controllers/PedidoFlujoController.js';
-import * as productoController from '../../controllers/ProductoController.js';
-import * as usuarioController from '../../controllers/UsuarioController.js';
-import auth from '../../middleware/autenticacion.js';
-import permitRoles from '../../middleware/role.js';
-import { parseCorsOrigins } from '../../config/corsOrigins.js';
-import adminUsuarioRouter from '../AdminUsuarioRoute.js';
-import carritoRouter from '../CarritoRoute.js';
-import catalogoRouter from '../CatalogoRoute.js';
-import dashboardRouter from '../DashboardRoute.js';
-import favoritoRouter from '../FavoritoRoute.js';
-import healthRouter from '../HealthRoute.js';
-import inventarioRouter from '../InventarioRoute.js';
-import logisticaRouter from '../LogisticaRoute.js';
-import pedidoRouter from '../PedidoRoute.js';
-import pedidoFlujoRouter from '../PedidoFlujoRoute.js';
-import productoRouter from '../ProductoRoute.js';
-import rootRouter from '../RootRoute.js';
-import usuarioRouter from '../UsuarioRoute.js';
+import * as adminUsuarioController from '../../../controllers/AdminUsuarioController.js';
+import * as carritoController from '../../../controllers/CarritoController.js';
+import * as catalogoController from '../../../controllers/CatalogoController.js';
+import * as dashboardController from '../../../controllers/DashboardController.js';
+import * as favoritoController from '../../../controllers/FavoritoController.js';
+import * as healthController from '../../../controllers/HealthController.js';
+import * as inventarioController from '../../../controllers/InventarioController.js';
+import * as logisticaController from '../../../controllers/LogisticaController.js';
+import * as pedidoController from '../../../controllers/PedidoController.js';
+import * as pedidoFlujoController from '../../../controllers/PedidoFlujoController.js';
+import * as productoController from '../../../controllers/ProductoController.js';
+import * as usuarioController from '../../../controllers/UsuarioController.js';
+import auth from '../../../middleware/autenticacion.js';
+import permitRoles from '../../../middleware/role.js';
+import { parseCorsOrigins } from '../../../config/corsOrigins.js';
+import adminUsuarioRouter from '../../AdminUsuarioRoute.js';
+import carritoRouter from '../../CarritoRoute.js';
+import catalogoRouter from '../../CatalogoRoute.js';
+import dashboardRouter from '../../DashboardRoute.js';
+import favoritoRouter from '../../FavoritoRoute.js';
+import healthRouter from '../../HealthRoute.js';
+import inventarioRouter from '../../InventarioRoute.js';
+import logisticaRouter from '../../LogisticaRoute.js';
+import pedidoRouter from '../../PedidoRoute.js';
+import pedidoFlujoRouter from '../../PedidoFlujoRoute.js';
+import productoRouter from '../../ProductoRoute.js';
+import rootRouter from '../../RootRoute.js';
+import usuarioRouter from '../../UsuarioRoute.js';
 
 const controllers = {
   ...adminUsuarioController,

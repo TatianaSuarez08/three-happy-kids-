@@ -21,9 +21,9 @@ El proyecto se entrega como monorepo con estas carpetas relevantes:
 
 ## Variables de entorno
 
-La configuración local real vive en la raíz del proyecto en `.env`.
+La configuración local vive en `.env` en la raíz del proyecto. Créalo copiando `.env.example` y reemplaza el secreto JWT de ejemplo y los datos de MySQL.
 
-Ejemplo real del proyecto:
+Configuración base:
 
 ```env
 PORT=3000
@@ -51,7 +51,7 @@ VITE_API_BACKUP_URL=http://localhost:3001
 - `VITE_BACKEND_URL`: URL principal del backend para el frontend
 - `VITE_API_BACKUP_URL`: URL de respaldo para failover
 
-> No se deben almacenar secretos reales en documentación ni en commits públicos.
+> No se deben almacenar secretos reales en documentación ni en commits públicos. El archivo `.env` está ignorado por Git.
 
 ## Instalación de dependencias
 

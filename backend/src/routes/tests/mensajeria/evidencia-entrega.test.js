@@ -5,7 +5,7 @@ import {
   getImageMetadata,
   persistEvidenceImage,
   removeEvidenceImage
-} from '../../services/evidenciaEntregaService.js';
+} from '../../../services/evidenciaEntregaService.js';
 
 const imageSamples = [
   {

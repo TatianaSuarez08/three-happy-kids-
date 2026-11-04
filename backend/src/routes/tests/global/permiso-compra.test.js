@@ -1,4 +1,4 @@
-import { buildRolePermissions } from '../../middleware/role.js';
+import { buildRolePermissions } from '../../../middleware/role.js';
 
 describe('permiso de compra', () => {
   test('todos los roles habilitados para compra incluyen comprar', () => {

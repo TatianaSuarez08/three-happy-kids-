@@ -10,7 +10,7 @@ Monorepo del ecommerce Three Happy Kids.
 
 ## Configuración universal
 
-La configuración local real vive en la raíz del proyecto en [.env](.env). Este archivo se comparte con backend y frontend.
+La configuración local vive en `.env` en la raíz del proyecto. Créalo copiando `.env.example` y ajusta la contraseña de MySQL y el secreto JWT; `.env` no se versiona.
 
 Variables principales:
 
@@ -22,9 +22,12 @@ DB_USER=root
 DB_PASSWORD=
 DB_DATABASE=happykids
 CORS_ORIGIN=http://localhost:5173,http://127.0.0.1:5173
-JWT_SECRET=three-happy-kids-dev-secret-2026-change-me
+JWT_SECRET=replace-with-a-long-random-value
 VITE_BACKEND_URL=http://localhost:3000
+VITE_API_BACKUP_URL=http://localhost:3001
 ```
+
+`backend` y `API` leen primero este archivo compartido y usan sus archivos `.env` locales como respaldo. Vite también lo lee para obtener las variables `VITE_*`.
 
 ## Inicio automático en VS Code
 

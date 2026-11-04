@@ -1,14 +1,14 @@
 import express from 'express';
 import request from 'supertest';
 
-jest.mock('../../db.js', () => ({
+jest.mock('../../../db.js', () => ({
   pool: {
     query: jest.fn()
   }
 }));
 
-import { pool } from '../../db.js';
-import healthRouter from '../HealthRoute.js';
+import { pool } from '../../../db.js';
+import healthRouter from '../../HealthRoute.js';
 
 const app = express();
 app.use(healthRouter);

@@ -1,4 +1,4 @@
-import { hashPassword, verifyPassword, verifyPasswordAndUpgrade, SALT_ROUNDS } from '../../services/passwordService.js';
+import { hashPassword, verifyPassword, verifyPasswordAndUpgrade, SALT_ROUNDS } from '../../../services/passwordService.js';
 
 describe('servicio de contraseñas', () => {
   test('genera y verifica hashes bcrypt', async () => {

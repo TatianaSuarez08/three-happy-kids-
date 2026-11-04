@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import jwt from 'jsonwebtoken';
-import { pool } from '../src/db.js';
-import { verifyPassword } from '../src/services/passwordService.js';
-import { buildRolePermissions } from '../src/middleware/role.js';
+import { pool } from '../../../db.js';
+import { verifyPassword } from '../../../services/passwordService.js';
+import { buildRolePermissions } from '../../../middleware/role.js';
 
 const api = process.env.BACKEND_URL || `http://localhost:${process.env.BACKEND_PORT || process.env.PORT || 3002}`;
 const email = `bcrypt.integration.${Date.now()}@example.com`;

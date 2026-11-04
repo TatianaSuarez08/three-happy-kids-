@@ -1,4 +1,4 @@
-import { validateCourierTransition } from '../../services/pedidoWorkflowService.js';
+import { validateCourierTransition } from '../../../services/pedidoWorkflowService.js';
 
 describe('transiciones de entrega', () => {
   test('permite iniciar recorrido y reintentar una entrega fallida', () => {

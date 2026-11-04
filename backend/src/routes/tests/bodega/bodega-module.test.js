@@ -1,4 +1,4 @@
-import { buildRolePermissions } from '../../middleware/role.js';
+import { buildRolePermissions } from '../../../middleware/role.js';
 
 describe('permisos del rol bodeguero', () => {
   test('incluye permisos de bodega e inventario', () => {

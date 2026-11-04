@@ -2,12 +2,12 @@ import express from 'express';
 import jwt from 'jsonwebtoken';
 import request from 'supertest';
 
-jest.mock('../../config/env.js', () => ({
+jest.mock('../../../config/env.js', () => ({
   env: { JWT_SECRET: 'test-secret' }
 }));
 
-import auth from '../../middleware/autenticacion.js';
-import permitRoles from '../../middleware/role.js';
+import auth from '../../../middleware/autenticacion.js';
+import permitRoles from '../../../middleware/role.js';
 
 const app = express();
 app.get(

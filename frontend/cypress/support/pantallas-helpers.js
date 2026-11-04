@@ -10,7 +10,7 @@ const product = {
   imagen_producto: ''
 };
 
-const pageCases = [
+export const pageCases = [
   { path: '/', role: null, text: 'Bienvenido a HappyKids' },
   { path: '/login', role: null, text: 'Inicia sesión para continuar' },
   { path: '/registro', role: null, text: 'Crea tu cuenta' },
@@ -46,11 +46,11 @@ const pageCases = [
   { path: '/mensajeria/perfil', role: 'mensajero', text: 'Mi perfil' }
 ];
 
-const protectedPaths = pageCases
+export const protectedPaths = pageCases
   .filter(({ role }) => role)
   .map(({ path }) => path);
 
-const mockApi = () => {
+export const mockApi = () => {
   cy.intercept('**/api/v1/**', (request) => {
     const { pathname } = new URL(request.url);
     let body = {};
@@ -102,7 +102,7 @@ const mockApi = () => {
   }).as('api');
 };
 
-const visitAsRole = (path, role) => {
+export const visitAsRole = (path, role) => {
   cy.visit(path, {
     onBeforeLoad(window) {
       window.localStorage.clear();
@@ -118,59 +118,3 @@ const visitAsRole = (path, role) => {
     }
   });
 };
-
-describe('Pruebas de caja negra - pantallas de HappyKids', () => {
-  beforeEach(() => {
-    mockApi();
-  });
-
-  pageCases.forEach(({ path, role, text }) => {
-    it(`abre ${path} y muestra su contenido principal`, () => {
-      visitAsRole(path, role);
-
-      cy.contains(text).should('be.visible');
-      cy.location('pathname').should('equal', path);
-    });
-  });
-
-  protectedPaths.forEach((path) => {
-    it(`redirige ${path} al inicio de sesión si no hay sesión`, () => {
-      visitAsRole(path, null);
-
-      cy.location('pathname').should('equal', '/login');
-      cy.contains('Inicia sesión para continuar').should('be.visible');
-    });
-  });
-
-  it('redirige /admin al dashboard para usuarios administradores', () => {
-    visitAsRole('/admin', 'administrador');
-
-    cy.location('pathname').should('equal', '/admin/dashboard');
-    cy.contains('Dashboard').should('be.visible');
-  });
-
-  it('rechaza el acceso al dashboard administrativo para un cliente', () => {
-    visitAsRole('/admin/dashboard', 'cliente');
-
-    cy.location('pathname').should('equal', '/no-autorizado');
-    cy.contains('Acceso denegado').should('be.visible');
-  });
-
-  it('muestra el error de validación de login antes de contactar la API', () => {
-    cy.intercept('POST', '**/api/v1/login').as('login');
-    visitAsRole('/login', null);
-    cy.contains('button', 'Ingresar').click();
-
-    cy.contains('Ingresa tu correo electrónico.').should('be.visible');
-    cy.get('@login.all').should('have.length', 0);
-  });
-
-  it('muestra el error de validación del registro antes de contactar la API', () => {
-    cy.intercept('POST', '**/api/v1/registro').as('registro');
-    visitAsRole('/registro', null);
-    cy.get('form').within(() => cy.get('button[type="submit"]').click());
-
-    cy.contains('Ingresa tu nombre de usuario.').should('be.visible');
-    cy.get('@registro.all').should('have.length', 0);
-  });
-});

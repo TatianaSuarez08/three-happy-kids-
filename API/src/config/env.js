@@ -4,9 +4,9 @@ import { fileURLToPath } from 'url';
 
 const currentFile = fileURLToPath(import.meta.url);
 const currentDirectory = path.dirname(currentFile);
+dotenv.config({ path: path.resolve(currentDirectory, '../../../.env') });
 dotenv.config({ path: path.resolve(currentDirectory, '../../.env') });
 dotenv.config({ path: path.resolve(currentDirectory, '../../../backend/.env') });
-dotenv.config({ path: path.resolve(currentDirectory, '../../../.env') });
 
 if (!process.env.JWT_SECRET) {
   throw new Error('JWT_SECRET es obligatorio. Configúralo en el archivo .env raíz antes de iniciar el servidor.');

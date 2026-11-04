@@ -1,7 +1,7 @@
-jest.mock('../../config/env.js', () => ({
+jest.mock('../../../config/env.js', () => ({
   env: { JWT_SECRET: 'test-secret' }
 }));
-jest.mock('../../models/UsuarioModel.js', () => ({
+jest.mock('../../../models/UsuarioModel.js', () => ({
   createUser: jest.fn(),
   findUserByEmail: jest.fn(),
   findUserProfile: jest.fn(),
@@ -9,8 +9,8 @@ jest.mock('../../models/UsuarioModel.js', () => ({
   updateUserProfilePhoto: jest.fn()
 }));
 
-import { updateUserProfilePhoto } from '../../models/UsuarioModel.js';
-import { updateMyProfilePhoto } from '../../controllers/UsuarioController.js';
+import { updateUserProfilePhoto } from '../../../models/UsuarioModel.js';
+import { updateMyProfilePhoto } from '../../../controllers/UsuarioController.js';
 
 describe('actualización de foto de perfil', () => {
   let response;

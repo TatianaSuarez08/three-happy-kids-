@@ -44,5 +44,15 @@ describe('transiciones de entrega', () => {
       nextStatus: 'En camino',
       hasEvidence: true
     })).toThrow(expect.objectContaining({ code: 'INVALID_TRANSITION' }));
+    expect(() => validateCourierTransition({
+      currentStatus: 'Asignado',
+      nextStatus: 'Entregado',
+      hasEvidence: true
+    })).toThrow(expect.objectContaining({ code: 'INVALID_TRANSITION' }));
+    expect(() => validateCourierTransition({
+      currentStatus: 'En camino',
+      nextStatus: 'Cancelado',
+      hasEvidence: false
+    })).toThrow(expect.objectContaining({ code: 'INVALID_TRANSITION' }));
   });
 });

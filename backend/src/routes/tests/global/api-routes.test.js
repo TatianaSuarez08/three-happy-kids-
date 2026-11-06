@@ -96,7 +96,7 @@ jest.mock('../../../middleware/subidaImagen.js', () => ({
     single: jest.fn(() => (_req, _res, next) => next())
   },
   uploadDeliveryEvidence: {
-    single: jest.fn(() => (_req, _res, next) => next())
+    single: jest.fn(() => (req, _res, next) => next(req.body?.uploadError))
   }
 }));
 
@@ -286,6 +286,27 @@ describe('rutas de la API', () => {
   test('parsea varios orígenes CORS separados por comas', () => {
     expect(parseCorsOrigins(' http://localhost:5173, http://127.0.0.1:5173, http://localhost:3001 , '))
       .toEqual(['http://localhost:5173', 'http://127.0.0.1:5173', 'http://localhost:3001']);
+  });
+
+  test.each([undefined, null, '', ' , , '])(
+    'usa el origen local por defecto cuando no hay orígenes configurados: %s',
+    (value) => {
+      expect(parseCorsOrigins(value)).toEqual(['http://localhost:5173']);
+    }
+  );
+
+  test.each([
+    [{ code: 'LIMIT_FILE_SIZE' }, 413, 'La fotografía no puede superar 5 MB'],
+    [{ message: 'Archivo rechazado' }, 400, 'Archivo rechazado'],
+    [{}, 400, 'No se pudo leer la fotografía']
+  ])('maneja errores al cargar evidencia: %j', async (uploadError, status, message) => {
+    const response = await request(app)
+      .post('/mensajeria/pedidos/12/evidencia')
+      .send({ uploadError });
+
+    expect(response.statusCode).toBe(status);
+    expect(response.body).toEqual({ error: message });
+    expect(pedidoFlujoController.uploadCourierEvidence).not.toHaveBeenCalled();
   });
 
   test('las rutas protegidas detienen la solicitud si falla la autenticación', async () => {

@@ -1,7 +1,8 @@
 import {
   validatePreparation,
   validatePreparationDecision,
-  validatePreparationChecklist
+  validatePreparationChecklist,
+  getWarehouseOrderState
 } from '../../../services/preparacionPedidoService.js';
 
 const requestedLines = [
@@ -29,6 +30,10 @@ describe('validación de alistamiento de pedidos', () => {
     expect(result.complete).toBe(false);
     expect(result.missingLines).toHaveLength(1);
     expect(result.missingLines[0].productId).toBe(10);
+    expect(validatePreparation(requestedLines, [
+      { idProducto: 10, cantidadPreparada: 1, observaciones: 'Falta una unidad' },
+      { idProducto: 20, cantidadPreparada: 1 }
+    ], null).observation).toBe('');
   });
 
   test('rechaza faltantes sin observación', () => {
@@ -36,6 +41,46 @@ describe('validación de alistamiento de pedidos', () => {
       { idProducto: 10, cantidadPreparada: 1 },
       { idProducto: 20, cantidadPreparada: 1 }
     ])).toThrow(expect.objectContaining({ code: 'PREPARATION_INVALID' }));
+  });
+
+  test('rechaza entradas de alistamiento que no son listas', () => {
+    expect(() => validatePreparation(null, [])).toThrow(
+      expect.objectContaining({ code: 'PREPARATION_INVALID' })
+    );
+    expect(() => validatePreparation(requestedLines, null)).toThrow(
+      expect.objectContaining({ code: 'PREPARATION_INVALID' })
+    );
+  });
+
+  test('acepta identificadores de producto representados como texto', () => {
+    const result = validatePreparation(
+      [{ idProducto: '10', cantidad: 2, nombre: 'Camiseta' }],
+      [{ idProducto: '10', cantidadPreparada: 2 }]
+    );
+
+    expect(result.complete).toBe(true);
+    expect(result.lines[0].productId).toBe(10);
+  });
+
+  test('rechaza cantidades y observaciones con tipos o límites inválidos', () => {
+    const validLine = { idProducto: 10, cantidadPreparada: 2 };
+    expect(() => validatePreparation(requestedLines, [
+      { idProducto: 10, cantidadPreparada: null },
+      { idProducto: 20, cantidadPreparada: 1 }
+    ])).toThrow(expect.objectContaining({ code: 'PREPARATION_INVALID' }));
+    expect(() => validatePreparation(requestedLines, [
+      { ...validLine, observaciones: 'x'.repeat(256) },
+      { idProducto: 20, cantidadPreparada: 1 }
+    ])).toThrow(expect.objectContaining({ code: 'PREPARATION_INVALID' }));
+    expect(() => validatePreparation(requestedLines, [
+      { idProducto: 10, cantidadPreparada: 1 },
+      { idProducto: 20, cantidadPreparada: 1 }
+    ], 'x'.repeat(2001))).toThrow(expect.objectContaining({ code: 'PREPARATION_INVALID' }));
+    const result = validatePreparation(requestedLines, [
+      { idProducto: 10, cantidadPreparada: 1, observaciones: 'Falta una unidad' },
+      { idProducto: 20, cantidadPreparada: 1 }
+    ], '  Novedad general  ');
+    expect(result.observation).toBe('Novedad general');
   });
 
   test('rechaza productos duplicados, omitidos o ajenos al pedido', () => {
@@ -94,6 +139,13 @@ describe('validación de alistamiento de pedidos', () => {
   test('exige novedad cuando Bodega reporta que falta algo', () => {
     expect(() => validatePreparationDecision(requestedLines, false, '  '))
       .toThrow(expect.objectContaining({ code: 'PREPARATION_INVALID' }));
+    expect(() => validatePreparationDecision(null, true))
+      .toThrow(expect.objectContaining({ code: 'PREPARATION_INVALID' }));
+    expect(() => validatePreparationDecision(requestedLines, 'sí'))
+      .toThrow(expect.objectContaining({ code: 'PREPARATION_INVALID' }));
+    expect(() => validatePreparationDecision(requestedLines, false, 'x'.repeat(2001)))
+      .toThrow(expect.objectContaining({ code: 'PREPARATION_INVALID' }));
+    expect(validatePreparationDecision(requestedLines, true, null).observation).toBe('');
   });
 
   test('valida el checklist sin pedir cantidades manuales', () => {
@@ -104,6 +156,17 @@ describe('validación de alistamiento de pedidos', () => {
 
     expect(result.complete).toBe(true);
     expect(result.lines.map((line) => line.preparedQuantity)).toEqual([2, 1]);
+
+    const incomplete = validatePreparationChecklist(requestedLines, [
+      { idProducto: 10, encontrado: false, tipoNovedad: 'Dañado', descripcion: 'Empaque roto' },
+      { idProducto: 20, encontrado: true, tipoNovedad: '', descripcion: '' }
+    ]);
+    expect(incomplete.complete).toBe(false);
+    expect(incomplete.missingLines[0]).toMatchObject({
+      productId: 10,
+      preparedQuantity: 0,
+      issueType: 'Dañado'
+    });
   });
 
   test('requiere tipo y descripción para cada producto no encontrado', () => {
@@ -128,5 +191,38 @@ describe('validación de alistamiento de pedidos', () => {
       foundLine,
       { idProducto: 99, encontrado: true, tipoNovedad: '', descripcion: '' }
     ])).toThrow(expect.objectContaining({ code: 'PREPARATION_INVALID' }));
+    expect(() => validatePreparationChecklist(null, []))
+      .toThrow(expect.objectContaining({ code: 'PREPARATION_INVALID' }));
+    expect(() => validatePreparationChecklist(requestedLines, null))
+      .toThrow(expect.objectContaining({ code: 'PREPARATION_INVALID' }));
+    expect(() => validatePreparationChecklist(requestedLines, [
+      { idProducto: 10, encontrado: 'sí' },
+      { idProducto: 20, encontrado: true }
+    ])).toThrow(expect.objectContaining({ code: 'PREPARATION_INVALID' }));
+    expect(() => validatePreparationChecklist(requestedLines, [
+      { idProducto: 10, encontrado: false, tipoNovedad: 'No encontrado', descripcion: 'x'.repeat(1001) },
+      { idProducto: 20, encontrado: true }
+    ])).toThrow(expect.objectContaining({ code: 'PREPARATION_INVALID' }));
+    expect(() => validatePreparationChecklist(requestedLines, [
+      { idProducto: 10, encontrado: true, tipoNovedad: 'Dañado', descripcion: '' },
+      { idProducto: 20, encontrado: true }
+    ])).toThrow(expect.objectContaining({ code: 'PREPARATION_INVALID' }));
+    expect(() => validatePreparationChecklist(requestedLines, [
+      { idProducto: 10, encontrado: false, tipoNovedad: 'Otro', descripcion: 'No aparece' },
+      { idProducto: 20, encontrado: true }
+    ])).toThrow(expect.objectContaining({ code: 'PREPARATION_INVALID' }));
+  });
+
+  test.each([
+    [{ deliveryStatus: 'Por recoger' }, 'Listo para envío'],
+    [{ deliveryStatus: 'Por recoger', assigned: true }, 'Asignado a Mensajería'],
+    [{ deliveryStatus: 'En camino' }, 'En camino'],
+    [{ deliveryStatus: 'Entregado' }, 'Entregado'],
+    [{ deliveryStatus: 'Cancelado' }, 'Cancelado'],
+    [{ deliveryStatus: 'Otro', latestOperation: 'PreparacionIniciada' }, 'En preparación'],
+    [{ deliveryStatus: 'Otro', latestOperation: 'AlistamientoIncompleto' }, 'Incidencia'],
+    [{ deliveryStatus: 'Otro', latestOperation: 'Otra operación' }, 'Pendiente de preparación']
+  ])('determina el estado de bodega para %j', (input, expected) => {
+    expect(getWarehouseOrderState(input)).toBe(expected);
   });
 });

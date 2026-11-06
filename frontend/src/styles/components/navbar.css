@@ -249,10 +249,23 @@
   }
 
   .catalogo-categorias-menu {
-    left: 50%;
+    left: 0;
+    right: 0;
+    width: min(100%, 22rem);
+    max-height: min(60vh, 26rem);
+    margin-inline: auto;
     grid-template-columns: 1fr;
-    transform: translateX(-50%);
-    animation-name: catalogo-menu-mobile-in;
+    overflow-y: auto;
+    transform: none;
+    animation-name: catalogo-menu-in;
+  }
+
+  .nav-links-bar {
+    position: relative;
+  }
+
+  .nav-category-control {
+    position: static;
   }
 }
 

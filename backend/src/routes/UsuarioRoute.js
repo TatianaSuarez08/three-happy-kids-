@@ -1,5 +1,5 @@
 import { Router } from 'express'; // Router de Express para definir rutas agrupadas
-import { getMyProfile, loginUser, registerUser, updateMyProfilePhoto } from '../controllers/UsuarioController.js'; // Controladores de login y registro
+import { getDocumentTypes, getMyProfile, loginUser, registerUser, updateMyProfilePhoto } from '../controllers/UsuarioController.js'; // Controladores de login y registro
 import auth from '../middleware/autenticacion.js';
 import { uploadProfileImage } from '../middleware/subidaImagen.js';
 
@@ -7,6 +7,7 @@ const router = Router(); // Crea una instancia de Router
 
 // Ruta POST para registrar un nuevo usuario
 router.post('/registro', registerUser);
+router.get('/tipos-documento', getDocumentTypes);
 
 // Ruta POST para iniciar sesión: recibe credenciales y llama a `loginUser`
 router.post('/login', loginUser);

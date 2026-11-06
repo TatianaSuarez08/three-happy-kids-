@@ -10,6 +10,7 @@ function Nav() {
   const [categorias, setCategorias] = useState([]);
   const [busqueda, setBusqueda] = useState('');
   const dropdownRef = useRef(null);
+  const categoryRef = useRef(null);
   const navigate = useNavigate();
   const location = useLocation();
   const { totalItems } = useCarrito();
@@ -44,9 +45,20 @@ function Nav() {
   useEffect(() => {
     const close = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) setDropdownOpen(false);
+      if (categoryRef.current && !categoryRef.current.contains(event.target)) setCategoriasOpen(false);
+    };
+    const closeOnEscape = (event) => {
+      if (event.key === 'Escape') {
+        setDropdownOpen(false);
+        setCategoriasOpen(false);
+      }
     };
     document.addEventListener('mousedown', close);
-    return () => document.removeEventListener('mousedown', close);
+    document.addEventListener('keydown', closeOnEscape);
+    return () => {
+      document.removeEventListener('mousedown', close);
+      document.removeEventListener('keydown', closeOnEscape);
+    };
   }, []);
 
   useEffect(() => {
@@ -236,15 +248,17 @@ function Nav() {
           ) : (
             <>
               <Link to="/" {...navLinkProps('/')}>Inicio</Link>
-              <div className="nav-category-control">
+              <div className="nav-category-control" ref={categoryRef}>
                 <button
                   type="button"
-                  className="nav-link-item catalogo-nav-link"
+                  className={`nav-link-item catalogo-nav-link${categoriasOpen ? ' is-open' : ''}`}
                   onClick={() => setCategoriasOpen(!categoriasOpen)}
                   aria-expanded={categoriasOpen}
                   aria-controls="catalogo-categorias-menu"
+                  aria-haspopup="true"
                 >
-                  <i className="bi bi-grid-3x3-gap" aria-hidden="true" /> Catálogo ▾
+                  <i className="bi bi-grid-3x3-gap" aria-hidden="true" /> Catálogo
+                  <i className={`bi ${categoriasOpen ? 'bi-chevron-up' : 'bi-chevron-down'} catalogo-toggle-icon`} aria-hidden="true" />
                 </button>
                 {categoriasOpen && renderCatalogMenu()}
               </div>

@@ -131,25 +131,41 @@ function InicioSesion() {
   };
 
   return (
-    <div className="login-page">
-      <div className="login-card">
-
-        {/* Sección de logo/instrucción */}
-        <div className="login-logo">
-          <div className="login-logo-icon" aria-hidden="true">HK</div>
-          <h1>HappyKids</h1>
-          <p>Inicia sesión para continuar</p>
+    <main className="registro-page auth-login-page">
+      <aside className="registro-intro">
+        <div className="registro-intro-content">
+          <div className="registro-brand-mark" aria-hidden="true">
+            <i className="bi bi-stars" />
+          </div>
+          <p className="registro-eyebrow">THREE HAPPY KIDS</p>
+          <h1>Qué bueno tenerte de vuelta.</h1>
+          <p className="registro-intro-copy">
+            Inicia sesión para encontrar tus favoritos y seguir disfrutando cada momento con tu familia.
+          </p>
+          <div className="registro-benefit">
+            <i className="bi bi-heart-fill" aria-hidden="true" />
+            <span>Tu espacio feliz, siempre cerca</span>
+          </div>
         </div>
+        <div className="registro-decoration registro-decoration-one" aria-hidden="true" />
+        <div className="registro-decoration registro-decoration-two" aria-hidden="true" />
+      </aside>
 
-        {/* Mostrar error si existe */}
-        {error && <div className="login-error">{error}</div>}
+      <section className="registro-content auth-login-content" aria-labelledby="login-title">
+        <div className="registro-form-shell auth-login-shell">
+          <header className="registro-heading">
+            <p className="registro-eyebrow">BIENVENIDO DE NUEVO</p>
+            <h2 id="login-title">Inicia sesión</h2>
+            <p>Ingresa a tu cuenta para continuar.</p>
+          </header>
 
-        {/* Formulario de inicio de sesión */}
-        <form onSubmit={handleSubmit} noValidate>
+          {error && <div className="registro-alert" role="alert">{error}</div>}
+
+          <form onSubmit={handleSubmit} noValidate>
 
           {/* Campo correo: input no controlado referenciado por `correoRef` */}
           <div className="login-field">
-            <label htmlFor="correo">Correo electrónico</label>
+            <label htmlFor="correo">Correo electrónico <span>*</span></label>
             <input
               id="correo"
               ref={correoRef}
@@ -164,7 +180,7 @@ function InicioSesion() {
 
           {/* Campo contraseña con toggle para mostrar/ocultar */}
           <div className="login-field">
-            <label htmlFor="contraseña">Contraseña</label>
+            <label htmlFor="contraseña">Contraseña <span>*</span></label>
             <div className="login-pass-wrap">
               <input
                 id="contraseña"
@@ -182,15 +198,11 @@ function InicioSesion() {
                 className="login-toggle-pass"
                 onClick={() => setShowPass(!showPass)}
                 disabled={loading}
+                aria-label={showPass ? "Ocultar contraseña" : "Mostrar contraseña"}
               >
-                {showPass ? "👁" : "🔒"}
+                <i className={`bi ${showPass ? "bi-eye-slash" : "bi-eye"}`} aria-hidden="true" />
               </button>
             </div>
-          </div>
-
-          {/* Enlace para recuperar contraseña */}
-          <div className="login-forgot">
-            <Link to="/recuperar-pass">¿Olvidaste tu contraseña?</Link>
           </div>
 
           <label className="login-remember">
@@ -203,19 +215,22 @@ function InicioSesion() {
             Recordarme en este dispositivo
           </label>
 
-          {/* Botones: enviar formulario y navegar a registro */}
-          <div className="botones">
-            <button type="submit" className="btn-ingresar" disabled={loading}>
-              {loading ? "Ingresando..." : "Ingresar"}
-            </button>
-            <button type="button" className="btn-registro" onClick={cancelar} disabled={loading}>
-              Registrarse
-            </button>
+          <div className="auth-login-links">
+            <Link to="/recuperar-pass">¿Olvidaste tu contraseña?</Link>
           </div>
 
-        </form>
-      </div>
-    </div>
+          <div className="registro-actions">
+            <button type="submit" className="registro-submit" disabled={loading}>
+              {loading ? "Ingresando..." : "Ingresar"}
+              {!loading && <i className="bi bi-arrow-right" aria-hidden="true" />}
+            </button>
+            <p>¿Aún no tienes una cuenta? <button type="button" onClick={cancelar} disabled={loading}>Regístrate</button></p>
+          </div>
+
+          </form>
+        </div>
+      </section>
+    </main>
   );
 }
 

@@ -10,4 +10,6 @@ export const register = (user) => request('/registro', {
   body: JSON.stringify(user)
 });
 
+export const getDocumentTypes = () => request('/tipos-documento');
+
 export const healthCheck = () => request('/health');

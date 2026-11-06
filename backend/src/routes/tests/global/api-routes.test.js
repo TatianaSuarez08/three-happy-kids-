@@ -75,6 +75,7 @@ jest.mock('../../../controllers/ProductoController.js', () => ({
   removeProduct: jest.fn()
 }));
 jest.mock('../../../controllers/UsuarioController.js', () => ({
+  getDocumentTypes: jest.fn(),
   getMyProfile: jest.fn(),
   loginUser: jest.fn(),
   registerUser: jest.fn(),
@@ -223,6 +224,7 @@ const endpoints = [
   ['post', '/productos', 'addProduct'],
   ['put', '/productos/12', 'editProduct'],
   ['delete', '/productos/12', 'removeProduct'],
+  ['get', '/tipos-documento', 'getDocumentTypes'],
   ['post', '/registro', 'registerUser'],
   ['post', '/login', 'loginUser'],
   ['get', '/me', 'getMyProfile'],

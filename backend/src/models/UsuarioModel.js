@@ -60,59 +60,90 @@ export const updatePassword = async (id, passwordHash) => {
   await pool.execute('UPDATE usuario SET contrasena = ? WHERE id = ?', [passwordHash, id]);
 };
 
+export const listActiveDocumentTypes = async () => {
+  const [rows] = await pool.execute(
+    `SELECT id, sigla, nombre_documento AS nombre
+     FROM tipo_documento
+     WHERE estado = 'Activo'
+     ORDER BY nombre_documento`
+  );
+  return rows;
+};
+
 // Crea un nuevo usuario en la base de datos con rol 'cliente' por defecto
 export const createUser = async (userData) => {
-  const { nombre_usuario, email, contrasena, idioma = 'es' } = userData;
+  const {
+    nombre_usuario,
+    email,
+    contrasena,
+    idioma = 'es',
+    primer_nombre,
+    primer_apellido,
+    numero_documento,
+    id_tipo_documento,
+    telefono = null,
+    direccion = null,
+    ciudad = null
+  } = userData;
+  const connection = await pool.getConnection();
+  let transactionStarted = false;
 
   try {
-    // 1. Insertar el usuario
-    const [insertResult] = await pool.execute(
+    await connection.beginTransaction();
+    transactionStarted = true;
+
+    const [insertResult] = await connection.execute(
       'INSERT INTO usuario (nombre_usuario, contrasena, correo, activo, idioma) VALUES (?, ?, ?, 1, ?)',
       [nombre_usuario, contrasena, email, idioma]
     );
 
     const userId = insertResult.insertId;
 
-    // 2. Obtener o crear el rol 'cliente'
-    const [rolRows] = await pool.execute(
-      'SELECT id FROM rol WHERE nombre_rol = ?',
-      ['cliente']
+    const [roleResult] = await connection.execute(
+      `INSERT INTO rol (nombre_rol) VALUES ('Cliente')
+       ON DUPLICATE KEY UPDATE id = LAST_INSERT_ID(id)`
     );
+    const roleId = roleResult.insertId;
 
-    let roleId;
-    if (rolRows.length === 0) {
-      // Si no existe el rol, crearlo
-      const [roleInsert] = await pool.execute(
-        'INSERT INTO rol (nombre_rol) VALUES (?)',
-        ['cliente']
-      );
-      roleId = roleInsert.insertId;
-    } else {
-      roleId = rolRows[0].id;
-    }
-
-    // 3. Asignar el rol 'cliente' al usuario
-    await pool.execute(
+    await connection.execute(
       'INSERT INTO usuario_rol (id_usuario, id_rol) VALUES (?, ?)',
       [userId, roleId]
     );
 
-    // 4. Retornar el usuario creado
+    await connection.execute(
+      `INSERT INTO cliente
+         (primer_nombre, primer_apellido, numero_documento, telefono, direccion,
+          ciudad, id_usuario, id_tipo_documento)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        primer_nombre,
+        primer_apellido,
+        numero_documento,
+        telefono,
+        direccion,
+        ciudad,
+        userId,
+        id_tipo_documento
+      ]
+    );
+
+    await connection.commit();
+    transactionStarted = false;
+
     return {
       id: userId,
       nombre: nombre_usuario,
       email: email,
+      telefono,
       idioma: idioma,
       activo: true,
       roles: ['cliente']
     };
 
   } catch (error) {
-    // Re-lanzar el error para que el controlador lo maneje
+    if (transactionStarted) await connection.rollback();
     throw error;
+  } finally {
+    connection.release();
   }
 };
-
-// Nota: la creación de usuarios y asignación de roles queda fuera del alcance
-// actual (backend centrado en inicio de sesión). Para crear/administrar usuarios
-// deberías implementar endpoints y lógica que inserten en `usuario` y `usuario_rol`.

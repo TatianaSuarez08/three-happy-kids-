@@ -8,6 +8,7 @@
 @import "./bodeguero.css";
 
 @import "./layout.css";
+@import "./pages/registro.css";
 @import "./pages/catalogo.css";
 @import "./pages/home.css";
 @import "./pages/carrito.css";

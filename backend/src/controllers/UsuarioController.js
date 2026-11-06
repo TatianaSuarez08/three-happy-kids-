@@ -2,7 +2,7 @@ import jwt from 'jsonwebtoken'; // Librería para generar y verificar tokens JWT
 import { buildRolePermissions } from '../middleware/role.js';
 import { env } from '../config/env.js';
 import { hashPassword, verifyPassword } from '../utils/password.js';
-import { findUserByEmail, findUserProfile, updatePassword, updateUserProfilePhoto, createUser } from '../models/UsuarioModel.js'; // Funciones del modelo de usuario
+import { findUserByEmail, findUserProfile, updatePassword, updateUserProfilePhoto, createUser, listActiveDocumentTypes } from '../models/UsuarioModel.js'; // Funciones del modelo de usuario
 
 // Genera un token JWT con información pública del usuario y expiración
 const generateToken = (user) => {
@@ -24,26 +24,56 @@ const generateToken = (user) => {
 // Controlador para registrar un nuevo usuario
 export const registerUser = async (req, res) => {
   try {
-    const nombreUsuario = typeof req.body.nombre_usuario === 'string' ? req.body.nombre_usuario.trim() : '';
-    const email = typeof req.body.email === 'string' ? req.body.email.trim().toLowerCase() : '';
-    const { password, confirmar_password } = req.body;
-    
+    const body = req.body || {};
+    const nombreUsuario = typeof body.nombre_usuario === 'string' ? body.nombre_usuario.trim() : '';
+    const email = typeof body.email === 'string' ? body.email.trim().toLowerCase() : '';
+    const primerNombre = typeof body.primer_nombre === 'string' ? body.primer_nombre.trim() : '';
+    const primerApellido = typeof body.primer_apellido === 'string' ? body.primer_apellido.trim() : '';
+    const numeroDocumento = typeof body.numero_documento === 'string' || typeof body.numero_documento === 'number'
+      ? String(body.numero_documento).trim()
+      : '';
+    const idTipoDocumento = Number(body.id_tipo_documento);
+    const password = body.password;
+    const confirmarPassword = body.confirmar_password;
+    const telefono = typeof body.telefono === 'string' ? body.telefono.trim() : '';
+    const direccion = typeof body.direccion === 'string' ? body.direccion.trim() : '';
+    const ciudad = typeof body.ciudad === 'string' ? body.ciudad.trim() : '';
+
     // Validaciones básicas
-    if (!nombreUsuario || !email || !password || !confirmar_password) {
+    if (!nombreUsuario || !email || !password || !confirmarPassword
+      || !primerNombre || !primerApellido || !numeroDocumento || !body.id_tipo_documento) {
       return res.status(400).json({ error: 'Faltan datos obligatorios' });
     }
 
-    if (password !== confirmar_password) {
+    if (password !== confirmarPassword) {
       return res.status(400).json({ error: 'Las contraseñas no coinciden' });
     }
 
-    if (password.length < 6) {
+    if (typeof password !== 'string' || password.length < 6) {
       return res.status(400).json({ error: 'La contraseña debe tener al menos 6 caracteres' });
     }
 
     if (nombreUsuario.length < 3 || nombreUsuario.length > 50
       || !/^[\p{L}\p{M}][\p{L}\p{M} .'_-]{2,49}$/u.test(nombreUsuario)) {
       return res.status(400).json({ error: 'El nombre solo puede contener letras, espacios, puntos, guiones, guiones bajos o apóstrofes y debe tener entre 3 y 50 caracteres' });
+    }
+
+    const personNamePattern = /^[\p{L}\p{M}][\p{L}\p{M} '-]{0,49}$/u;
+    if (!personNamePattern.test(primerNombre) || !personNamePattern.test(primerApellido)) {
+      return res.status(400).json({ error: 'El nombre y apellido solo pueden contener letras, espacios, apóstrofes o guiones y tener hasta 50 caracteres' });
+    }
+
+    if (!/^\d{1,19}$/.test(numeroDocumento)
+      || BigInt(numeroDocumento) > 9223372036854775807n) {
+      return res.status(400).json({ error: 'El número de documento debe contener solo dígitos y ser válido' });
+    }
+
+    if (!Number.isSafeInteger(idTipoDocumento) || idTipoDocumento < 1) {
+      return res.status(400).json({ error: 'Selecciona un tipo de documento válido' });
+    }
+
+    if (telefono.length > 20 || direccion.length > 150 || ciudad.length > 60) {
+      return res.status(400).json({ error: 'Revisa la longitud del teléfono, dirección o ciudad' });
     }
 
     // Validar formato de email
@@ -64,7 +94,7 @@ export const registerUser = async (req, res) => {
       return res.status(409).json({ error: 'El email ya está registrado' });
     }
 
-    // Hashear la contraseña con SHA2 + SALT
+    // Guardar contraseñas nuevas con bcrypt.
     const hashedPassword = await hashPassword(password);
 
     // Crear el usuario en la base de datos
@@ -72,7 +102,14 @@ export const registerUser = async (req, res) => {
       nombre_usuario: nombreUsuario,
       email,
       contrasena: hashedPassword,
-      idioma: 'es'
+      idioma: 'es',
+      primer_nombre: primerNombre,
+      primer_apellido: primerApellido,
+      numero_documento: numeroDocumento,
+      id_tipo_documento: idTipoDocumento,
+      telefono: telefono || null,
+      direccion: direccion || null,
+      ciudad: ciudad || null
     });
 
     // Generar token
@@ -98,10 +135,24 @@ export const registerUser = async (req, res) => {
     console.error('Error en registro:', error);
     
     if (error.code === 'ER_DUP_ENTRY') {
-      return res.status(409).json({ error: 'El nombre de usuario o email ya existe' });
+      return res.status(409).json({ error: 'El nombre de usuario, correo o documento ya está registrado' });
+    }
+
+    if (error.code === 'ER_NO_REFERENCED_ROW_2') {
+      return res.status(400).json({ error: 'El tipo de documento seleccionado ya no está disponible' });
     }
     
     res.status(500).json({ error: 'Error al registrar el usuario' });
+  }
+};
+
+export const getDocumentTypes = async (_req, res) => {
+  try {
+    const documentTypes = await listActiveDocumentTypes();
+    res.json({ success: true, documentTypes });
+  } catch (error) {
+    console.error('Error al consultar los tipos de documento:', error);
+    res.status(500).json({ error: 'No se pudieron consultar los tipos de documento' });
   }
 };
 

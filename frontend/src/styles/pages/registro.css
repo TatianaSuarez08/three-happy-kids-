@@ -1,0 +1,488 @@
+.registro-page {
+  display: grid;
+  grid-template-columns: minmax(300px, 0.78fr) minmax(0, 1.65fr);
+  width: 100%;
+  min-height: calc(100vh - 7rem);
+  background: var(--color-surface);
+}
+
+.registro-intro {
+  position: relative;
+  display: flex;
+  min-height: 100%;
+  align-items: center;
+  overflow: hidden;
+  padding: clamp(2.5rem, 6vw, 6rem);
+  color: #fff;
+  background:
+    radial-gradient(ellipse at 12% 85%, rgba(245, 207, 159, 0.35), transparent 40%),
+    linear-gradient(145deg, #6d3d2c 0%, #a85e3d 56%, #c47b57 100%);
+}
+
+.registro-intro-content {
+  position: relative;
+  z-index: 1;
+  width: min(100%, 440px);
+  margin-inline: auto;
+}
+
+.registro-brand-mark {
+  display: grid;
+  width: 3.5rem;
+  height: 3.5rem;
+  place-items: center;
+  margin-bottom: 2rem;
+  border: 1px solid rgba(255, 255, 255, 0.34);
+  border-radius: 1.1rem;
+  background: rgba(255, 255, 255, 0.13);
+  font-size: 1.55rem;
+  backdrop-filter: blur(8px);
+}
+
+.registro-eyebrow {
+  margin: 0 0 0.75rem;
+  color: var(--color-brand-strong);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+}
+
+.registro-intro .registro-eyebrow {
+  color: #f7d8bd;
+}
+
+.registro-intro h1 {
+  max-width: 10ch;
+  margin: 0;
+  color: #fff;
+  font-family: var(--font-heading);
+  font-size: clamp(2.35rem, 4vw, 4.25rem);
+  font-weight: 750;
+  letter-spacing: -0.055em;
+  line-height: 1.06;
+}
+
+.registro-intro-copy {
+  max-width: 34rem;
+  margin: 1.35rem 0 2rem;
+  color: rgba(255, 255, 255, 0.82);
+  font-size: clamp(0.98rem, 1.2vw, 1.1rem);
+  line-height: 1.75;
+}
+
+.registro-benefit {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  color: #fff;
+  font-size: 0.88rem;
+  font-weight: 650;
+}
+
+.registro-benefit i {
+  color: #f7d8bd;
+}
+
+.registro-decoration {
+  position: absolute;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.registro-decoration-one {
+  width: 24rem;
+  height: 24rem;
+  right: -13rem;
+  top: 8%;
+}
+
+.registro-decoration-two {
+  width: 33rem;
+  height: 33rem;
+  right: -18rem;
+  top: 1%;
+}
+
+.registro-content {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(2rem, 5vw, 5rem);
+  background:
+    radial-gradient(ellipse at 100% 0, rgba(245, 234, 227, 0.4), transparent 42%),
+    var(--color-page);
+}
+
+.registro-form-shell {
+  width: min(100%, 980px);
+  margin-inline: auto;
+  padding: clamp(1.5rem, 4vw, 3.25rem);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-strong);
+  color: var(--color-ink);
+}
+
+.registro-heading {
+  margin-bottom: 1.75rem;
+}
+
+.registro-heading h2 {
+  margin: 0;
+  color: var(--color-ink);
+  font-size: clamp(1.8rem, 3vw, 2.5rem);
+  font-weight: 750;
+  letter-spacing: -0.04em;
+}
+
+.registro-heading > p:last-child {
+  margin: 0.55rem 0 0;
+  color: var(--color-muted);
+  font-size: 0.94rem;
+}
+
+.registro-alert {
+  margin-bottom: 1.1rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--color-danger);
+  border-radius: var(--radius-md);
+  background: var(--color-danger-soft);
+  color: var(--color-danger);
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+.registro-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.05rem 1.25rem;
+}
+
+.registro-field {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.registro-field-wide {
+  grid-column: 1 / -1;
+}
+
+.registro-field label {
+  color: var(--color-ink-soft);
+  font-size: 0.84rem;
+  font-weight: 650;
+}
+
+.registro-field label span {
+  color: var(--color-brand-strong);
+}
+
+.registro-field label small {
+  color: var(--color-muted);
+  font-size: 0.76rem;
+  font-weight: 450;
+}
+
+.registro-field input,
+.registro-field select {
+  width: 100%;
+  min-width: 0;
+  height: 3rem;
+  padding: 0 0.9rem;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
+  outline: none;
+  background: var(--color-surface);
+  color: var(--color-ink);
+  font: inherit;
+  font-size: 0.9rem;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
+}
+
+.registro-field input::placeholder {
+  color: var(--color-subtle);
+}
+
+.registro-field input:focus,
+.registro-field select:focus {
+  border-color: var(--color-brand);
+  box-shadow: 0 0 0 3px var(--color-focus);
+}
+
+.registro-field input:disabled,
+.registro-field select:disabled {
+  background: var(--color-surface-soft);
+}
+
+.registro-password {
+  position: relative;
+}
+
+.registro-password input {
+  padding-right: 3rem;
+}
+
+.registro-password-toggle {
+  position: absolute;
+  top: 50%;
+  right: 0.65rem;
+  display: grid;
+  width: 2rem;
+  height: 2rem;
+  place-items: center;
+  transform: translateY(-50%);
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--color-muted);
+  cursor: pointer;
+}
+
+.registro-password-toggle:hover {
+  background: var(--color-brand-soft);
+  color: var(--color-brand-strong);
+}
+
+.registro-actions {
+  margin-top: 1.6rem;
+}
+
+.registro-submit {
+  display: flex;
+  width: 100%;
+  min-height: 3.2rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  border: 1px solid var(--color-brand-strong);
+  border-radius: var(--radius-sm);
+  background: var(--color-brand-strong);
+  color: #fff;
+  font: inherit;
+  font-size: 0.98rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.registro-submit:hover:not(:disabled) {
+  transform: translateY(-1px);
+  background: var(--color-brand);
+  box-shadow: var(--shadow-soft);
+}
+
+.registro-submit:focus-visible,
+.registro-actions p button:focus-visible,
+.registro-password-toggle:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.registro-submit:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+.registro-actions p {
+  margin: 1rem 0 0;
+  color: var(--color-muted);
+  text-align: center;
+  font-size: 0.88rem;
+}
+
+.registro-actions p button {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-brand-strong);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.registro-actions p button:hover {
+  text-decoration: underline;
+}
+
+.auth-login-shell {
+  width: min(100%, 600px);
+}
+
+.auth-login-shell .login-field label {
+  color: var(--color-ink-soft);
+  font-size: 0.84rem;
+  font-weight: 650;
+}
+
+.auth-login-shell .login-field label span {
+  color: var(--color-brand-strong);
+}
+
+.auth-login-shell .login-field input {
+  height: 3rem;
+  border-color: var(--color-border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-ink);
+}
+
+.auth-login-shell .login-field input::placeholder {
+  color: var(--color-subtle);
+}
+
+.auth-login-shell .login-field input:focus {
+  border-color: var(--color-brand);
+  background: var(--color-surface);
+  box-shadow: 0 0 0 3px var(--color-focus);
+}
+
+.auth-login-shell .login-toggle-pass {
+  display: grid;
+  width: 2rem;
+  height: 2rem;
+  place-items: center;
+  padding: 0;
+  border-radius: 50%;
+  color: var(--color-muted);
+}
+
+.auth-login-shell .login-toggle-pass:hover {
+  background: var(--color-brand-soft);
+  color: var(--color-brand-strong);
+}
+
+.auth-login-shell .login-remember {
+  margin: 0 0 1.2rem;
+  color: var(--color-muted);
+}
+
+.auth-login-shell .login-remember input {
+  accent-color: var(--color-brand-strong);
+}
+
+.auth-login-links {
+  margin: -0.5rem 0 1.1rem;
+  text-align: right;
+  font-size: 0.85rem;
+}
+
+.auth-login-links a {
+  color: var(--color-brand-strong);
+  font-weight: 650;
+  text-decoration: none;
+}
+
+.auth-login-links a:hover {
+  text-decoration: underline;
+}
+
+.auth-login-shell .registro-actions {
+  margin-top: 0;
+}
+
+[data-theme="dark"] .registro-content {
+  background:
+    radial-gradient(ellipse at 100% 0, rgba(56, 40, 32, 0.58), transparent 42%),
+    var(--color-page);
+}
+
+[data-theme="dark"] .registro-form-shell {
+  border-color: var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-ink);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.28);
+}
+
+[data-theme="dark"] .registro-heading h2,
+[data-theme="dark"] .registro-field label,
+[data-theme="dark"] .registro-field input,
+[data-theme="dark"] .registro-field select {
+  color: var(--color-ink);
+}
+
+[data-theme="dark"] .registro-heading > p:last-child,
+[data-theme="dark"] .registro-field label small,
+[data-theme="dark"] .registro-actions p,
+[data-theme="dark"] .auth-login-shell .login-remember {
+  color: var(--color-muted);
+}
+
+[data-theme="dark"] .registro-field input::placeholder {
+  color: var(--color-subtle);
+}
+
+[data-theme="dark"] .auth-login-shell .login-field label {
+  color: var(--color-ink-soft);
+}
+
+[data-theme="dark"] .auth-login-shell .login-field input {
+  border-color: var(--color-border-strong);
+  background: var(--color-surface-soft);
+  color: var(--color-ink);
+}
+
+[data-theme="dark"] .auth-login-shell .login-field input:focus {
+  border-color: var(--color-brand);
+  background: var(--color-surface);
+}
+
+@media (max-width: 900px) {
+  .registro-page {
+    grid-template-columns: minmax(250px, 0.72fr) minmax(0, 1.35fr);
+  }
+
+  .registro-intro,
+  .registro-content {
+    padding: 2.25rem;
+  }
+}
+
+@media (max-width: 680px) {
+  .registro-page {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .registro-intro {
+    min-height: auto;
+    padding: 2.25rem 1.4rem;
+  }
+
+  .registro-brand-mark {
+    width: 2.9rem;
+    height: 2.9rem;
+    margin-bottom: 1.15rem;
+  }
+
+  .registro-intro h1 {
+    max-width: 14ch;
+    font-size: clamp(2rem, 9vw, 3rem);
+  }
+
+  .registro-intro-copy {
+    margin: 0.85rem 0 1.1rem;
+  }
+
+  .registro-content {
+    padding: 2rem 1.2rem 2.5rem;
+  }
+
+  .registro-form-shell {
+    padding: 1.4rem 1.1rem;
+  }
+}
+
+@media (max-width: 460px) {
+  .registro-fields {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.9rem;
+  }
+
+  .registro-field-wide {
+    grid-column: auto;
+  }
+}

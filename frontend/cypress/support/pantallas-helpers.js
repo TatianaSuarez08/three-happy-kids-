@@ -12,7 +12,7 @@ const product = {
 
 export const pageCases = [
   { path: '/', role: null, text: 'Bienvenido a HappyKids' },
-  { path: '/login', role: null, text: 'Inicia sesión para continuar' },
+  { path: '/login', role: null, text: 'Ingresa a tu cuenta para continuar.' },
   { path: '/registro', role: null, text: 'Crea tu cuenta' },
   { path: '/recuperar-pass', role: null, text: 'Recuperar contraseña' },
   { path: '/no-autorizado', role: null, text: 'Acceso denegado' },
@@ -33,11 +33,11 @@ export const pageCases = [
   { path: '/admin/usuarios', role: 'administrador', text: 'Todos los usuarios' },
   { path: '/admin/crear-usuario', role: 'administrador', text: 'Crear usuario' },
   { path: '/admin/editar-usuario/1', role: 'administrador', text: 'Editar usuario' },
-  { path: '/bodeguero', role: 'bodeguero', text: 'Movimientos recientes' },
+  { path: '/bodeguero', role: 'bodeguero', text: 'Mi actividad reciente' },
   { path: '/bodeguero/inventario', role: 'bodeguero', text: 'Inventario disponible' },
-  { path: '/bodeguero/pedidos', role: 'bodeguero', text: 'Pedidos pendientes' },
-  { path: '/bodeguero/movimientos', role: 'bodeguero', text: 'Historial de movimientos' },
-  { path: '/mensajeria', role: 'mensajero', text: 'Pedidos activos y recorridos del día' },
+  { path: '/bodeguero/pedidos', role: 'bodeguero', text: 'Pedidos disponibles' },
+  { path: '/bodeguero/movimientos', role: 'bodeguero', text: 'Mi historial de actividad' },
+  { path: '/mensajeria', role: 'mensajero', text: 'Pedidos listos para despacho' },
   { path: '/mensajeria/entregas', role: 'mensajero', text: 'Mis entregas' },
   { path: '/mensajeria/ruta', role: 'mensajero', text: 'Ruta / Mapa' },
   { path: '/mensajeria/evidencias', role: 'mensajero', text: 'Evidencias' },
@@ -47,7 +47,7 @@ export const pageCases = [
 ];
 
 export const protectedPaths = pageCases
-  .filter(({ role }) => role)
+  .filter(({ path, role }) => role && !['/cliente/catalogo', '/catalogo', '/producto/1'].includes(path))
   .map(({ path }) => path);
 
 export const mockApi = () => {
@@ -57,6 +57,11 @@ export const mockApi = () => {
 
     if (pathname.endsWith('/categorias')) {
       body = { success: true, categories: [{ id_categoria: 4, nombre: 'Ropa infantil' }] };
+    } else if (pathname.endsWith('/tipos-documento')) {
+      body = {
+        success: true,
+        documentTypes: [{ id: 1, nombre: 'Cédula', sigla: 'CC' }]
+      };
     } else if (pathname.endsWith('/productos-publicos')) {
       body = { success: true, products: [product] };
     } else if (/\/productos-publicos\/\d+$/.test(pathname) || /\/productos\/\d+$/.test(pathname)) {

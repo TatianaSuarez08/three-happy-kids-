@@ -81,6 +81,10 @@ jest.mock('../../../controllers/UsuarioController.js', () => ({
   registerUser: jest.fn(),
   updateMyProfilePhoto: jest.fn()
 }));
+jest.mock('../../../controllers/PasswordRecoveryController.js', () => ({
+  requestPasswordReset: jest.fn(),
+  resetPassword: jest.fn()
+}));
 jest.mock('../../../middleware/autenticacion.js', () => jest.fn((_req, _res, next) => next()));
 jest.mock('../../../middleware/role.js', () => {
   const roleGate = jest.fn((_req, _res, next) => next());
@@ -112,6 +116,7 @@ import * as pedidoController from '../../../controllers/PedidoController.js';
 import * as pedidoFlujoController from '../../../controllers/PedidoFlujoController.js';
 import * as productoController from '../../../controllers/ProductoController.js';
 import * as usuarioController from '../../../controllers/UsuarioController.js';
+import * as passwordRecoveryController from '../../../controllers/PasswordRecoveryController.js';
 import auth from '../../../middleware/autenticacion.js';
 import permitRoles from '../../../middleware/role.js';
 import { parseCorsOrigins } from '../../../config/corsOrigins.js';
@@ -141,7 +146,8 @@ const controllers = {
   ...pedidoController,
   ...pedidoFlujoController,
   ...productoController,
-  ...usuarioController
+  ...usuarioController,
+  ...passwordRecoveryController
 };
 const controllerMocks = Object.values(controllers).filter(jest.isMockFunction);
 
@@ -227,6 +233,8 @@ const endpoints = [
   ['get', '/tipos-documento', 'getDocumentTypes'],
   ['post', '/registro', 'registerUser'],
   ['post', '/login', 'loginUser'],
+  ['post', '/recuperar-contrasena', 'requestPasswordReset'],
+  ['post', '/restablecer-contrasena', 'resetPassword'],
   ['get', '/me', 'getMyProfile'],
   ['put', '/me/foto', 'updateMyProfilePhoto']
 ];

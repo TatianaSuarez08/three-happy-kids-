@@ -1,45 +1,24 @@
-# Backend (Three Happy Kids)
+# Backend principal HappyKids
 
-Instalación y uso mínimo para el backend de inicio de sesión.
+Servicio Express principal conectado a MySQL. La entrada es `index.js`; las rutas de `src/routes/` se montan bajo `/api/v1` y también sin prefijo para compatibilidad. La lógica se organiza en rutas, controladores, modelos, servicios y middleware.
 
-Requisitos:
-- Node.js
-- MySQL y una base de datos con tabla `Usuarios` que contenga columnas `nombre, email, password, role`.
+## Configuración
 
-Variables de entorno (`.env`, no se versiona; usa `.env.example`):
-- `PORT` (opcional)
-- `DB_HOST`, `DB_USER`, `DB_PASSWORD`, `DB_DATABASE`
-- `JWT_SECRET` (obligatorio; el servidor no inicia sin él)
-- `BCRYPT_ROUNDS` (opcional, por defecto `12`)
+El backend carga primero el `.env` de la raíz y después `backend/.env` como respaldo. Copia `.env.example` a la raíz del repositorio y configura `PORT`, `DB_HOST`, `DB_USER`, `DB_PASSWORD`, `DB_DATABASE`, `JWT_SECRET` y `CORS_ORIGIN`. `JWT_SECRET` es obligatorio.
 
-Ejecutar en desarrollo:
+La fuente de esquema es [`DOCUMENTACION/sql/DataBaseHappyKids_CORREGIDA.sql`](../DOCUMENTACION/sql/DataBaseHappyKids_CORREGIDA.sql). Para bases existentes, `CREATE TABLE IF NOT EXISTS` no actualiza tablas; revisa las migraciones y respalda la base antes de cualquier cambio.
 
-```bash
-cd backend
-npm install
-npm run dev
-```
-
-Endpoints relevantes:
-- `POST /login` — body: `{ "email": "...", "password": "..." }` — devuelve `token` y `user`.
-- `GET /me` — header `Authorization: Bearer <token>` — devuelve `user` (payload del token).
-
-Si la tabla `Usuarios` no contiene la columna `role`, aplica la migración en `db-migrations/001-add-role-to-usuarios.sql`.
-# Backend Three Happy Kids
-
-La guía única del proyecto está en [documentacion/README.md](../documentacion/README.md).
-
-Para configurar y ejecutar el backend, consulta:
-
-- `documentacion/01-INICIO-Y-CONFIGURACION.md`
-- `documentacion/02-AUTENTICACION-SHA2-Y-JWT.md`
-- `documentacion/04-BASE-DE-DATOS.md`
-
-Inicio rápido:
+## Ejecución y pruebas
 
 ```bash
 npm install
 npm run dev
 ```
 
-El backend expone rutas versionadas bajo `/api/v1` y mantiene las rutas sin prefijo temporalmente por compatibilidad. Las contraseñas nuevas usan bcrypt; las antiguas `salt:hash` se migran al primer login correcto.
+El puerto predeterminado es `3000`. Las pruebas de caja blanca están en `src/routes/tests/` y se ejecutan con:
+
+```bash
+npm test
+```
+
+Este comando usa Jest y genera cobertura. Consulta la [guía del proyecto](../DOCUMENTACION/README.md) para los flujos funcionales, los permisos y la referencia de endpoints.

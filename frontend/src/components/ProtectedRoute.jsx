@@ -1,5 +1,6 @@
 import { Navigate } from 'react-router-dom';
 
+// Normaliza los roles del token y los permitidos para compararlos sin depender de mayúsculas.
 const normalizeRoles = (roles) => {
   if (!Array.isArray(roles)) return [];
   return roles.flatMap((role) => {
@@ -9,6 +10,7 @@ const normalizeRoles = (roles) => {
   });
 };
 
+// Deja pasar solo sesiones presentes y, si se indicó, con al menos un rol permitido.
 export default function ProtectedRoute({ children, allowedRoles = [] }) {
   const storage = localStorage.getItem('token') ? localStorage : sessionStorage;
   const token = storage.getItem('token');

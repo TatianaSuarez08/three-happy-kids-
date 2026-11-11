@@ -19,7 +19,7 @@ describe('Pruebas de caja negra - pantallas de HappyKids', () => {
       visitAsRole(path, null);
 
       cy.location('pathname').should('equal', '/login');
-      cy.contains('Inicia sesión para continuar').should('be.visible');
+      cy.contains('Ingresa a tu cuenta para continuar.').should('be.visible');
     });
   });
 

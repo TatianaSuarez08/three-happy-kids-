@@ -1,115 +1,58 @@
-# 04. Frontend
+# 4. Frontend React
 
-## Tecnologías usadas
-
-- React 19
-- Vite
-- React Router DOM
-- Bootstrap 5
-- Bootstrap Icons
-- variables de entorno para conexión a backend
-
-## Estructura principal
+## Estructura
 
 ```text
 frontend/src/
-├── App.jsx
-├── main.jsx
-├── components/
-├── context/
-├── pages/
-├── services/
-├── styles/
+├── App.jsx                 # rutas de pantalla y guardas por rol
+├── main.jsx                # montaje de React y proveedores globales
+├── components/             # navegación, rutas protegidas y UI compartida
+├── context/                # carrito, favoritos y tema
+├── pages/                  # vistas públicas y módulos por rol
+├── services/               # solicitudes HTTP agrupadas por funcionalidad
+└── styles/                 # estilos globales, componentes y páginas
 ```
 
-## Routing principal
+Los grupos de `pages/` son `publicas`, `cliente`, `administracion`, `bodeguero` y `mensajeria`. Componentes compartidos relevantes incluyen `Nav`, `ProtectedRoute`, `NoAutorizado`, `ProductImage`, `EmptyState` y `StatusBadge`.
 
-El enrutamiento central está en `frontend/src/App.jsx` y define rutas para:
+## Navegación y permisos de pantalla
 
-- cliente
-- administrador
-- bodeguero
-- mensajero
-- autenticación
-- acceso no autorizado
+Las rutas se declaran en `src/App.jsx`. El acceso a las rutas protegidas lo controla `ProtectedRoute.jsx` con la presencia del token y los roles guardados en el navegador. La autorización del cliente es una restricción de interfaz; el backend vuelve a validar el JWT y los permisos en cada endpoint.
 
-Principales rutas:
+| Grupo | Rutas | Acceso de pantalla |
+|---|---|---|
+| Público | `/`, `/login`, `/registro`, `/recuperar-pass`, `/no-autorizado`, `/catalogo`, `/cliente/catalogo`, `/producto/:id` | Sin guarda de rol. |
+| Compra y perfil | `/carrito`, `/confirmar-compra`, `/favoritos`, `/mis-pedidos`, `/perfil` | Token y cualquiera de los roles admitidos en `App.jsx`. |
+| Administración | `/admin/dashboard`, `/admin/inventario`, `/admin/compras`, `/admin/actividad-empleados`, `/admin/pedidos`, `/admin/novedades-pedidos`, `/admin/agregar-producto`, `/admin/editar-producto/:id`, `/admin/usuarios`, `/admin/crear-usuario`, `/admin/editar-usuario/:id` | Administrador. `/admin` redirige al dashboard y `/bodega` conserva una ruta de inventario para administrador. |
+| Bodega | `/bodeguero`, `/bodeguero/inventario`, `/bodeguero/pedidos`, `/bodeguero/movimientos`, `/bodeguero/compras` | Bodeguero. |
+| Mensajería | `/mensajeria`, `/mensajeria/entregas`, `/mensajeria/ruta`, `/mensajeria/evidencias`, `/mensajeria/novedades`, `/mensajeria/historial`, `/mensajeria/perfil` | Mensajero. |
 
-- `/` -> portada / entrada principal
-- `/login` -> inicio de sesión
-- `/registro` -> registro
-- `/catalogo` -> catálogo
-- `/producto/:id` -> detalle
-- `/carrito` -> carrito
-- `/favoritos` -> favoritos
-- `/mis-pedidos` -> pedidos del usuario
-- `/admin/dashboard` -> dashboard administración
-- `/admin/inventario` -> gestión de productos
-- `/admin/pedidos` -> pedidos administrativos
-- `/admin/usuarios` -> gestión de usuarios
-- `/bodeguero/*` -> módulos de bodeguero
-- `/mensajeria/*` -> módulos de mensajero
+El componente de entrada puede redirigir una sesión de mensajero o bodeguero a su panel. Los roles del frontend se normalizan (por ejemplo, `admin` a `administrador`); la firma y vigencia del token solo se comprueban en Express.
 
-## Protección de rutas
+## Estado, contextos y hooks
 
-La protección se hace con `ProtectedRoute.jsx`:
+`main.jsx` registra proveedores de tema, carrito y favoritos. Sus hooks de consumo son `useTheme`, `useCarrito` y `useFavoritos`. El carrito y los favoritos se sincronizan con los servicios cuando cambia la sesión; el carrito serializa operaciones para reducir actualizaciones concurrentes fuera de orden. El contexto no reemplaza la persistencia del servidor.
 
-- lee token desde `localStorage` o `sessionStorage`,
-- valida `user.roles` para permitir acceso por role,
-- redirige a `/login` si no hay token,
-- redirige a `/no-autorizado` si no tiene permisos.
+## Servicios y API
 
-## Manejo de sesión
+`src/services/` separa las llamadas a autenticación, catálogo/productos, carrito, favoritos, pedidos, inventario, logística/dashboard y usuarios. Normalmente delegan en `apiClient.js`, que:
 
-El frontend guarda sesión con:
+- agrega el prefijo `/api/v1` y el token Bearer cuando existe;
+- genera o usa `Idempotency-Key` en métodos mutantes;
+- aplica un timeout de 20 segundos;
+- intenta la URL principal y luego la URL alternativa ante error de red, timeout o HTTP 502/503/504.
 
-- `token`
-- `user`
-- `userRoles`
+Otros errores HTTP (por ejemplo 400 o 404) se devuelven como error sin reintentar en la siguiente instancia. La instancia `API/` no tiene todas las rutas del servicio principal, por lo que el fallback no garantiza todos los flujos. La descarga de evidencia usa una petición `fetch` directa en `pedidoService.js`, no `apiClient`.
 
-La función `getSessionToken()` en `frontend/src/services/httpClient.js` elige `localStorage` si existe un token; de lo contrario usa `sessionStorage`.
+## Sesión y formularios
 
-## Cliente HTTP central
+La aplicación lee token y perfil desde `localStorage` o `sessionStorage`. El login elige dónde guardar la sesión según “Recordarme”; el registro guarda sesión persistente. Los formularios de login y registro realizan validaciones del lado del cliente y los controladores vuelven a validar los datos. El evento de ventana `happykids:session-changed` permite a contextos y navegación reaccionar a cambios de sesión.
 
-El archivo `frontend/src/services/apiClient.js` es la pieza clave:
+## Variables de entorno
 
-- intenta backend y API backup,
-- usa `Authorization` con el JWT,
-- añade `Idempotency-Key` para operaciones mutantes,
-- envía la petición a `/api/v1/...`,
-- reintenta errores de red o `502/503/504`.
+Vite configura `envDir` para leer el `.env` raíz. Variables opcionales:
 
-## Servicios del frontend
+- `VITE_BACKEND_URL`, por defecto `http://localhost:3000`.
+- `VITE_API_BACKUP_URL`, por defecto `http://localhost:3001`.
 
-Dentro de `frontend/src/services/` existen módulos para:
-
-- autenticación
-- consumo de salud,
-- clientes HTTP para rutas específicas
-
-El servicio de autenticación real es:
-
-- `authService.js`: login, registro y health check
-
-## Estado y UX
-
-El frontend no tiene un store global complejo en el código revisado; la sesión se maneja a través de almacenamiento local del navegador y de rutas protegidas. La navegación y permisos se basan principalmente en:
-
-- roles del usuario,
-- JWT y token guardado,
-- redirecciones por `ProtectedRoute`.
-
-## Archivos importantes
-
-- `frontend/src/App.jsx`
-- `frontend/src/components/ProtectedRoute.jsx`
-- `frontend/src/services/apiClient.js`
-- `frontend/src/services/httpClient.js`
-- `frontend/src/services/authService.js`
-
-## Consideraciones de producción
-
-- la aplicación debe correr con `VITE_BACKEND_URL` y `VITE_API_BACKUP_URL` configuradas,
-- no se debe confiar en rutas hardcodeadas sin entorno,
-- la sesión debe protegerse con HTTPS en producción,
-- el frontend debe apuntar siempre a la instancia activa del backend o la API de respaldo.
+No se requiere que estén definidas para esos valores locales predeterminados. Consulta [instalación](03_INSTALACION.md).

@@ -1,219 +1,75 @@
-# 05. Backend
+# 5. Backend Express principal
 
-## Propósito
-
-El backend es la instancia principal de negocio del sistema. Tiene la responsabilidad de:
-
-- autenticar usuarios,
-- validar permisos por rol,
-- consultar y modificar MySQL,
-- servir rutas para catálogo, usuarios, pedidos, inventario, productos y dashboard,
-- servir imágenes y responder a operaciones del frontend,
-- y actuar como la capa principal de servicio del sistema.
-
-## Estructura real
+## Organización
 
 ```text
-backend/src/
-├── config/
-│   └── env.js
-├── controllers/
-├── middleware/
-│   ├── autenticacion.js
-│   ├── idempotencia.js
-│   ├── role.js
-│   └── subidaImagen.js
-├── models/
-├── routes/
-├── utils/
-├── db.js
+backend/
+├── index.js
+└── src/
+    ├── config/       # carga y normalización de configuración
+    ├── routes/       # métodos HTTP, paths y middleware de cada módulo
+    ├── controllers/  # validación de entrada y respuestas HTTP
+    ├── services/     # correo centralizado y reglas de flujos
+    ├── models/       # acceso SQL a MySQL
+    ├── middleware/   # JWT, permisos, idempotencia y archivos
+    ├── utils/        # utilidades, entre ellas contraseñas
+    └── db.js         # pool MySQL y verificación de conexión
 ```
 
-## Entrada principal
+La estructura agrupa un controlador, un modelo y un router por funcionalidad cuando corresponde; los flujos de preparación/entrega y algunos comportamientos de negocio se separan en servicios. `index.js` es el punto de composición del servicio.
 
-El punto de inicio es `backend/index.js`.
+## Arranque y configuración
 
-Se configuran:
+`backend/index.js` configura CORS, parseadores JSON y URL-encoded, Morgan, idempotencia, archivos estáticos y routers. Monta los routers tanto bajo `/api/v1` como en la raíz sin prefijo. `GET /` responde el estado de la aplicación.
 
-- Express,
-- CORS,
-- JSON parsing,
-- logger HTTP,
-- idempotencia,
-- archivos estáticos de imágenes,
-- y las rutas de negocio.
+El cargador de `src/config/env.js` busca primero el `.env` raíz y después `backend/.env`; `JWT_SECRET` es obligatorio. `src/db.js` usa `mysql2/promise` con un pool y verifica MySQL con `SELECT 1`. Al iniciar, asegura la existencia de `api_idempotency`. Estas operaciones no aplican las demás migraciones del esquema.
 
-## Configuración ambiente
+## Capas y responsabilidad
 
-Se importa `env.js` desde `backend/src/config/env.js`:
+1. **Router:** vincula método/path con autenticación, permisos, carga de archivos y controlador.
+2. **Controlador:** valida los datos de solicitud, coordina servicio/modelo y construye la respuesta JSON/código HTTP.
+3. **Servicio:** implementa procesos de varios pasos o reglas compartidas, por ejemplo transiciones de pedido, preparación o evidencia.
+4. **Modelo:** ejecuta consultas SQL y transacciones en MySQL.
 
-```js
-PORT: process.env.PORT || '3000'
-JWT_SECRET: process.env.JWT_SECRET
-DB_HOST: process.env.DB_HOST
-DB_USER: process.env.DB_USER
-DB_PASSWORD: process.env.DB_PASSWORD || ''
-DB_DATABASE: process.env.DB_DATABASE
-CORS_ORIGIN: process.env.CORS_ORIGIN || 'http://localhost:5173'
-```
+Controladores principales: usuario/autenticación, recuperación de contraseña, producto/catálogo, carrito, favoritos, pedido/flujo de pedido, administración de usuarios, dashboard, inventario, logística y salud. Los modelos del mismo dominio manejan las tablas indicadas en [base de datos](07_BASE_DE_DATOS.md).
 
-Si falta `JWT_SECRET`, el backend lanza error al iniciar.
+## Middleware
 
-## Base de datos
+- `autenticacion.js` exige `Authorization: Bearer <JWT>` y adjunta el payload validado a `req.user`.
+- `role.js` normaliza roles y permisos y autoriza cuando coincide al menos un rol o permiso configurado en la ruta.
+- `idempotencia.js` actúa en métodos mutantes solo cuando existe `Idempotency-Key`; registra hash y respuesta para repetición segura, y rechaza claves demasiado largas o asociadas a un cuerpo distinto.
+- `rateLimit.js` limita por IP las solicitudes públicas de recuperación de contraseña.
+- `subidaImagen.js` configura almacenamiento y filtros de imágenes de producto, perfil y evidencia.
 
-La conexión a MySQL se gestiona en `backend/src/db.js` con `mysql2/promise` y un pool. La función `verifyDatabaseConnection()` valida que MySQL responda con `SELECT 1` y crea la tabla `api_idempotency` si no existe.
+La autenticación, el mapeo de permisos y los roles se detallan en [Autenticación y permisos](08_AUTENTICACION_Y_SEGURIDAD.md).
 
-## Middleware principales
+## Módulos de rutas
 
-### `autenticacion.js`
+| Dominio | Router | Responsabilidad |
+|---|---|---|
+| Usuario y autenticación | `UsuarioRoute.js` | Registro, login, recuperación de contraseña, tipos de documento, perfil y foto. |
+| Catálogo y productos | `CatalogoRoute.js`, `ProductoRoute.js` | Categorías y consulta/administración de productos. |
+| Compra del cliente | `CarritoRoute.js`, `FavoritoRoute.js`, `PedidoRoute.js` | Carrito, favoritos y pedidos. |
+| Administración | `AdminUsuarioRoute.js`, `DashboardRoute.js` | Usuarios administrativos y métricas. |
+| Inventario/abastecimiento | `InventarioRoute.js` | Movimientos/actividad, compras de proveedor y recepciones. |
+| Preparación y entrega | `PedidoFlujoRoute.js` | Asignación y flujo de bodega/mensajería, evidencias y novedades. |
+| Logística y salud | `LogisticaRoute.js`, `HealthRoute.js` | Resumen logístico y estado de MySQL. |
 
-Verifica que el token venga en:
+La referencia de métodos, paths y guardas está en [API y endpoints](10_API_ENDPOINTS.md).
 
-```http
-Authorization: Bearer <token>
-```
+## Reglas y persistencia relevantes
 
-Si no existe o es inválido, responde `401`.
+- El registro guarda contraseña nueva con bcrypt; el login también reconoce hashes heredados y, si son válidos, los actualiza al formato bcrypt.
+- `PasswordRecoveryController.js` emite respuestas genéricas para evitar enumerar cuentas, genera tokens aleatorios de un solo uso y coordina su expiración, hash y consumo transaccional con `UsuarioModel.js`.
+- `emailService.js` configura Nodemailer de forma perezosa y comparte plantillas HTML/texto para bienvenida, recuperación, cambio de contraseña y notificación a empleados. Un fallo de correo no revierte la creación de una cuenta ni un cambio de contraseña ya confirmado.
+- El registro público sigue creando únicamente Clientes. La creación administrativa de personal envía una notificación sin incluir la contraseña introducida.
+- Crear un pedido valida stock y coordina factura, líneas, inventario, pago y entrega.
+- La preparación en bodega y la entrega del mensajero se persisten en tablas de flujo, historial y novedades.
+- Los modelos acceden a MySQL; el esquema de referencia es `DOCUMENTACION/sql/DataBaseHappyKids_CORREGIDA.sql`.
+- La tabla `recuperacion_contrasena` se añade mediante el script manual `DOCUMENTACION/sql/MIGRACION_RECUPERACION_CONTRASENA.sql`; no se crea al iniciar Express. Las variables SMTP están en la guía de [instalación](03_INSTALACION.md).
 
-### `role.js`
+No se ejecutaron migraciones ni consultas sobre una instancia MySQL real durante esta revisión.
 
-Construye permisos a partir de roles y valida acceso con `permitRoles(...)`.
+## Pruebas
 
-Los roles y permisos reales implementados incluyen:
-
-- administrador
-- bodeguero
-- mensajero
-- cliente
-
-### `idempotencia.js`
-
-Se ejecuta para métodos mutantes (`POST`, `PUT`, `PATCH`, `DELETE`).
-
-Registra en la tabla `api_idempotency`:
-
-- `idempotency_key`
-- `request_hash`
-- `status`
-- `response_status`
-- `response_body`
-- `created_at`
-- `updated_at`
-
-Si la clave ya existe y la petición coincide, responde con la misma respuesta; si difiere, responde `409`.
-
-## Rutas del backend
-
-### Usuarios
-
-- `POST /registro`
-- `POST /login`
-- `GET /me`
-- `PUT /me/foto`
-
-### Productos
-
-- `GET /productos-publicos`
-- `GET /productos-publicos/:id`
-- `GET /colores`
-- `GET /productos`
-- `GET /productos/:id`
-- `POST /productos`
-- `PUT /productos/:id`
-- `DELETE /productos/:id`
-
-### Pedidos
-
-- `GET /pedidos`
-- `POST /pedidos`
-- `PUT /pedidos/:id/estado`
-- `GET /mis-pedidos`
-
-### Carrito
-
-- `GET /carrito`
-- `POST /carrito`
-- `PUT /carrito/:productId`
-- `DELETE /carrito/:productId`
-- `DELETE /carrito`
-
-### Favoritos
-
-- `GET /favoritos`
-- `POST /favoritos`
-- `DELETE /favoritos/:productId`
-
-### Dashboard
-
-- `GET /dashboard`
-
-### Inventario
-
-- `GET /inventario/:id/historial`
-- `POST /inventario/movimiento`
-
-### Logística
-
-- `GET /logistica`
-
-### Administración de usuarios
-
-- `GET /usuarios`
-- `POST /usuarios`
-- `PUT /usuarios/:id`
-- `PUT /usuarios/:id/estado`
-- `DELETE /usuarios/:id`
-
-### Salud
-
-- `GET /health`
-
-## Controladores clave
-
-- `UsuarioController.js`: registro, login, perfil, foto
-- `ProductoController.js`: alta, edición, validación y baja lógica
-- `PedidoController.js`: creación y actualización de pedidos
-- `CarritoController.js`: gestión del carrito autenticado
-- `FavoritoController.js`: favoritos por usuario
-- `AdminUsuarioController.js`: cuentas administrativas
-- `DashboardController.js`: métricas del sistema
-- `InventarioController.js`: historial y movimientos
-- `HealthController.js`: verificación de la BD
-- `CatalogoController.js`: categorías activas
-
-## Seguridad y validaciones
-
-El backend aplica validaciones reales de:
-
-- email válido,
-- contraseñas congruentes,
-- longitud mínima,
-- roles permitidos,
-- stock suficiente en pedidos,
-- IDs numéricos válidos,
-- y versión de usuario activo/inactivo.
-
-En cuanto a autenticación:
-
-- usa `jsonwebtoken`
-- firma el JWT con `JWT_SECRET`
-- expira en 8 horas
-- incluye `id`, `email`, `nombre`, `roles`, `permissions`
-
-## Manejo de errores
-
-El backend responde con códigos reales como:
-
-- `400` para datos inválidos
-- `401` para token faltante o inválido
-- `403` para permisos insuficientes
-- `404` para recursos inexistentes
-- `409` para colisiones o conflictos
-- `500` para errores del servidor
-- `503` si base de datos no disponible
-
-## Observaciones importantes
-
-- No existe una API REST pública separada en el backend principal: la capa pública se expone en la instancia `api/` con prefijo `/api/v1`.
-- El backend principal y la API redundante comparten lógica y esquema de base de datos.
-- La duplicación de ejecución se intenta evitar con `Idempotency-Key` y la tabla `api_idempotency`.
+Las pruebas Jest del backend principal están en `backend/src/routes/tests/`, organizadas por grupos funcionales. Se ejecutan con `npm test` dentro de `backend/`; el script también genera `backend/coverage/`. El script de la raíz `verify:all` ejecuta estas pruebas antes del lint/build del frontend, no las pruebas del paquete `API/` ni Cypress.

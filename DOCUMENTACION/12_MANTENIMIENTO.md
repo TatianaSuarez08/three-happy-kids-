@@ -1,119 +1,60 @@
-# 12. Mantenimiento
+# 12. Mantenimiento y verificación
 
-## Objetivo
+## Pruebas incluidas
 
-Este documento define la forma real de mantener la aplicación en operación y revisar su salud técnica.
+### Backend principal: caja blanca
 
-## Revisión regular
+Los tests Jest de `backend/src/routes/tests/` están agrupados en `global/`, `bodega/` y `mensajeria/`. En conjunto cubren routers/controladores, health, acceso y permisos, autenticación/contraseñas/perfil, compras, preparación de pedidos, flujo de entrega y evidencias. Ejecuta desde la raíz:
 
-### 1. Salud de base de datos
-
-La comprobación real del sistema es:
-
-```http
-GET /health
+```bash
+npm --prefix backend test
 ```
 
-Si falla, el problema más probable es una conexión MySQL o un problema de `DB_HOST`, `DB_USER`, `DB_PASSWORD` o `DB_DATABASE`.
+El script `jest --coverage` produce salida de cobertura en `backend/coverage/`. El reporte resume el código instrumentado y ejecutado por las pruebas; no es una garantía de ausencia de defectos ni una prueba de integración con una base externa.
 
-### 2. Salud de backend y API
+### Instancia `API/`
 
-Se debe revisar:
+Sus pruebas están en `API/tests/` y se ejecutan con:
 
-- arranque del proceso,
-- logs de Express,
-- puertos específicos,
-- y estado de los workers o procesos del servicio.
+```bash
+npm --prefix API test
+```
 
-### 3. Estado de sesión y JWT
+El paquete usa el runner de pruebas integrado de Node.js (`node --test`). El comando raíz `npm run verify:all` no incluye esta suite.
 
-Se deben revisar:
+### Frontend: caja negra
 
-- expiración de tokens,
-- fechas de sesión en cliente,
-- y fallos en `Authorization`.
+Las pruebas Cypress están en `frontend/cypress/e2e/`:
 
-## Actualización de dependencias
+- `global/`: pantallas públicas, redirecciones y validación de acceso.
+- `cliente/`: pantallas del cliente, catálogo/categorías y validación de registro.
+- `administracion/`, `bodega/`, `mensajeria/`: pantallas de esos módulos por rol.
 
-Cuando se actualicen dependencias:
+Se ejecutan con:
 
-- revisar `package.json` de backend, api y frontend,
-- probar instalación limpia,
-- validar que el arranque no falle,
-- y ejecutar pruebas o smoke tests manuales de rutas importantes.
+```bash
+npm --prefix frontend run test:e2e
+```
 
-## Cómo agregar funcionalidad
+La configuración (`frontend/cypress.config.js`) fija `http://localhost:5173` y desactiva `supportFile`. Los specs importan `cypress/support/pantallas-helpers.js` directamente; `support/e2e.js` y `commands.js` no se cargan automáticamente. `fixtures/example.json` es un fixture de ejemplo y no lo usan los specs actuales. Cypress no inicia Vite; inicia primero `npm --prefix frontend run dev`. Los interceptores simulan respuestas de API; estas pruebas no verifican MySQL ni la disponibilidad real de Express.
 
-El patrón real del proyecto es:
+### Verificación agregada
 
-1. añadir o ajustar la ruta en `src/routes/`
-2. añadir o ajustar el controlador en `src/controllers/`
-3. implementar la lógica en `src/models/`
-4. validar permisos con `permitRoles()` si aplica
-5. verificar la respuesta JSON y casos de error
-6. confirmar que la base de datos soporta la operación
+```bash
+npm run verify:all
+```
 
-## Cómo gestionar imágenes
+El script raíz corre la suite backend principal y después lint/build de frontend. No ejecuta API ni Cypress. Para cubrir todos los paquetes, ejecuta además los comandos anteriores en un entorno de prueba.
 
-Las rutas de almacenamiento actuales son:
+## Mantenimiento operativo
 
-- productos: `backend/storage/assets/productos`
-- perfiles: `backend/storage/assets/foto_de_perfil`
+- Usa `GET /api/v1/health` para comprobar el servicio y su conexión MySQL; el backend principal conserva también el path sin prefijo `/health`.
+- Revisa los logs de Express y los errores de red/HTTP del cliente al investigar fallos.
+- Mantén secretos fuera de Git y confirma los valores de `CORS_ORIGIN`, bases URL y conexión a MySQL en el entorno que ejecuta cada proceso.
+- Configura SMTP con las variables `MAIL_*` y `FRONTEND_URL` de `.env.example`. Para comprobar la conexión desde `backend/` con un servidor de pruebas configurado, ejecuta `node --input-type=module -e "import { verifyMailConnection } from './src/services/emailService.js'; await verifyMailConnection(); console.log('SMTP disponible');"`. No se verificó un servidor SMTP real durante esta implementación.
+- Antes de desplegar las rutas de recuperación, revisa y aplica manualmente `DOCUMENTACION/sql/MIGRACION_RECUPERACION_CONTRASENA.sql`; no se ejecuta durante el arranque.
+- Respalda MySQL antes de aplicar una migración manual. No ejecutes archivos `MIGRACION_*.sql` sin contrastar el estado de la base y el propósito del script.
+- Conserva las carpetas de uploads en almacenamiento persistente.
+- Revisa el crecimiento de `api_idempotency` según el proceso operativo aprobado; el repositorio no define un trabajo automático de limpieza.
 
-La API usa la carpeta equivalente bajo `api/storage/assets/...`.
-
-## Backups de base de datos
-
-El proyecto no incluye un sistema automático de copia de seguridad en el código revisado. Para mantenimiento real, debe implementarse estrategia operativa externa con:
-
-- copia diaria o por cambio,
-- retención temporal,
-- restauración validada,
-- y pruebas de recuperación.
-
-## Cómo revisar errores
-
-Se deben observar:
-
-- logs de Node.js,
-- errores de `502`/`503`/`504` en el cliente,
-- y mensajes de MySQL en backend/API.
-
-## Consideraciones de seguridad
-
-Mantenimiento mínimo recomendado:
-
-- rotar `JWT_SECRET` de forma controlada,
-- mantener `DB_PASSWORD` fuera de repositorios,
-- revisar acceso a rutas administrativas,
-- mantener `CORS_ORIGIN` en valores permitidos,
-- y no permitir archivos con extensiones no permitidas.
-
-## Mantenimiento de idempotencia
-
-La tabla `api_idempotency` puede crecer con registros. Debe revisarse periódicamente para:
-
-- identificar claves antiguas,
-- mantener limpieza si la operación lo requiere,
-- y evitar su uso descontrolado por reintentos repetidos.
-
-## Recomendación para producción
-
-Para un despliegue serio, se recomienda:
-
-- observabilidad de backend y API,
-- monitoreo del puertos y health checks,
-- revisión de logs de error,
-- backup de MySQL,
-- y documentación de procedimientos de despliegue y rollback.
-
-## Mantenimiento preventivo
-
-Se debe revisar periódicamente:
-
-- stock mínimo vs stock disponible,
-- pedidos con estado pendiente,
-- usuarios inactivos,
-- productos con imagen ausente,
-- actualizaciones de permisos y roles,
-- y consistencia de datos en `factura`, `entrega`, `pago` e `inventario`.
+No se ejecutaron migraciones, cambios en MySQL ni operaciones de limpieza durante esta revisión.

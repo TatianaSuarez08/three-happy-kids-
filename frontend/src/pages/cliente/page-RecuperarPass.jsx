@@ -1,147 +1,211 @@
-import { useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { requestPasswordReset, resetPassword } from "../../services/authService";
 
 function RecuperarPass() {
-  const emailRef = useRef(null);
-  const codValRef = useRef(null);
+  const [token] = useState(() => new URLSearchParams(window.location.search).get("token") || "");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmation, setConfirmation] = useState("");
+  const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [requestSent, setRequestSent] = useState(false);
+  const [resetComplete, setResetComplete] = useState(false);
+  const [confirmationEmailSent, setConfirmationEmailSent] = useState(false);
   const navigate = useNavigate();
 
-  const [emailBloq, setEmailBloq] = useState(false);
-  const [mostrarValida, setMostrarValida] = useState(false);
-  const [modal, setModal] = useState(null);
+  useEffect(() => {
+    if (token) window.history.replaceState(window.history.state, "", window.location.pathname);
+  }, [token]);
 
-  const correoValida = (e) => {
-    e.preventDefault();
-    setEmailBloq(true);
-    setModal("enviado");
-  };
+  const submitRequest = async (event) => {
+    event.preventDefault();
+    setError("");
+    setNotice("");
 
-  const modalExito = () => {
-    setModal(null);
-    setMostrarValida(true);
-  };
-
-  const validaCod = () => {
-    const ingresado = parseInt(codValRef.current.value);
-    if (!codValRef.current.value) {
-      setModal("advertencia");
+    const normalizedEmail = email.trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+      setError("Escribe un correo electrónico válido.");
       return;
     }
-    if (ingresado === 123456) {
-      setModal("validado");
-    } else {
-      setModal("advertencia");
+
+    setLoading(true);
+    try {
+      const response = await requestPasswordReset(normalizedEmail);
+      setNotice(response.message);
+      setRequestSent(true);
+    } catch (requestError) {
+      setError(requestError.message || "No se pudo procesar la solicitud. Inténtalo más tarde.");
+    } finally {
+      setLoading(false);
     }
   };
 
-  const modalAdvertencia = () => setModal(null);
+  const submitReset = async (event) => {
+    event.preventDefault();
+    setError("");
+    setNotice("");
 
-  const modalIngresa = () => {
-    setModal(null);
-    navigate("/");
+    if (password.length < 6) {
+      setError("La contraseña debe tener al menos 6 caracteres.");
+      return;
+    }
+    if (password !== confirmation) {
+      setError("Las contraseñas no coinciden.");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await resetPassword({
+        token,
+        password,
+        confirmar_password: confirmation
+      });
+      setNotice(response.message);
+      setConfirmationEmailSent(Boolean(response.emailSent));
+      setResetComplete(true);
+      setPassword("");
+      setConfirmation("");
+    } catch (requestError) {
+      setError(requestError.message || "No se pudo actualizar la contraseña.");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const cancelar = () => navigate("/");
+  const isResetFlow = Boolean(token);
 
   return (
-    <div className="login-page">
-      <div className="login-card">
-
-        <div className="login-logo">
-          <div className="login-logo-icon">🔑</div>
-          <h1>Recuperar contraseña</h1>
-          <p>Te enviaremos un código a tu correo</p>
+    <main className="registro-page">
+      <aside className="registro-intro">
+        <div className="registro-intro-content">
+          <div className="registro-brand-mark" aria-hidden="true">
+            <i className="bi bi-stars" />
+          </div>
+          <p className="registro-eyebrow">THREE HAPPY KIDS</p>
+          <h1>Tu cuenta, siempre segura.</h1>
+          <p className="registro-intro-copy">
+            {isResetFlow
+              ? "Elige una nueva contraseña para volver a disfrutar de HappyKids."
+              : "Te ayudaremos a recuperar el acceso a tu cuenta de forma segura."}
+          </p>
+          <div className="registro-benefit">
+            <i className="bi bi-shield-check" aria-hidden="true" />
+            <span>El enlace de recuperación vence y solo puede usarse una vez</span>
+          </div>
         </div>
+        <div className="registro-decoration registro-decoration-one" aria-hidden="true" />
+        <div className="registro-decoration registro-decoration-two" aria-hidden="true" />
+      </aside>
 
-        {/* Formulario correo */}
-        <form onSubmit={correoValida}>
-          <div className="login-field">
-            <label htmlFor="email">Correo electrónico</label>
-            <input
-              type="email"
-              id="email"
-              ref={emailRef}
-              placeholder="correo@ejemplo.com"
-              readOnly={emailBloq}
-              required
-            />
-          </div>
-          <div className="botones" style={{ marginTop: "1rem" }}>
-            <button type="submit" className="btn-ingresar" disabled={emailBloq}>
-              {emailBloq ? "Código enviado" : "Enviar código"}
-            </button>
-          </div>
-        </form>
-
-        {/* Formulario validación */}
-        {mostrarValida && (
-          <form style={{ marginTop: "1.5rem" }} onSubmit={(e) => e.preventDefault()}>
-            <p style={{ fontSize: "13px", color: "#888", marginBottom: "1rem" }}>
-              Ingresa el código de validación que llegó a tu correo.
+      <section className="registro-content" aria-labelledby="recuperacion-title">
+        <div className="registro-form-shell auth-login-shell">
+          <header className="registro-heading">
+            <p className="registro-eyebrow">ACCESO A TU CUENTA</p>
+            <h2 id="recuperacion-title">
+              {isResetFlow ? "Crea una nueva contraseña" : "Recuperar contraseña"}
+            </h2>
+            <p>
+              {isResetFlow
+                ? "Ingresa y confirma tu nueva contraseña."
+                : "Escribe el correo asociado a tu cuenta y te enviaremos un enlace de recuperación."}
             </p>
-            <div className="login-field">
-              <label htmlFor="cod">Código de validación</label>
-              <input
-                type="number"
-                id="cod"
-                ref={codValRef}
-                placeholder="123456"
-              />
-            </div>
-            <div className="botones" style={{ marginTop: "1rem" }}>
-              <button type="button" className="btn-ingresar" onClick={validaCod}>
-                Validar código
+          </header>
+
+          {error && <div className="registro-alert" role="alert">{error}</div>}
+          {notice && <div className="registro-alert auth-recovery-status" role="status">{notice}</div>}
+
+          {isResetFlow && !resetComplete && (
+            <form onSubmit={submitReset} noValidate>
+              <div className="registro-field">
+                <label htmlFor="password-nueva">Nueva contraseña <span>*</span></label>
+                <input
+                  id="password-nueva"
+                  type="password"
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  autoComplete="new-password"
+                  minLength={6}
+                  required
+                  disabled={loading}
+                />
+              </div>
+              <div className="registro-field">
+                <label htmlFor="password-confirmacion">Confirmar contraseña <span>*</span></label>
+                <input
+                  id="password-confirmacion"
+                  type="password"
+                  value={confirmation}
+                  onChange={(event) => setConfirmation(event.target.value)}
+                  autoComplete="new-password"
+                  minLength={6}
+                  required
+                  disabled={loading}
+                />
+              </div>
+              <div className="registro-actions">
+                <button type="submit" className="registro-submit" disabled={loading}>
+                  {loading ? "Actualizando..." : "Actualizar contraseña"}
+                </button>
+              </div>
+            </form>
+          )}
+
+          {!isResetFlow && !requestSent && (
+            <form onSubmit={submitRequest} noValidate>
+              <div className="registro-field">
+                <label htmlFor="email-recuperacion">Correo electrónico <span>*</span></label>
+                <input
+                  id="email-recuperacion"
+                  type="email"
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
+                  placeholder="correo@ejemplo.com"
+                  autoComplete="email"
+                  maxLength={100}
+                  required
+                  disabled={loading}
+                />
+              </div>
+              <div className="registro-actions">
+                <button type="submit" className="registro-submit" disabled={loading}>
+                  {loading ? "Procesando..." : "Enviar instrucciones"}
+                </button>
+              </div>
+            </form>
+          )}
+
+          {resetComplete && (
+            <div className="registro-actions">
+              <p role="status">
+                {confirmationEmailSent
+                  ? "Te enviamos un correo para confirmar el cambio."
+                  : "No pudimos enviar el correo de confirmación, pero tu contraseña ya fue actualizada."}
+              </p>
+              <button type="button" className="registro-submit" onClick={() => navigate("/login")}>
+                Volver a iniciar sesión
               </button>
-              <button type="button" className="btn-registro" onClick={cancelar}>
-                Cancelar
+            </div>
+          )}
+
+          {requestSent && (
+            <div className="registro-actions">
+              <button type="button" className="registro-submit" onClick={() => navigate("/login")}>
+                Volver a iniciar sesión
               </button>
             </div>
-          </form>
-        )}
+          )}
 
-        {!mostrarValida && (
-          <div style={{ textAlign: "center", marginTop: "1rem" }}>
-            <button className="btn-registro" onClick={cancelar}>
-              Volver al inicio de sesión
-            </button>
-          </div>
-        )}
-      </div>
-
-      {/* Modal: código enviado */}
-      {modal === "enviado" && (
-        <div className="modal-overlay">
-          <div className="modal-box">
-            <h4 style={{ color: "#3a7d44" }}>¡Código enviado!</h4>
-            <p>Revisa tu bandeja de entrada. Hemos enviado un código de validación.</p>
-            <button className="btn-ingresar" onClick={modalExito}>Aceptar</button>
-          </div>
+          {!resetComplete && !requestSent && (
+            <div className="registro-actions">
+              <p><Link to="/login">Volver a iniciar sesión</Link></p>
+            </div>
+          )}
         </div>
-      )}
-
-      {/* Modal: advertencia */}
-      {modal === "advertencia" && (
-        <div className="modal-overlay">
-          <div className="modal-box">
-            <h4 style={{ color: "#b8860b" }}>¡Advertencia!</h4>
-            <p>El código ingresado es incorrecto o está vacío. Intenta de nuevo.</p>
-            <button className="btn-ingresar" onClick={modalAdvertencia}>Aceptar</button>
-          </div>
-        </div>
-      )}
-
-      {/* Modal: validado */}
-      {modal === "validado" && (
-        <div className="modal-overlay">
-          <div className="modal-box">
-            <h4 style={{ color: "#3a7d44" }}>¡Validado!</h4>
-            <p>El código ha sido validado correctamente.</p>
-            <button className="btn-ingresar" onClick={modalIngresa}>Continuar</button>
-          </div>
-        </div>
-      )}
-
-    </div>
+      </section>
+    </main>
   );
 }
 

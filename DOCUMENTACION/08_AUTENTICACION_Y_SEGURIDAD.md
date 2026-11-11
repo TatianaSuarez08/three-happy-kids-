@@ -1,135 +1,44 @@
-# 08. Autenticación y seguridad
+# 8. Autenticación, autorización y controles
 
-## Mecanismo real
+## Registro y credenciales
 
-La autenticación del proyecto usa JWT firmado con `jsonwebtoken` y la clave `JWT_SECRET` del `.env` raíz.
+`POST /registro` es público y crea una cuenta de cliente. El formulario envía nombre de usuario, correo, nombres, documento, tipo de documento y contraseña/confirmación; los campos opcionales de contacto se validan también. `GET /tipos-documento` entrega las opciones activas que necesita el formulario.
 
-El token se genera en `backend/src/controllers/UsuarioController.js` con:
+Las contraseñas nuevas se guardan usando `bcryptjs`. Para mantener compatibilidad, el login reconoce hashes heredados `salt:hash` basados en SHA-256; después de una autenticación correcta los reemplaza por bcrypt. Por tanto, SHA-256 no es el formato utilizado para nuevas contraseñas.
 
-```js
-jwt.sign(
-  {
-    id: user.id,
-    email: user.email,
-    nombre: user.nombre,
-    roles: user.roles || [],
-    permissions
-  },
-  env.JWT_SECRET,
-  { expiresIn: '8h' }
-)
-```
+## Sesión JWT
 
-## Flujo de login
+`POST /login` valida credenciales y devuelve un token junto con un perfil público del usuario. El JWT se firma con `JWT_SECRET`, expira en ocho horas e incluye identidad, correo, nombre, roles y permisos derivados de los roles.
 
-1. El usuario envía `email` y `password` a `POST /login`.
-2. El backend busca el usuario por correo.
-3. Verifica contraseña usando `verifyPassword()`.
-4. Si la contraseña es legacy (SHA-256 + salt), la migra a bcrypt.
-5. Genera JWT de sesión.
-6. Devuelve `user` y `token` al cliente.
-
-## Verificación de contraseña
-
-La lógica real está en `backend/src/utils/password.js`.
-
-- si el hash empieza con `$2a$`, `$2b$` o `$2y$`, usa bcrypt,
-- si no, asume hash legacy Sha-256 con salt,
-- y valida con `crypto.createHash('sha256').update(salt + password).digest('hex')`.
-
-Esto significa que el proyecto admite tanto contraseñas nuevas en bcrypt como contraseñas antiguas con salt SHA-256.
-
-## Middleware de autenticación
-
-`backend/src/middleware/autenticacion.js` valida:
+El frontend guarda la sesión en `localStorage` cuando se selecciona “Recordarme” y en `sessionStorage` cuando no. El registro guarda una sesión persistente. Las solicitudes autenticadas envían:
 
 ```http
 Authorization: Bearer <token>
 ```
 
-Si no se envía el header o el token falla, responde `401`.
+El texto entre corchetes es una forma del contrato, no un token real. Nunca publiques tokens, contraseñas, hashes privados ni valores de `.env`.
 
-## Roles y permisos
+## Recuperación de contraseña y correo
 
-Los permisos se calculan con `backend/src/middleware/role.js` usando los roles del usuario.
+`POST /recuperar-contrasena` valida el formato del correo, pero devuelve el mismo mensaje para cuentas existentes e inexistentes. La ruta limita solicitudes por IP; además, cada usuario tiene un periodo mínimo de espera entre correos. Para usuarios activos genera 32 bytes aleatorios, guarda solo su SHA-256 y envía el token original por correo. El token vence a los 20 minutos y una solicitud nueva reemplaza el anterior.
 
-Roles reales definidos en el código:
+`POST /restablecer-contrasena` recibe el token y las dos contraseñas. El backend verifica expiración, uso previo y estado activo del usuario dentro de una transacción; actualiza el hash de contraseña con el mismo `bcryptjs` existente y marca el token como usado. Los fallos de SMTP no revierten un cambio ya realizado.
 
-- administrador
-- bodeguero
-- mensajero
-- cliente
+La tabla adicional `recuperacion_contrasena` se debe crear manualmente con `DOCUMENTACION/sql/MIGRACION_RECUPERACION_CONTRASENA.sql`. Las cuentas públicas siguen asignándose solo al rol Cliente. La notificación de empleados no envía contraseñas; utiliza las credenciales que el administrador haya indicado por otro canal. La configuración SMTP se describe en [instalación](03_INSTALACION.md).
 
-Permisos por rol:
+## Autenticación y autorización del backend
 
-- administrador: usuarios, productos, inventario, pedidos, dashboard
-- bodeguero: inventario y pedidos de operación
-- mensajero: pedidos, entregas
-- cliente: catálogo, carrito, pedidos propios, compra
+`autenticacion.js` verifica el JWT con el secreto del servicio y asigna su payload a `req.user`. Si falta o no es válido, devuelve `401`.
 
-Los endpoints usan `permitRoles(...)` para restringir acceso.
+`role.js` normaliza los roles y permisos incluidos/asociados al usuario. `permitRoles(...)` concede acceso si coincide al menos un rol o permiso permitido por la ruta; la denegación responde `403`. Los roles funcionales son `administrador`, `bodeguero`, `mensajero` y `cliente`. El detalle de permisos por endpoint está en [API y endpoints](10_API_ENDPOINTS.md).
 
-## Protección de rutas
+La protección de pantalla en `frontend/src/components/ProtectedRoute.jsx` mejora la navegación, pero no sustituye la verificación del token/permiso en el servidor. El catálogo y el detalle de producto son públicos tanto en la ruta React como en el backend.
 
-Ejemplo real:
+## Otras protecciones relacionadas
 
-```js
-router.get('/dashboard', auth, permitRoles('administrador', { permission: 'dashboard:read' }), getDashboard);
-```
+- **CORS:** Express toma orígenes permitidos de `CORS_ORIGIN`; el ejemplo de entorno incluye los puertos locales de Vite.
+- **Idempotencia:** en solicitudes mutantes con `Idempotency-Key`, el middleware guarda hash y respuesta para gestionar reintentos; véase [API](06_API.md).
+- **Archivos:** uploads usan middleware dedicado y nombres/rutas gestionados por `subidaImagen.js`; las rutas protegidas mantienen sus guardas de autenticación/rol.
+- **Validación:** formularios React y controladores backend validan los datos en sus capas respectivas. La validación del cliente no reemplaza la del servidor.
 
-Esto exige:
-
-- token válido,
-- y que el usuario tenga el role o permiso requerido.
-
-## Seguridad HTTP
-
-Se aplica:
-
-- CORS con `CORS_ORIGIN`
-- JSON parsing
-- no se usa sesión de servidor en la implementación revisada
-- JWT en cliente para autenticación por estado stateless
-
-## Variables sensibles
-
-Las configuraciones sensibles reales se encuentran en `.env` raíz:
-
-- `JWT_SECRET`
-- `DB_PASSWORD`
-- `DB_USER`
-
-Nunca deben incluirse en documentación pública ni en repositorios sin control de acceso.
-
-## Seguridad adicional implementada
-
-### Idempotencia
-
-El sistema evita reejecuciones duplicadas de mutaciones con `Idempotency-Key`.
-
-### Validación de datos de entrada
-
-Se validan:
-
-- email
-- longitud mínima de contraseña
-- longitud mínima de nombre de usuario
-- IDs numéricos válidos
-- roles permitidos
-- stock suficiente
-- formatos de imágenes
-
-### Manejo de archivos
-
-`subidaImagen.js` valida mime types permitidos:
-
-- `image/jpeg`
-- `image/png`
-- `image/webp`
-- `image/gif`
-
-Tamaño máximo: 5 MB por archivo.
-
-## Observaciones importantes
-
-La documentación debe señalar que el sistema usa autenticación basada en JWT y no en cookies con sesión del lado del servidor. Todas las verificaciones de permiso dependen del token y de la información incluida en el payload.
+No se ejecutó una auditoría de seguridad ni se inspeccionó el `.env` local; esta descripción explica los mecanismos visibles en el código y no certifica una configuración de despliegue.

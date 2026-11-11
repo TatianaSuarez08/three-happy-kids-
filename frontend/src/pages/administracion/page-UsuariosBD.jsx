@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { deactivateUser, getUsers, updateUserStatus } from "../../services/usuarioService";
 import { API_BASE_URL } from "../../services/httpClient";
 
@@ -12,6 +12,7 @@ const rolColor = {
 
 function Usuarios() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [usuarios, setUsuarios] = useState([]);
   const [busqueda, setBusqueda] = useState("");
   const [filtroRol, setFiltroRol] = useState("todos");
@@ -94,6 +95,23 @@ function Usuarios() {
         </div>
 
         {error && <div className="login-error">{error}</div>}
+        {typeof location.state?.employeeEmailSent === "boolean" && (
+          <div
+            className={`registro-alert${location.state.employeeEmailSent ? " auth-recovery-status" : ""}`}
+            role="status"
+          >
+            {location.state.employeeEmailSent
+              ? "La cuenta fue creada y se envió el correo de notificación."
+              : "La cuenta fue creada, pero no se pudo enviar el correo. Verifica la configuración SMTP."}
+            <button
+              type="button"
+              className="btn-admin-cancelar"
+              onClick={() => navigate(location.pathname, { replace: true, state: null })}
+            >
+              Cerrar
+            </button>
+          </div>
+        )}
 
         <div className="admin-toolbar">
           {roles.map((rol) => (

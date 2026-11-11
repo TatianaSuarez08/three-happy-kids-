@@ -34,6 +34,7 @@ export const apiClient = async (path, options = {}) => {
     ...(fetchOptions.headers || {}),
   };
 
+  // La clave se conserva al cambiar de instancia; solo red, timeout y 502/503/504 permiten continuar.
   let lastError;
   for (const apiBaseUrl of API_BASE_URLS) {
     const controller = new AbortController();

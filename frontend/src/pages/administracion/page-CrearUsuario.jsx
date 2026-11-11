@@ -50,8 +50,10 @@ function CrearUsuario() {
       Object.entries(formulario).forEach(([campo, valor]) => {
         if (valor !== null && valor !== "") datos.append(campo, valor);
       });
-      await createUser(datos);
-      navigate("/admin/usuarios");
+      const response = await createUser(datos);
+      navigate("/admin/usuarios", {
+        state: { employeeEmailSent: Boolean(response.emailSent) }
+      });
     } catch (err) {
       setError(err.message || "No se pudo crear el usuario");
     } finally {

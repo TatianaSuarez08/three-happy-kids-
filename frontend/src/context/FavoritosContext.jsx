@@ -11,6 +11,7 @@ const getSession = () => {
 export function FavoritosProvider({ children }) {
   const [favoritos, setFavoritos] = useState([]);
 
+  // Recarga los favoritos al iniciar o cambiar la sesión y cancela escrituras de estado tras desmontar el proveedor.
   useEffect(() => {
     let activo = true;
     const sincronizar = async () => {

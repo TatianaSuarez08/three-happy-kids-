@@ -1,16 +1,26 @@
-# React + Vite
+# Frontend HappyKids
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Aplicación de tienda construida con React y Vite. Las rutas de pantalla están en `src/App.jsx`; los servicios HTTP de `src/services/` llaman a la API versionada `/api/v1`.
 
-Currently, two official plugins are available:
+## Requisitos y ejecución
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+Instala las dependencias desde esta carpeta y ejecuta Vite:
 
-## React Compiler
+```bash
+npm install
+npm run dev
+```
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Vite lee las variables `VITE_*` del `.env` situado en la raíz del repositorio. Si no se configuran `VITE_BACKEND_URL` y `VITE_API_BACKUP_URL`, el cliente usa `http://localhost:3000` y `http://localhost:3001`, respectivamente.
 
-## Expanding the ESLint configuration
+## Verificaciones
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+```bash
+npm run lint
+npm run build
+npm run test:e2e
+```
+
+Cypress espera que el frontend esté disponible en `http://localhost:5173`; el comando `test:e2e` no inicia el servidor. Las pruebas interceptan las solicitudes de API que necesitan.
+
+Consulta la [guía del proyecto](../DOCUMENTACION/README.md) para la configuración completa, la arquitectura y los módulos funcionales.

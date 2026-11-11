@@ -1,5 +1,7 @@
 # Autenticación, SHA-2 y JWT
 
+> **Documento histórico:** describe el hash SHA-256 heredado como mecanismo vigente. Las contraseñas nuevas usan bcrypt y el backend solo migra hashes heredados tras un login válido. Consulta [Autenticación y permisos](08_AUTENTICACION_Y_SEGURIDAD.md).
+
 ## Registro
 
 El frontend envía `POST /registro` con:

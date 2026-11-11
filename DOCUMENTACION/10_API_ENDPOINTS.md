@@ -1,308 +1,118 @@
 # 10. Referencia de endpoints
 
-## Convención
+## Convenciones
+
+La tabla describe las rutas del backend principal (`backend/src/routes/`). En el backend se pueden invocar con prefijo `/api/v1` o sin él; el frontend usa `/api/v1`. La instancia `API/` solo monta el prefijo y tiene excepciones de cobertura listadas al final.
+
+- `Público`: no requiere token.
+- `JWT`: requiere `Authorization: Bearer <token>`.
+- `JWT + acceso`: requiere JWT y al menos uno de los roles o permisos indicados por `permitRoles(...)`.
+- Los parámetros entre `:...` son segmentos de ruta. Las respuestas y validaciones exactas dependen del controlador; los formatos resumidos están en “Contratos importantes”.
+
+## Cuenta y usuario
+
+| Método | Path | Acceso |
+|---|---|---|
+| `POST` | `/registro` | Público |
+| `GET` | `/tipos-documento` | Público |
+| `POST` | `/login` | Público |
+| `POST` | `/recuperar-contrasena` | Público; límite por IP |
+| `POST` | `/restablecer-contrasena` | Público; límite por IP |
+| `GET` | `/me` | JWT |
+| `PUT` | `/me/foto` | JWT; multipart, campo `foto` |
+
+## Catálogo y productos
+
+| Método | Path | Acceso |
+|---|---|---|
+| `GET` | `/categorias` | Público |
+| `GET` | `/productos-publicos` | Público |
+| `GET` | `/productos-publicos/:id` | Público |
+| `GET` | `/colores` | JWT + administrador/bodeguero o `productos:read` |
+| `GET` | `/productos` | JWT + administrador/bodeguero o `productos:read` |
+| `GET` | `/productos/:id` | JWT + administrador/bodeguero o `productos:read` |
+| `POST` | `/productos` | JWT + administrador/bodeguero o `productos:write`; multipart, campo `imagen` |
+| `PUT` | `/productos/:id` | JWT + administrador/bodeguero o `productos:write`; admite imagen |
+| `DELETE` | `/productos/:id` | JWT + administrador/bodeguero o `productos:write` |
+
+## Carrito, favoritos y pedidos
+
+| Método | Path | Acceso |
+|---|---|---|
+| `GET`, `POST`, `DELETE` | `/carrito` | JWT |
+| `PUT`, `DELETE` | `/carrito/:productId` | JWT |
+| `GET`, `POST` | `/favoritos` | JWT |
+| `DELETE` | `/favoritos/:productId` | JWT |
+| `GET` | `/pedidos` | JWT + administrador |
+| `POST` | `/pedidos` | JWT + permiso `comprar` (incluido por los roles funcionales) |
+| `PUT` | `/pedidos/:id/estado` | JWT + administrador |
+| `GET` | `/mis-pedidos` | JWT + roles/permiso `pedidos:own:read` |
+
+## Administración, logística e inventario
+
+| Método | Path | Acceso |
+|---|---|---|
+| `GET` | `/usuarios` | JWT + administrador o `usuarios:read` |
+| `POST`, `PUT` | `/usuarios`, `/usuarios/:id` | JWT + administrador o `usuarios:write` |
+| `PUT` | `/usuarios/:id/estado` | JWT + administrador o `usuarios:write` |
+| `DELETE` | `/usuarios/:id` | JWT + administrador o `usuarios:write` |
+| `GET` | `/dashboard` | JWT + administrador o `dashboard:read` |
+| `GET` | `/logistica` | JWT + administrador |
+| `GET` | `/inventario/:id/historial` | JWT + administrador/bodeguero |
+| `POST` | `/inventario/movimiento` | JWT + administrador/bodeguero |
+| `GET` | `/inventario/actividad` | JWT + administrador/bodeguero |
+| `POST` | `/inventario/actividad/reportes` | JWT + administrador |
+| `GET` | `/admin/compras/opciones` | JWT + administrador |
+| `POST` | `/admin/compras` | JWT + administrador |
+| `GET` | `/bodega/compras` | JWT + administrador/bodeguero |
+| `POST` | `/bodega/compras/:id/recepcion` | JWT + bodeguero |
+
+La actividad acepta filtros opcionales por query según el servicio de inventario. Los reportes administrativos reciben datos de usuario/actividad y motivo/descripcion; consulta el controlador y el modelo para validar el payload exacto.
+
+## Preparación de pedidos, entrega y novedades
+
+| Método | Path | Acceso |
+|---|---|---|
+| `GET` | `/bodega/pedidos/disponibles` | JWT + bodeguero/administrador |
+| `GET` | `/bodega/pedidos/mios` | JWT + bodeguero |
+| `POST` | `/bodega/pedidos/:id/asignar` | JWT + bodeguero |
+| `POST` | `/bodega/pedidos/:id/liberar` | JWT + bodeguero |
+| `PUT` | `/bodega/pedidos/:id/preparacion` | JWT + bodeguero |
+| `GET` | `/mensajeria/pedidos/disponibles` | JWT + mensajero |
+| `GET` | `/mensajeria/mis-entregas` | JWT + mensajero |
+| `GET` | `/mensajeria/historial` | JWT + mensajero |
+| `POST` | `/mensajeria/pedidos/:id/asignar` | JWT + mensajero |
+| `POST` | `/mensajeria/pedidos/:id/liberar` | JWT + mensajero |
+| `PUT` | `/mensajeria/pedidos/:id/estado` | JWT + mensajero |
+| `POST` | `/mensajeria/pedidos/:id/evidencia` | JWT + mensajero; multipart, campo `evidencia` |
+| `GET` | `/mensajeria/pedidos/:id/evidencia` | JWT + mensajero/administrador |
+| `GET` | `/admin/novedades/pedidos` | JWT + administrador |
+| `PUT` | `/admin/novedades/pedidos/:id/resolver` | JWT + administrador |
+
+El endpoint de estado de entrega aplica transiciones definidas en el servicio de flujo; completar la entrega requiere evidencia y declarar un fallo requiere observación.
+
+## Estado y archivos estáticos
+
+| Método | Path | Acceso |
+|---|---|---|
+| `GET` | `/` | Público; estado del servicio |
+| `GET` | `/health` | Público; verificación de MySQL |
+| `GET` | `/assets/productos/...` | Archivos estáticos |
+| `GET` | `/assets/foto_de_perfil/...` | Archivos estáticos |
+
+En el backend principal, `GET /health` está disponible también como `/api/v1/health`. En `API/`, el health check registrado está bajo `/api/v1/health`.
 
-La API de respaldo montada en `api/` usa el prefijo:
+## Contratos importantes
 
-```text
-/api/v1
-```
+- Registro: requiere `nombre_usuario`, `email`, `password`, `confirmar_password`, `primer_nombre`, `primer_apellido`, `numero_documento` e `id_tipo_documento`. Si tiene éxito, responde `201` con `{ success, message, emailSent, user, token }`; `emailSent` indica si salió el correo de bienvenida.
+- Login: recibe `email` y `password`; responde con `{ success, message, user, token }`.
+- Recuperación: `POST /recuperar-contrasena` recibe `{ email }` y responde `202` con un mensaje genérico, sin confirmar si la cuenta existe.
+- Cambio por enlace: `POST /restablecer-contrasena` recibe `{ token, password, confirmar_password }`. Responde éxito cuando la contraseña cambia y agrega `emailSent` para indicar si se envió el correo de confirmación; enlaces inválidos, usados o vencidos se rechazan.
+- Alta administrativa: `POST /usuarios` conserva su guarda de administrador y agrega `emailSent` para informar si se notificó a la cuenta creada; la notificación nunca incluye la contraseña.
+- Checkout: recibe `{ direccion, ciudad, telefono, pago, productos }`; si tiene éxito responde `201` con `{ success, message, id, estadoPago }`. El servidor valida stock y registra el pedido en transacción.
+- Carrito: agregar producto acepta alias de identificador `productId`, `id_producto` o `id`; la cantidad puede recibirse como `quantity` o `cantidad`.
+- Errores de autenticación/autorización: `401` si falta o falla el JWT; `403` si no coincide el acceso requerido. Los controladores también pueden responder validación, conflicto y no encontrado; revisa el controlador para los errores de cada recurso.
 
-El backend principal usa la raíz, pero la documentación técnica debe describir el esquema de servicio real del frontend, que apunta a `/api/v1` en todas las peticiones.
+## Diferencias de la instancia `API/`
 
-## 1. Autenticación
-
-### `POST /api/v1/registro`
-
-- Descripción: crea una cuenta de cliente.
-- Autenticación: no
-- Body:
-  - `nombre_usuario`
-  - `email`
-  - `password`
-  - `confirmar_password`
-- Respuesta exitosa: `201` con `user` y `token`
-- Errores comunes:
-  - `400` datos faltantes o email inválido
-  - `409` email ya registrado
-
-### `POST /api/v1/login`
-
-- Descripción: autentica al usuario.
-- Autenticación: no
-- Body:
-  - `email`
-  - `password`
-- Respuesta exitosa: `200` con `user` y `token`
-- Errores comunes:
-  - `400` datos faltantes o email inválido
-  - `401` credenciales inválidas
-  - `403` usuario inactivo
-
-### `GET /api/v1/me`
-
-- Descripción: devuelve el perfil del usuario autenticado.
-- Autenticación: `Bearer token`
-- Respuesta exitosa: perfil del usuario
-- Errores comunes:
-  - `401` token inválido
-  - `404` usuario no encontrado
-
-### `PUT /api/v1/me/foto`
-
-- Descripción: actualiza la foto de perfil.
-- Autenticación: `Bearer token`
-- Form-data: archivo `foto`
-- Respuesta exitosa: `200` con `fotoPerfil`
-
-## 2. Productos y catálogo
-
-### `GET /api/v1/productos-publicos`
-
-- Descripción: lista productos públicos.
-- Autenticación: no
-- Respuesta exitosa: lista de productos
-
-### `GET /api/v1/productos-publicos/:id`
-
-- Descripción: detalle de un producto.
-- Autenticación: no
-- Parámetro: `id`
-- Respuesta: detalle del producto o `404`
-
-### `GET /api/v1/categorias`
-
-- Descripción: obtiene categorías activas.
-- Autenticación: no
-- Respuesta: arreglo de categorías
-
-### `GET /api/v1/colores`
-
-- Descripción: obtiene los colores disponibles.
-- Autenticación: requerida; permisos de `productos:read`
-- Respuesta: arreglo de colores
-
-### `GET /api/v1/productos`
-
-- Descripción: lista de productos para administración.
-- Autenticación: requerida
-- Permisos: `administrador`, `bodeguero` con permisos de lectura
-- Respuesta: lista de productos
-
-### `GET /api/v1/productos/:id`
-
-- Descripción: detalle de un producto específico.
-- Autenticación: requerida
-- Permisos: `administrador`, `bodeguero` con permisos de lectura
-
-### `POST /api/v1/productos`
-
-- Descripción: crea un producto.
-- Autenticación: requerida
-- Permisos: `administrador`, `bodeguero` con `productos:write`
-- Form-data: archivo `imagen` + campos del producto
-- Respuesta: producto creado
-- Errores comunes:
-  - `400` datos inválidos
-  - `409` nombre duplicado
-
-### `PUT /api/v1/productos/:id`
-
-- Descripción: actualiza producto.
-- Autenticación: requerida
-- Permisos: `administrador`, `bodeguero` con `productos:write`
-- Form-data opcional: imagen
-- Respuesta: producto actualizado
-
-### `DELETE /api/v1/productos/:id`
-
-- Descripción: elimina producto.
-- Autenticación: requerida
-- Permisos: `administrador`, `bodeguero` con `productos:write`
-- Respuesta: confirmación
-
-## 3. Carrito
-
-### `GET /api/v1/carrito`
-
-- Descripción: obtiene carrito activo del usuario.
-- Autenticación: requerida
-
-### `POST /api/v1/carrito`
-
-- Descripción: agrega producto al carrito.
-- Autenticación: requerida
-- Body ejemplo:
-
-```json
-{
-  "productId": 5,
-  "quantity": 2
-}
-```
-
-- Respuesta: carrito actualizado
-
-### `PUT /api/v1/carrito/:productId`
-
-- Descripción: modifica cantidad de un producto.
-- Autenticación: requerida
-- Body ejemplo:
-
-```json
-{
-  "quantity": 3
-}
-```
-
-### `DELETE /api/v1/carrito/:productId`
-
-- Descripción: elimina un producto del carrito.
-- Autenticación: requerida
-
-### `DELETE /api/v1/carrito`
-
-- Descripción: vacía el carrito.
-- Autenticación: requerida
-
-## 4. Favoritos
-
-### `GET /api/v1/favoritos`
-
-- Descripción: lista favoritos del usuario autenticado.
-- Autenticación: requerida
-
-### `POST /api/v1/favoritos`
-
-- Descripción: agrega favorito.
-- Autenticación: requerida
-- Body:
-  - `productId`
-
-### `DELETE /api/v1/favoritos/:productId`
-
-- Descripción: elimina favorito.
-- Autenticación: requerida
-
-## 5. Pedidos
-
-### `GET /api/v1/pedidos`
-
-- Descripción: lista pedidos del sistema.
-- Autenticación: requerida
-- Permisos: `administrador`, `bodeguero`, `mensajero`, `pedidos:read`
-
-### `POST /api/v1/pedidos`
-
-- Descripción: crea un pedido.
-- Autenticación: requerida
-- Permisos: `comprar`
-- Body ejemplo:
-
-```json
-{
-  "direccion": "Calle 123",
-  "ciudad": "Bogotá",
-  "telefono": "3000000000",
-  "pago": "efectivo",
-  "productos": [
-    { "id": 2, "cantidad": 1 }
-  ]
-}
-```
-
-- Respuesta: `201` con `id` del pedido
-- Errores:
-  - `400` faltan datos del pedido
-  - `409` stock insuficiente
-
-### `PUT /api/v1/pedidos/:id/estado`
-
-- Descripción: actualiza el estado del pedido.
-- Autenticación: requerida
-- Permisos: `administrador`, `mensajero` con `pedidos:write`
-- Body:
-
-```json
-{
-  "estado": "En camino"
-}
-```
-
-### `GET /api/v1/mis-pedidos`
-
-- Descripción: pedidos propios del usuario autenticado.
-- Autenticación: requerida
-- Permisos: `pedidos:own:read`
-
-## 6. Inventario
-
-### `GET /api/v1/inventario/:id/historial`
-
-- Descripción: historial del producto.
-- Autenticación: requerida
-- Permisos: administrador o bodeguero
-
-### `POST /api/v1/inventario/movimiento`
-
-- Descripción: registra movimiento de inventario.
-- Autenticación: requerida
-- Body:
-  - `productId`
-  - `tipo`
-  - `cantidad`
-  - `motivo`
-  - `referencia`
-
-## 7. Usuarios administrativos
-
-### `GET /api/v1/usuarios`
-
-- Descripción: obtiene usuarios del sistema.
-- Autenticación: requerida
-- Permisos: administrador con `usuarios:read`
-
-### `POST /api/v1/usuarios`
-
-- Descripción: crea un usuario administrativo.
-- Autenticación: requerida
-- Permisos: administrador con `usuarios:write`
-- Body: nombre, apellido, correo, password, rol
-
-### `PUT /api/v1/usuarios/:id`
-
-- Descripción: actualiza un usuario administrativo.
-- Autenticación: requerida
-
-### `PUT /api/v1/usuarios/:id/estado`
-
-- Descripción: activa o desactiva un usuario.
-- Autenticación: requerida
-
-### `DELETE /api/v1/usuarios/:id`
-
-- Descripción: desactiva un usuario.
-- Autenticación: requerida
-
-## 8. Dashboard y logística
-
-### `GET /api/v1/dashboard`
-
-- Descripción: métricas del sistema.
-- Autenticación: requerida
-
-### `GET /api/v1/logistica`
-
-- Descripción: resumen logístico.
-- Autenticación: requerida
-
-### `GET /api/v1/health`
-
-- Descripción: health check de la base de datos.
-- Autenticación: no
-- Respuesta exitosa: `{ "ok": true }`
-- Respuesta si falla: `503` con `{ "ok": false, "error": "Base de datos no disponible" }`
-
-## 9. Observación de implementación
-
-La lista anterior corresponde a la lógica real implementada por las rutas del backend y del espejo API. La documentación debe tratarlas como endpoints activos del sistema y no como propuestas futuras.
+`API/` registra las rutas bajo `/api/v1`, pero `UsuarioRoute.js` no incluye `GET /tipos-documento`. Su `InventarioRoute.js` no registra las rutas de actividad/reportes ni las de compra/recepción que aparecen arriba. `PedidoFlujoRoute.js` reutiliza rutas del backend principal. Por esas diferencias, esta tabla no debe interpretarse como contrato completo de la instancia `API/`.

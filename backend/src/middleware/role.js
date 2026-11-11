@@ -1,3 +1,4 @@
+// Mapea roles funcionales a permisos reutilizables por los routers y la emisión del JWT.
 const ROLE_PERMISSIONS = {
   administrador: [
     'usuarios:read',
@@ -48,6 +49,7 @@ const ROLE_PERMISSIONS = {
 
 const normalizeValue = (value) => String(value ?? '').trim().toLowerCase();
 
+// Une permisos de uno o varios roles y elimina duplicados.
 export const buildRolePermissions = (roles = []) => {
   const inputRoles = Array.isArray(roles) ? roles : [roles];
   const permissions = new Set();
@@ -74,6 +76,7 @@ export const normalizePermissions = (permissions = []) => {
 };
 
 // Middleware que chequea si el usuario tiene alguno de los roles o permisos permitidos
+// Requiere que auth ya haya poblado req.user; basta coincidir con uno de los roles o permisos admitidos.
 export default function permitRoles(...allowedRoles) {
   return (req, res, next) => {
     const user = req.user;

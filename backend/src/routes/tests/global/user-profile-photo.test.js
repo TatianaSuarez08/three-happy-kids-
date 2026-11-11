@@ -13,6 +13,9 @@ jest.mock('../../../utils/password.js', () => ({
   hashPassword: jest.fn(),
   verifyPassword: jest.fn()
 }));
+jest.mock('../../../services/emailService.js', () => ({
+  sendWelcomeEmail: jest.fn()
+}));
 
 import {
   createUser,
@@ -23,6 +26,7 @@ import {
   updateUserProfilePhoto
 } from '../../../models/UsuarioModel.js';
 import { hashPassword, verifyPassword } from '../../../utils/password.js';
+import { sendWelcomeEmail } from '../../../services/emailService.js';
 import {
   getDocumentTypes,
   getMyProfile,
@@ -60,6 +64,7 @@ describe('actualización de foto de perfil', () => {
     findUserByEmail.mockResolvedValue(undefined);
     hashPassword.mockImplementation(async (password) => `hashed:${password}`);
     createUser.mockResolvedValue(createdUser);
+    sendWelcomeEmail.mockResolvedValue(undefined);
     response = {
       status: jest.fn().mockReturnThis(),
       json: jest.fn()
@@ -130,10 +135,15 @@ describe('actualización de foto de perfil', () => {
       direccion: 'Calle 1',
       ciudad: 'Bogotá'
     });
+    expect(sendWelcomeEmail).toHaveBeenCalledWith({
+      to: 'demo@example.com',
+      name: 'Ana Pérez'
+    });
     expect(response.status).toHaveBeenCalledWith(201);
     expect(response.json).toHaveBeenCalledWith({
       success: true,
       message: 'Usuario registrado correctamente',
+      emailSent: true,
       user: {
         id: 7,
         nombre: 'usuario_demo',
@@ -158,9 +168,24 @@ describe('actualización de foto de perfil', () => {
       ciudad: null
     }));
     expect(response.json).toHaveBeenCalledWith(expect.objectContaining({
+      emailSent: true,
       user: expect.objectContaining({ roles: [] }),
       token: expect.any(String)
     }));
+  });
+
+  test('no revierte el registro si falla el correo de bienvenida', async () => {
+    sendWelcomeEmail.mockRejectedValueOnce(new Error('SMTP no disponible'));
+
+    await registerUser({ body: validRegistration }, response);
+
+    expect(response.status).toHaveBeenCalledWith(201);
+    expect(response.json).toHaveBeenCalledWith(expect.objectContaining({
+      success: true,
+      emailSent: false,
+      token: expect.any(String)
+    }));
+    expect(createUser).toHaveBeenCalledTimes(1);
   });
 
   test.each([

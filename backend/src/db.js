@@ -17,6 +17,7 @@ export const pool = mysql.createPool(config);
 
 let idempotencyTablePromise;
 
+// Comparte la promesa de inicialización para que varias solicitudes de arranque no creen la tabla en paralelo.
 export const ensureIdempotencyTable = () => {
   if (!idempotencyTablePromise) {
     idempotencyTablePromise = pool.execute(
@@ -35,6 +36,7 @@ export const ensureIdempotencyTable = () => {
   return idempotencyTablePromise;
 };
 
+// Comprueba que MySQL responda y deja lista la tabla que necesita el middleware de idempotencia.
 export const verifyDatabaseConnection = async () => {
   const connection = await pool.getConnection();
   try {

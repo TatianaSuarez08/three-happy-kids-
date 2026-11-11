@@ -1,5 +1,7 @@
 # 10. Roles y permisos
 
+> **Documento histórico:** las conclusiones de este archivo no reflejan el mapeo actual de roles y permisos ni las rutas de Bodega. Usa [Autenticación y permisos](08_AUTENTICACION_Y_SEGURIDAD.md) y [Endpoints](10_API_ENDPOINTS.md).
+
 ## Roles detectados
 
 Los roles reales que se observan en el código y la base de datos son:

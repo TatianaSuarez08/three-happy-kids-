@@ -1,5 +1,7 @@
 # 03. Base de datos
 
+> **Documento histórico:** la descripción de este archivo no corresponde al esquema actual (por ejemplo, el DDL vigente sí define movimientos de inventario). Usa [Base de datos](07_BASE_DE_DATOS.md) y [SQL](sql/README.md) como referencia actual.
+
 ## Motor y conexión
 
 El backend usa MySQL con `mysql2/promise` desde [backend/src/db.js](../backend/src/db.js).

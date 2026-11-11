@@ -86,6 +86,7 @@ export const uploadDeliveryEvidence = (orderId, file) => {
   });
 };
 
+// Recupera el archivo binario y devuelve una URL local para mostrarlo en lugar de tratarlo como JSON.
 export const getDeliveryEvidenceObjectUrl = async (orderId) => {
   const token = getSessionToken();
   let lastError;

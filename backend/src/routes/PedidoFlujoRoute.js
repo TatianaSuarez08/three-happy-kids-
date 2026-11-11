@@ -33,12 +33,14 @@ const uploadEvidence = (req, res, next) => {
   });
 };
 
+// Bodega: autentica cada operación y restringe asignación/preparación al rol que ejecuta el proceso.
 router.get('/bodega/pedidos/disponibles', auth, permitRoles('bodeguero', 'administrador'), getWarehouseAvailable);
 router.get('/bodega/pedidos/mios', auth, permitRoles('bodeguero'), getWarehouseAssigned);
 router.post('/bodega/pedidos/:id/asignar', auth, permitRoles('bodeguero'), assignWarehouse);
 router.post('/bodega/pedidos/:id/liberar', auth, permitRoles('bodeguero'), releaseWarehouse);
 router.put('/bodega/pedidos/:id/preparacion', auth, permitRoles('bodeguero'), submitPreparation);
 
+// Mensajería: la lectura de evidencia permite también administración; el resto del flujo es del mensajero.
 router.get('/mensajeria/pedidos/disponibles', auth, permitRoles('mensajero'), getCourierAvailable);
 router.get('/mensajeria/mis-entregas', auth, permitRoles('mensajero'), getCourierAssigned);
 router.get('/mensajeria/historial', auth, permitRoles('mensajero'), getCourierActivityHistory);

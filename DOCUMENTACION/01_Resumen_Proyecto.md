@@ -1,5 +1,7 @@
 # 01. Resumen del proyecto
 
+> **Documento histórico:** este resumen contiene afirmaciones de una versión anterior sobre roles y módulos. La descripción vigente está en [Introducción](01_INTRODUCCION.md) y [Módulos funcionales](09_FUNCIONALIDADES.md).
+
 ## Alcance actual
 
 HappyKids es un sistema de comercio, pedidos y gestión de inventario para una tienda infantil. El proyecto divide su lógica en frontend React y backend Express con MySQL. La arquitectura actual ya incluye módulos de cliente, administrador y mensajería, con la base de datos y las rutas principales operativas.

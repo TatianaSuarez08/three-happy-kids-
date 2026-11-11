@@ -17,9 +17,12 @@ describe('Pruebas de caja negra - pantallas de HappyKids', () => {
   it('muestra el error de validación del registro antes de contactar la API', () => {
     cy.intercept('POST', '**/api/v1/registro').as('registro');
     visitAsRole('/registro', null);
-    cy.get('form').within(() => cy.get('button[type="submit"]').click());
+    cy.get('main.registro-page form')
+      .find('button[type="submit"]')
+      .should('be.enabled')
+      .click();
 
-    cy.contains('Ingresa tu nombre de usuario.').should('be.visible');
+    cy.contains('Completa todos los campos obligatorios para continuar.').should('be.visible');
     cy.get('@registro.all').should('have.length', 0);
   });
 });

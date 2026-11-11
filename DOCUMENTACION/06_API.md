@@ -1,113 +1,42 @@
-# 06. API
+# 6. Comunicación HTTP y servicio API
 
-## Función de la API
+## Cliente HTTP del frontend
 
-La carpeta `api/` contiene una instancia de Express que funciona como respaldo o réplica funcional del backend principal. Su función real no es ser un servicio adicional con lógica distinta; es mantener la misma capa de negocio y la misma base de datos disponible para continuidad del servicio.
+La mayoría de las solicitudes de `frontend/src/services/` pasan por `apiClient.js`. El cliente añade `/api/v1` al path, envía JSON cuando corresponde y adjunta `Authorization: Bearer <token>` si encuentra un token en el almacenamiento del navegador. Para `POST`, `PUT`, `PATCH` y `DELETE` agrega `Idempotency-Key` (usa una clave proporcionada por el servicio o genera una UUID).
 
-## Diferencia con el backend
+La lista de base URLs es:
 
-### Backend principal
+1. `VITE_BACKEND_URL`, por defecto `http://localhost:3000`.
+2. `VITE_API_BACKUP_URL`, por defecto `http://localhost:3001`.
 
-- archivo principal: `backend/index.js`
-- monta rutas directamente en la raíz
-- usa `PORT` para escuchar
-- no usa `/api/v1` en la raíz
+El cliente prueba las URLs en ese orden. Continúa ante error de red, timeout de 20 segundos o HTTP 502, 503 o 504. En cambio, un 4xx, 404 o un HTTP distinto a esos estados se convierte en error y no dispara otro intento. Por tanto, tener dos URLs configuradas no garantiza disponibilidad equivalente.
 
-### API redundante
+La consulta binaria de evidencia de entrega es una excepción: `pedidoService.js` usa `fetch` directamente y adjunta el token en su propia lógica.
 
-- archivo principal: `api/index.js`
-- monta rutas con prefijo `/api/v1`
-- usa `API_PORT` para escuchar
-- sirve como instancia alternativa del mismo servicio
+## Servicios Express
 
-## Estructura real
+### `backend/` — principal
 
-```text
-api/src/
-├── config/
-├── controllers/
-├── middleware/
-├── models/
-├── routes/
-├── utils/
-├── db.js
-```
+`backend/index.js` monta las rutas del sistema en `/api/v1` y también en la raíz sin prefijo. El frontend utiliza la versión `/api/v1`; las rutas sin prefijo permanecen registradas por compatibilidad. Predeterminado: puerto `3000`.
 
-La estructura es virtualmente equivalente a la del backend.
+### `API/` — instancia adicional
 
-## Comportamiento de failover
+`API/index.js` registra rutas solo bajo `/api/v1` y predetermina el puerto `3001`. Comparte modelos y partes del flujo con el backend, pero no todas las rutas están presentes. En particular, faltan `GET /tipos-documento` y las rutas de actividad/reportes y compras/recepción que `backend/src/routes/InventarioRoute.js` sí registra. La carga de página de registro y algunos flujos de bodega pueden fallar si solo responde esta instancia.
 
-El frontend no elige aleatoriamente una instancia. El cliente HTTP real en `frontend/src/services/apiClient.js` usa una lista de URLs:
+La aplicación de frontend puede intentar `API/` después de un error de transporte o de los estados transitorios indicados, pero la falta de una ruta devuelve 404, que no activa fallback. No describas `API/` como réplica completa ni como balanceador.
 
-```js
-const API_BASE_URLS = [
-  import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000',
-  import.meta.env.VITE_API_BACKUP_URL || 'http://localhost:3001'
-];
-```
+## Contrato de solicitudes
 
-Lógica real:
+Los paths, métodos, guardas y operaciones principales están enumerados en [Referencia de endpoints](10_API_ENDPOINTS.md). El contrato base es JSON; las subidas usan `multipart/form-data` (`foto`, `imagen` o `evidencia`, según la ruta). Las respuestas de error contienen un campo `error` o `message` según controlador.
 
-1. intenta la primera URL,
-2. si falla por `502`, `503` o `504`, continúa con la siguiente,
-3. si ninguna responde, lanza el error final.
+## Idempotencia
 
-Esto da continuidad frente a fallas de un nodo, pero no distribuye la carga ni hace "replicación transaccional" automática.
+El middleware del backend considera métodos mutantes solo cuando incluyen `Idempotency-Key`. Guarda hash y respuesta en `api_idempotency` para permitir replay de una solicitud completada y detectar una clave reutilizada con otra solicitud. Si la llamada no incluye la cabecera, el middleware continúa sin persistir una clave. La tabla también está declarada en el DDL y se asegura al iniciar el servicio.
 
-## Seguridad y endpoints
+## CORS y archivos
 
-La API usa los mismos mecanismos de seguridad del backend:
+Los servicios leen `CORS_ORIGIN`; el backend permite los encabezados de contenido, autorización e idempotencia. Express publica imágenes bajo `/assets/productos` y `/assets/foto_de_perfil`; las rutas de evidencia se atienden mediante endpoints autenticados. Las rutas de disco se configuran en `subidaImagen.js`.
 
-- JWT en `Authorization: Bearer <token>`
-- validación de permisos por rol
-- `Idempotency-Key` para mutaciones
-- CORS con `CORS_ORIGIN`
+## Pruebas de caja negra
 
-## Rutas montadas en la API
-
-La API monta rutas con el prefijo `/api/v1`, por ejemplo:
-
-- `/api/v1/registro`
-- `/api/v1/login`
-- `/api/v1/me`
-- `/api/v1/productos`
-- `/api/v1/pedidos`
-- `/api/v1/carrito`
-- `/api/v1/favoritos`
-- `/api/v1/dashboard`
-- `/api/v1/health`
-
-## Redundancia real del sistema
-
-La redundancia es de servicio, no de base de datos.
-
-Ambas instancias apuntan a la misma MySQL `happykids` y usan la misma lógica de negocio. Si el backend falla, la API puede seguir atendiendo la mayor parte del sistema mientras el frontend la utiliza como respaldo.
-
-## Idempotencia en la API
-
-El middleware `idempotencia.js` se usa además en la API con la misma lógica que en backend. Esto evita situaciones como:
-
-- dobles clic repetidos,
-- reintentos de red,
-- y reenvío accidental del mismo POST/PUT/DELETE.
-
-## Mecanismo real para evitar duplicaciones
-
-Se guarda en `api_idempotency`:
-
-- la clave enviada por `Idempotency-Key`,
-- un hash de la solicitud,
-- y la respuesta final.
-
-Si la misma clave se reutiliza con otra solicitud diferente, devuelve `409`.
-
-## Consideraciones de operación
-
-- la API no reemplaza la base de datos ni la lógica de negocio,
-- la API no crea un segundo sistema inconsistente: ambos usan la misma base de datos,
-- la elección activa se hace en el frontend según disponibilidad,
-- la práctica de producción debe mantener ambas instancias sincronizadas en código y dependencias.
-
-## Observación crítica
-
-El proyecto implementa failover de servicio y no balanceo de carga. La documentación debe describirlo exactamente así: dos instancias equivalentes, mismo esquema de negocio, misma base de datos, decisión de ruta en el cliente.
+Cypress verifica vistas y algunos flujos de UI sobre el frontend en `localhost:5173`. Las pruebas interceptan llamadas `/api/v1` y no comprueban la integración real con MySQL; las suites de backend/API son pruebas separadas. Consulta [pruebas y mantenimiento](12_MANTENIMIENTO.md).

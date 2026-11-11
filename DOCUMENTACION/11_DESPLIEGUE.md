@@ -1,116 +1,40 @@
-# 11. Despliegue y producción
+# 11. Despliegue: configuración y límites
 
-## Requisitos para producción
+Este documento describe los requisitos visibles en el repositorio y recomendaciones operativas generales. No representa un despliegue existente: no se revisaron servidores, secretos, dominio, proxy, red ni una base de producción.
 
-Antes de desplegar, se requiere:
+## Elementos que necesita una instalación
 
-- servidor Node.js 20+
-- MySQL 8.x o compatible
-- entorno seguro para variables de entorno
-- dominio o proxy reverso para frontend
-- balanceador o enrutamiento para backend/API
-- almacenamiento persistente para imágenes subidas
-- HTTPS para todo el acceso público
+- Runtime Node.js/npm compatible con los paquetes.
+- MySQL compatible con el DDL versionado.
+- Variables de entorno de conexión, `JWT_SECRET`, CORS y URLs del frontend.
+- Almacenamiento persistente y con permisos para los archivos que sube Express.
+- HTTPS y un origen de frontend limitado en `CORS_ORIGIN` para un entorno público.
 
-## Variables mínimas de entorno
+Usa solo variables reales del entorno de destino; no copies credenciales o secretos a este documento. La configuración y valores locales se explican en [Instalación](03_INSTALACION.md).
 
-```env
-PORT=3000
-API_PORT=3001
-DB_HOST=prod-db-host
-DB_USER=app_user
-DB_PASSWORD=***
-DB_DATABASE=happykids
-JWT_SECRET=***
-CORS_ORIGIN=https://tu-dominio.com
-VITE_BACKEND_URL=https://api-principal.tu-dominio.com
-VITE_API_BACKUP_URL=https://api-backup.tu-dominio.com
-```
+## Construir y arrancar
 
-> Las credenciales reales no se deben guardar en documentación ni en archivos públicos.
-
-## Preparación del backend
-
-Se debe:
-
-1. instalar dependencias con `npm install`,
-2. cargar `.env` con valores de producción,
-3. asegurar que la base de datos exista y esté migrada,
-4. asegurar que la carpeta de imágenes exista y sea escribible,
-5. verificar `JWT_SECRET` y `DB_PASSWORD` en entorno seguro.
-
-## Preparación de la API
-
-La API debe ejecutarse con la misma configuración de entorno que el backend principal, más su puerto de respaldo. La instancia debe apuntar al mismo esquema MySQL y a los mismos archivos de imagen.
-
-## Preparación del frontend
-
-El frontend debe compilar con:
+El frontend se compila con:
 
 ```bash
 cd frontend
-npm install
 npm run build
 ```
 
-El resultado de build se sirve con un servidor web estático o un reverse proxy.
+Los servicios Express se inician desde sus respectivos paquetes con `npm start` o `npm run dev`. Para despliegue, configura el proceso que ejecuta `backend/` con `PORT` y la base MySQL del entorno. `API/` es un servicio separado con `API_PORT`; no está sincronizado en todas sus rutas y no debe anunciarse como reemplazo íntegro o alta disponibilidad del backend.
 
-## Directrices de seguridad
+## Base de datos y archivos
 
-En producción se recomienda:
+Antes de poner una instancia en uso, verifica que el esquema y migraciones aprobados correspondan a esa base. El arranque del backend comprueba la conexión y asegura `api_idempotency`, pero no ejecuta el resto de los SQL. El DDL usa `CREATE TABLE IF NOT EXISTS`, que no actualiza tablas preexistentes.
 
-- HTTPS obligatorio,
-- `JWT_SECRET` robusta y almacenada en gestor de secretos,
-- `DB_PASSWORD` no embebida en código,
-- `CORS_ORIGIN` restringido al dominio real,
-- limitar acceso a `/admin` y `/usuarios` a roles adecuados,
-- no exponer mensajes internos de error al cliente,
-- y revisar archivos de imagen y uploads con límites de tamaño.
+Los uploads requieren que las ubicaciones configuradas en `subidaImagen.js` sean persistentes y escribibles. La imagen se entrega mediante las rutas estáticas de Express. No se verificó aquí ninguna ruta de almacenamiento de producción.
 
-## Base de datos en producción
+## Verificaciones antes de exponer el servicio
 
-Se debe asegurar:
+1. Ejecuta las pruebas backend y API que correspondan, lint/build del frontend y Cypress con un entorno de prueba.
+2. Verifica `GET /api/v1/health`, CORS desde el origen previsto y comunicación con MySQL.
+3. Prueba los roles y rutas protegidas con cuentas de prueba autorizadas.
+4. Comprueba persistencia de imágenes y copias de seguridad/restauración de MySQL.
+5. Valida URLs de frontend; no asumas que `API/` tiene todas las rutas del servicio principal.
 
-- conexión persistente y segura,
-- backups regulares,
-- índices adecuados y monitoreo de consumo,
-- correcto esquema `DataBaseHappyKids_CORREGIDA.sql`,
-- y permisos mínimos para el usuario de app.
-
-## Failover y servicio continuo
-
-El proyecto implementa failover con dos instancias equivalentes:
-
-- backend principal
-- API backup
-
-El frontend intenta responder por su orden configurado. En despliegue real, esto requiere que ambas instancias compartan:
-
-- mismo código,
-- mismas dependencias,
-- mismo esquema de base de datos,
-- y mismo entorno de configuración.
-
-## Verificaciones previas al despliegue
-
-Antes de dejarlo en producción se debe verificar:
-
-- MySQL responde,
-- backend y API arrancan sin errores,
-- salud responde `ok: true`,
-- login funciona con JWT,
-- rutas protegidas responden `401`/`403` cuando corresponde,
-- productos y pedidos se crean con stock validado,
-- idempotencia funciona para reintentos,
-- frontend usa la URL correcta según el entorno,
-- y se eliminan o restringen mensajes de error internos.
-
-## Recomendación operativa
-
-La arquitectura actual es cognosciblemente un diseño de alta disponibilidad simple, no un sistema de balanceo avanzado ni replicación transaccional de base de datos. Para producción, se recomienda mantener:
-
-- monitorización de backend y API,
-- validación de fallos por logs,
-- backups automáticos de MySQL,
-- observabilidad de latencia y errores HTTP,
-- y revisión periódica del estado de la tabla `api_idempotency`.
+No hay un proveedor, dominio ni valores de producción definidos en la configuración de ejemplo.

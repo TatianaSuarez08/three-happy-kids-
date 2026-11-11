@@ -19,5 +19,12 @@ export const env = {
   DB_USER: process.env.DB_USER,
   DB_PASSWORD: process.env.DB_PASSWORD || '',
   DB_DATABASE: process.env.DB_DATABASE,
-  CORS_ORIGIN: parseCorsOrigins(process.env.CORS_ORIGIN)
+  CORS_ORIGIN: parseCorsOrigins(process.env.CORS_ORIGIN),
+  MAIL_HOST: process.env.MAIL_HOST || '',
+  MAIL_PORT: process.env.MAIL_PORT || '',
+  MAIL_SECURE: ['true', '1'].includes((process.env.MAIL_SECURE || '').toLowerCase()),
+  MAIL_USER: process.env.MAIL_USER || '',
+  MAIL_PASS: process.env.MAIL_PASS || '',
+  MAIL_FROM: process.env.MAIL_FROM || '',
+  FRONTEND_URL: process.env.FRONTEND_URL || ''
 };

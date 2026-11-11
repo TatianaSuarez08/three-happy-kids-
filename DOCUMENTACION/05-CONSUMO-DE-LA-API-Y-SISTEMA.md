@@ -1,5 +1,7 @@
 # Consumo de la API y sistema utilizado
 
+> **Documento histórico:** las afirmaciones sobre la API, el estado del frontend y los roles describen una versión anterior. Para el sistema actual, consulta [Arquitectura](02_ARQUITECTURA.md), [Frontend](04_FRONTEND.md), [Backend](05_BACKEND.md) y [Endpoints](10_API_ENDPOINTS.md).
+
 ## 1. Resumen del sistema
 
 Three Happy Kids utiliza una arquitectura cliente-servidor separada:

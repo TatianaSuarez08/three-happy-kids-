@@ -1,136 +1,41 @@
-# 02. Arquitectura
+# 2. Arquitectura del sistema
 
-## Visión general
-
-El sistema está construido como un monorepo con tres módulos principales:
+## Diagrama de comunicación
 
 ```text
-frontend/          -> React + Vite
-backend/           -> Express principal para negocio y acceso a MySQL
-api/               -> Express backup redundante, misma lógica del backend
-documentacion/     -> documentación técnica, SQL y guías operativas
+Navegador
+  └─ React + React Router (Vite, puerto 5173)
+       └─ servicios de frontend / apiClient
+            ├─ backend principal (puerto 3000, /api/v1) ──┐
+            └─ API adicional (puerto 3001, /api/v1; cobertura parcial) ─┴── MySQL (DB_DATABASE)
 ```
 
-## Flujo funcional
-
-```text
-Usuario -> Frontend (React) -> Cliente HTTP -> Backend principal (puerto 3000)
-                                      \-> API backup (puerto 3001) si falla el principal
-                                      -> MySQL (happykids)
-```
+El diagrama representa la configuración local por defecto. Los dos procesos Express usan variables de entorno propias; que ambos se conecten a la misma instancia/base MySQL depende de que sus valores de configuración coincidan.
 
 ## Frontend
 
-La aplicación frontend usa React con Vite y la lógica HTTP central está en:
+`frontend/src/main.jsx` monta React y sus proveedores globales. `App.jsx` declara las rutas de pantalla; los grupos de páginas se encuentran bajo `src/pages/`, los componentes compartidos en `src/components/`, el estado compartido en `src/context/` y las llamadas por módulo en `src/services/`.
 
-- `frontend/src/services/apiClient.js`
-- `frontend/src/services/httpClient.js`
-- `frontend/src/services/authService.js`
+Los servicios de frontend delegan normalmente en `apiClient.js`, que agrega `/api/v1`, el token Bearer cuando existe y una clave de idempotencia para operaciones mutantes. La excepción relevante es la descarga de evidencia en `pedidoService.js`, que realiza una petición `fetch` directa.
 
-El cliente intenta múltiples URLs en orden:
+## Backend Express principal
 
-1. `VITE_BACKEND_URL` (`http://localhost:3000` por defecto)
-2. `VITE_API_BACKUP_URL` (`http://localhost:3001` por defecto)
+La entrada es `backend/index.js`. Configura CORS, parseo JSON y URL-encoded, registro HTTP, middleware de idempotencia, archivos estáticos de imágenes y routers. Monta esos routers en `/api/v1` y también en `/` para conservar rutas sin prefijo.
 
-La lógica real está en `apiClient.js`:
+La ruta pasa por el router del módulo, middleware de autenticación/autorización cuando corresponde, controlador y modelo/servicio. El acceso a MySQL se centraliza en `backend/src/db.js`, usando `mysql2/promise` y un pool.
 
-- agrega `Authorization: Bearer <token>` cuando existe sesión,
-- agrega `Idempotency-Key` en mutaciones (`POST`, `PUT`, `PATCH`, `DELETE`),
-- envia la petición a `/api/v1/...`,
-- reintenta automatica y secuencialmente si la respuesta es `502`, `503` o `504`,
-- y falla con un error general si ninguna instancia responde.
+## Instancia `API/`
 
-## Backend principal
+`API/index.js` inicia un segundo proceso, con prefijo `/api/v1` y puerto predeterminado `API_PORT=3001`. Comparte patrones y parte de la implementación con `backend/`, pero no todas sus rutas están sincronizadas; por tanto, no es un sustituto completo del backend principal.
 
-El backend principal se inicia en `backend/index.js` y monta todas las rutas directamente sobre la raíz:
+El cliente frontend intenta primero `VITE_BACKEND_URL` y después `VITE_API_BACKUP_URL`. Reintenta ante errores de red, timeout y respuestas HTTP 502, 503 o 504. Las respuestas HTTP distintas, incluidas rutas inexistentes (404), se devuelven como error sin probar otra instancia. El mecanismo es un fallback secuencial del cliente, no balanceo de carga ni replicación de datos.
 
-```js
-app.use('/', userRoutes);
-app.use('/', productRoutes);
-app.use('/', orderRoutes);
-...
-```
+## Base de datos y flujo de información
 
-La capa pública real es `/api/v1` en la instancia `api/`, pero la versión principal no aplica prefijo `/api/v1`; la expone en raíz. Esto es importante para la operación y para la documentación.
+Los modelos ejecutan consultas SQL contra la base indicada por `DB_DATABASE`; el esquema SQL de referencia crea/usa `happykids`. Los controladores orquestan validaciones y flujos de negocio. Operaciones como la creación del pedido usan transacciones para mantener coordinados factura, detalles, stock, pago y entrega; los procesos de bodega/mensajería guardan además preparación, responsables, novedades e historial en tablas de flujo.
 
-Incluye:
+`api_idempotency` registra solicitudes mutantes que llegan con `Idempotency-Key` y permite reproducir respuestas ya completadas o rechazar el uso conflictivo de la misma clave.
 
-- CORS con `origin` desde `CORS_ORIGIN`
-- `express.json()` y `express.urlencoded()`
-- `morgan('dev')`
-- middleware de idempotencia
-- hosting de archivos estáticos para imágenes de productos y perfil
-- validación de conexión a MySQL al arranque
+## Configuración
 
-## API redundante
-
-La instancia `api/` es un clon funcional del backend principal. Se monta con prefijo:
-
-```js
-app.use('/api/v1', userRoutes);
-app.use('/api/v1', productRoutes);
-...
-```
-
-La API también usa:
-
-- mismo middleware de autenticación,
-- mismo middleware de idempotencia,
-- same env file through root `.env`,
-- y misma base de datos MySQL.
-
-## Comunicación entre componentes
-
-### Frontend -> Backend/API
-
-- El frontend usa el cliente HTTP centralizado para todas las llamadas.
-- Las peticiones autenticadas llevan JWT en `Authorization`.
-- Las peticiones mutantes llevan `Idempotency-Key` para evitar reenvíos duplicados.
-
-### Backend/API -> MySQL
-
-- Ambas instancias usan `mysql2/promise` con un pool de conexiones.
-- `backend/src/db.js` y `api/src/db.js` crean un pool con `waitForConnections`, `connectionLimit: 10` y `queueLimit: 0`.
-
-## Redundancia y failover
-
-La estrategia real documentada por el código es la siguiente:
-
-1. El frontend intenta `VITE_BACKEND_URL`.
-2. Si el backend responde con `502`, `503` o `504`, se intenta la siguiente URL.
-3. Si no responde ninguna, se lanza un error final.
-4. El backend y la API comparten misma lógica y base de datos.
-
-Esto no es un balancer automático ni un sistema de replicación distribuida: es un failover manual en la capa cliente con dos instancias equivalentes del servicio.
-
-## Riesgo de duplicación
-
-La duplicación real que el proyecto intenta evitar es la reejecución de la misma operación mutante. La protección principal es el middleware `idempotencia.js`:
-
-- se usa `Idempotency-Key` del header,
-- se calcula un hash de la petición,
-- se guarda la clave en la tabla `api_idempotency`,
-- si la misma clave se reutiliza con un cuerpo distinto, responde `409`,
-- si la solicitud anterior ya concluyó, devuelve la respuesta guardada,
-- si todavía está en proceso, devuelve `409` con estado de procesamiento.
-
-## Capas lógicas
-
-La arquitectura se puede resumir así:
-
-- Capa vista: React + rutas + componentes
-- Capa cliente HTTP: `apiClient.js`
-- Capa routing: Express routers por módulo
-- Capa controladores: validaciones y lógica de negocio
-- Capa modelo: consultas a MySQL
-- Capa middleware: autenticación, permisos, upload, idempotencia
-- Capa persistencia: MySQL + tablas relacionales
-
-## Observación importante
-
-La documentación debe distinguir claramente:
-
-- Backend principal = instancia principal de negocio y servicio web
-- API = instancia redundante / respaldo
-- Frontend = cliente que alterna entre ambas instancias
-- MySQL = almacenamiento real y único
+Backend, instancia `API/` y Vite cargan variables desde el `.env` raíz; revisa además los cargadores de entorno y `.env.example` de cada paquete. No se debe consultar ni documentar el `.env` local. Ver [instalación y configuración](03_INSTALACION.md).

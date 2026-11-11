@@ -1,64 +1,61 @@
-# Three Happy Kids
+# HappyKids
 
-Monorepo del ecommerce Three Happy Kids.
+HappyKids es una aplicación web de comercio electrónico para productos infantiles. Este monorepo reúne la interfaz React, el servicio Express principal, una segunda instancia Express y los archivos SQL y guías del proyecto.
+
+## Arquitectura
+
+- `frontend/`: React 19, React Router y Vite.
+- `backend/`: servicio Express principal; expone las rutas tanto bajo `/api/v1` como sin prefijo.
+- `API/`: servicio Express adicional, con rutas bajo `/api/v1`. Su conjunto de rutas no es equivalente al del servicio principal, por lo que no cubre todos los flujos si se usa como respaldo.
+- `DOCUMENTACION/`: documentación técnica, esquema SQL y scripts de datos de ejemplo.
+
+El frontend envía las solicitudes a `VITE_BACKEND_URL` y, ante fallos de red, timeout o estados HTTP 502/503/504, intenta `VITE_API_BACKUP_URL`. Ambas instancias se configuran para usar MySQL; la instancia `API/` tiene diferencias de cobertura funcional descritas en la documentación.
 
 ## Requisitos
 
-- Node.js 20+
-- MySQL activo
-- Base `happykids` creada desde `documentacion/sql/DataBaseHappyKids_CORREGIDA.sql`
+- Node.js y npm, en versiones compatibles con las dependencias de cada paquete.
+- MySQL compatible con el esquema de [`DOCUMENTACION/sql/DataBaseHappyKids_CORREGIDA.sql`](DOCUMENTACION/sql/DataBaseHappyKids_CORREGIDA.sql).
+- Credenciales de MySQL y un secreto JWT configurados localmente.
 
-## Configuración universal
+## Configuración e instalación
 
-La configuración local vive en `.env` en la raíz del proyecto. Créalo copiando `.env.example` y ajusta la contraseña de MySQL y el secreto JWT; `.env` no se versiona.
+1. Copia `.env.example` a `.env` en la raíz y configura los valores locales. No compartas ni versionas secretos.
+2. Instala las dependencias:
 
-Variables principales:
+   ```bash
+   npm run install:all
+   ```
 
-```env
-PORT=3000
-API_PORT=3001
-DB_HOST=localhost
-DB_USER=root
-DB_PASSWORD=
-DB_DATABASE=happykids
-CORS_ORIGIN=http://localhost:5173,http://127.0.0.1:5173
-JWT_SECRET=replace-with-a-long-random-value
-VITE_BACKEND_URL=http://localhost:3000
-VITE_API_BACKUP_URL=http://localhost:3001
-```
+3. En una base aislada de desarrollo, prepara el esquema siguiendo [`DOCUMENTACION/03_INSTALACION.md`](DOCUMENTACION/03_INSTALACION.md) y [`DOCUMENTACION/sql/README.md`](DOCUMENTACION/sql/README.md). El archivo `dml.sql` carga datos de demostración; no lo ejecutes en producción.
 
-`backend` y `API` leen primero este archivo compartido y usan sus archivos `.env` locales como respaldo. Vite también lo lee para obtener las variables `VITE_*`.
+## Inicio local
 
-## Inicio automático en VS Code
-
-Al abrir la carpeta del proyecto en VS Code se inician automáticamente el frontend, el backend y `API`. La primera vez, VS Code puede pedir permiso para ejecutar las tareas automáticas; acepta la solicitud.
-
-Instala primero las dependencias de los tres servicios desde la raíz:
-
-```bash
-npm run install:all
-```
-
-El backend usa el puerto `3000` y es el servidor al que se conecta el frontend. `API` usa el puerto `3001` para evitar conflictos. Ambos requieren las variables de base de datos y `JWT_SECRET` configuradas en el `.env` raíz, además de MySQL activo.
-
-## Backend
+Abre una terminal por servicio:
 
 ```bash
 cd backend
-npm install
-npm start
-```
-
-El Backend escucha en `http://localhost:3000` y expone directamente las rutas `/api/v1`.
-
-## Frontend
-
-En otra terminal:
-
-```bash
-cd frontend
-npm install
 npm run dev
 ```
 
-La app frontend consume directamente el Backend mediante `VITE_BACKEND_URL`. El cliente HTTP central está en `frontend/src/services/`.
+```bash
+cd API
+npm run dev
+```
+
+```bash
+cd frontend
+npm run dev
+```
+
+Por defecto, el backend usa el puerto 3000 (`PORT`), `API/` el 3001 (`API_PORT`) y Vite el 5173. La instancia `API/` es opcional para el uso local principal. Las tareas de VS Code del repositorio no inician esa instancia.
+
+## Pruebas y verificaciones
+
+- `npm run verify:all`: pruebas Jest del backend principal, lint y build de frontend. No ejecuta las pruebas de `API/` ni Cypress.
+- `npm --prefix backend test`: Jest; también genera cobertura.
+- `npm --prefix API test`: pruebas Node.js del paquete `API/`.
+- `npm --prefix frontend run test:e2e`: Cypress; requiere que Vite ya esté disponible en el puerto 5173.
+
+## Documentación
+
+Empieza por la [documentación técnica y funcional](DOCUMENTACION/README.md), que enlaza arquitectura, instalación, módulos, API, base de datos y pruebas.

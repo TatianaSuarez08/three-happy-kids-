@@ -48,7 +48,7 @@ app.get('/', (req, res) => {
     });
 });
 
-// API versionada; la capa pública real del sistema se mantiene bajo /api/v1.
+// Esta instancia expone solo /api/v1; sus rutas no tienen paridad completa con backend/.
 app.use('/api/v1', userRoutes);
 app.use('/api/v1', productRoutes);
 app.use('/api/v1', orderRoutes);

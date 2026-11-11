@@ -1,45 +1,20 @@
-# Backend (Three Happy Kids)
+# Instancia adicional de Express
 
-Instalación y uso mínimo para el backend de inicio de sesión.
+`API/` es un servicio Express ejecutable por separado, con configuración propia y rutas bajo `/api/v1`. Usa `API_PORT` (3001 por defecto) y la configuración MySQL/JWT del `.env` raíz; la configuración local de `backend/.env` puede servir como respaldo según el cargador de entorno.
 
-Requisitos:
-- Node.js
-- MySQL y una base de datos con tabla `Usuarios` que contenga columnas `nombre, email, password, role`.
+Esta instancia no tiene paridad completa con `backend/`: faltan, entre otras, algunas rutas de tipos de documento y operaciones de inventario/compra que sí están en el servicio principal. El cliente frontend intenta esta URL como segunda instancia solo ante errores de red, timeout o HTTP 502/503/504; una ruta ausente no se reintenta automáticamente. No la consideres un reemplazo íntegro del backend.
 
-Variables de entorno (`.env`, no se versiona; usa `.env.example`):
-- `PORT` (opcional)
-- `DB_HOST`, `DB_USER`, `DB_PASSWORD`, `DB_DATABASE`
-- `JWT_SECRET` (obligatorio; el servidor no inicia sin él)
-- `BCRYPT_ROUNDS` (opcional, por defecto `12`)
-
-Ejecutar en desarrollo:
-
-```bash
-cd backend
-npm install
-npm run dev
-```
-
-Endpoints relevantes:
-- `POST /login` — body: `{ "email": "...", "password": "..." }` — devuelve `token` y `user`.
-- `GET /me` — header `Authorization: Bearer <token>` — devuelve `user` (payload del token).
-
-Si la tabla `Usuarios` no contiene la columna `role`, aplica la migración en `db-migrations/001-add-role-to-usuarios.sql`.
-# Backend Three Happy Kids
-
-La guía única del proyecto está en [documentacion/README.md](../documentacion/README.md).
-
-Para configurar y ejecutar el backend, consulta:
-
-- `documentacion/01-INICIO-Y-CONFIGURACION.md`
-- `documentacion/02-AUTENTICACION-SHA2-Y-JWT.md`
-- `documentacion/04-BASE-DE-DATOS.md`
-
-Inicio rápido:
+## Ejecución y pruebas
 
 ```bash
 npm install
 npm run dev
 ```
 
-El backend expone rutas versionadas bajo `/api/v1` y mantiene las rutas sin prefijo temporalmente por compatibilidad. Las contraseñas nuevas usan bcrypt; las antiguas `salt:hash` se migran al primer login correcto.
+Para ejecutar las pruebas propias de este paquete:
+
+```bash
+npm test
+```
+
+El script usa `node --test` y no está incluido en `npm run verify:all` de la raíz. La guía principal y la referencia de rutas están en [`DOCUMENTACION/README.md`](../DOCUMENTACION/README.md).

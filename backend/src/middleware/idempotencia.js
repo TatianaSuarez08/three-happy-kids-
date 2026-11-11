@@ -7,6 +7,7 @@ const MAX_WAIT_MS = 20000;
 
 const sleep = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds));
 
+// Vincula la clave al método, URL, cuerpo y usuario autenticado para detectar reutilización incompatible.
 const getRequestHash = (req) => createHash('sha256')
   .update(JSON.stringify({
     method: req.method,
@@ -30,6 +31,7 @@ const findRecord = async (key) => {
   return rows[0];
 };
 
+// Si la misma clave ya está en proceso, espera un tiempo acotado antes de decidir si puede reproducirse.
 const waitForCompletion = async (key) => {
   const startedAt = Date.now();
   while (Date.now() - startedAt < MAX_WAIT_MS) {
@@ -40,6 +42,7 @@ const waitForCompletion = async (key) => {
   return findRecord(key);
 };
 
+// Solo intercepta mutaciones con Idempotency-Key; sin la cabecera deja continuar la ruta normalmente.
 export default async function idempotencia(req, res, next) {
   if (!MUTATING_METHODS.has(req.method)) return next();
 
@@ -82,6 +85,7 @@ export default async function idempotencia(req, res, next) {
       return originalSend(body);
     };
 
+    // Guarda la respuesta terminada para que un reintento pueda recibir el mismo resultado.
     res.once('finish', () => {
       if (res.statusCode >= 500) {
         pool.execute('DELETE FROM api_idempotency WHERE idempotency_key = ?', [key]).catch(() => {});

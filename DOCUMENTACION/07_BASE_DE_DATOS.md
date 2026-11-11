@@ -1,228 +1,100 @@
-# 07. Base de datos
+# 7. Base de datos
 
-## Motor y nombre
+## Fuente y alcance
 
-El sistema usa MySQL y la base de datos real del proyecto es:
+El esquema de referencia del repositorio es `DOCUMENTACION/sql/DataBaseHappyKids_CORREGIDA.sql`; declara y selecciona la base MySQL `happykids`. El archivo contiene 31 declaraciones de tabla con `CREATE TABLE IF NOT EXISTS`. Esto no modifica una tabla antigua ya existente, por lo que este DDL por sí solo no verifica ni migra una base configurada fuera del repositorio.
+
+Esta revisión fue estática: no se leyó el `.env`, no se conectó a MySQL y no se ejecutó SQL. Para instalaciones nuevas y datos de prueba, consulta `DOCUMENTACION/sql/README.md`.
+
+## Tablas y relaciones
+
+`PK` significa clave primaria y `FK` clave foránea. La siguiente lista describe columnas importantes y relaciones del DDL; para tipos de datos, nulabilidad, restricciones y demás columnas, la fuente exacta es el SQL.
+
+### Identidad y catálogos
+
+| Tabla | Claves/campos principales | Uso y relación |
+|---|---|---|
+| `usuario` | PK `id`; únicos `nombre_usuario`, `correo`; credencial, contacto, estado y perfil | Identidad del sistema. Se vincula con roles, cliente y empleado. |
+| `rol` | PK `id`; único `nombre_rol` | Roles asignables a usuarios. |
+| `usuario_rol` | PK compuesta (`id_usuario`, `id_rol`); ambas columnas FK | Relación muchos-a-muchos entre `usuario` y `rol`. |
+| `recuperacion_contrasena` | PK/FK `id_usuario`; único `token_hash`; fechas de creación, expiración y uso | Tabla incremental de recuperación; mantiene como máximo un token hasheado por usuario y lo consume una sola vez. Se crea mediante `MIGRACION_RECUPERACION_CONTRASENA.sql`, no forma parte del DDL base. |
+| `tipo_documento` | PK `id`; único `sigla` | Catálogo de identificación usado por clientes. |
+| `cargo` | PK `id`; único `nombre_cargo` | Catálogo de cargos usado por empleados. |
+| `talla`, `color`, `categoria` | PK `id`; nombre único en cada catálogo | Catálogos referenciados por productos. |
+
+### Cliente, personal, producto e inventario
+
+| Tabla | Claves/campos principales | Uso y relación |
+|---|---|---|
+| `cliente` | PK `id`; FK única `id_usuario`; FK `id_tipo_documento`; número de documento único | Datos de compra y contacto del cliente. |
+| `empleado` | PK `id`; FK única `id_usuario`; FK `id_cargo` | Perfil del personal asociado a un usuario. |
+| `producto` | PK `id`; nombre único; precio de compra/venta, imagen y estado; FK `id_categoria`, `id_talla`, `id_color` | Catálogo y producto operado por inventario, carrito, compra y pedido. |
+| `inventario` | PK `id`; FK única `id_producto`; cantidades disponible y mínima | Existencia actual por producto. |
+| `inventario_movimiento` | PK `id`; referencias a producto y usuario; tipo, cantidad/variación y motivo/referencia | Trazabilidad de movimientos de inventario. |
+
+### Carrito, favoritos y compras de proveedor
+
+| Tabla | Claves/campos principales | Uso y relación |
+|---|---|---|
+| `carrito` | PK `id`; FK `id_cliente`; estado y fechas | Carrito asociado a cliente. |
+| `detalle_carrito` | PK `id`; único (`id_carrito`, `id_producto`); FK a carrito y producto | Cantidad, precio y subtotal de cada línea. |
+| `favorito` | PK `id`; único (`id_usuario`, `id_producto`); FK a usuario y producto | Evita duplicar el mismo favorito por usuario. |
+| `proveedor` | PK `id`; datos de contacto y estado | Origen de compras de abastecimiento. |
+| `compra` | PK `id`; FK `id_proveedor`; fecha, total y estado | Cabecera de compra al proveedor. |
+| `detalle_compra` | PK `id`; único (`id_compra`, `id_producto`); FK a compra y producto | Productos y cantidades compradas. |
+| `compra_recepcion` | PK `id`; único `clave_idempotencia`; FK a compra y usuario | Registro de una recepción de compra. |
+| `compra_recepcion_detalle` | PK `id`; cantidades recibidas/dañadas; FK a recepción y detalle de compra | Resultado por línea de una recepción. |
+
+### Facturas, pedidos, pagos y entregas
+
+| Tabla | Claves/campos principales | Uso y relación |
+|---|---|---|
+| `factura` | PK `id`; FK a cliente y FK opcional a empleado; fecha, total y estado | Cabecera usada por los flujos de pedido. |
+| `detalle_pedido` | PK compuesta (`id_factura`, `id_producto`); FKs a factura y producto | Líneas del pedido con cantidad, precio y subtotal. |
+| `pago` | PK `id`; FK `id_factura`; método, fecha, total y transacción | Datos del pago asociado a la factura; no representa integración con un procesador externo. |
+| `entrega` | PK `id`; FK única `id_factura`; estado y datos de entrega | Estado de entrega asociado a la factura. |
+| `pedido_flujo` | PK/FK `id_factura`; FKs opcionales de responsables y usuario de evidencia | Estados y asignaciones de preparación/entrega por pedido. |
+| `pedido_preparacion_detalle` | PK compuesta (`id_factura`, `id_producto`); FKs a factura, producto y usuario bodeguero | Resultado de verificación de cada producto preparado. |
+| `pedido_novedad` | PK `id`; referencias opcionales a factura o compra, producto, detalle y usuarios | Novedades de pedido/compra, reporte y resolución; el DDL restringe el origen para que corresponda a factura o compra. |
+| `pedido_historial` | PK `id`; FKs a factura y usuario; evento | Auditoría de eventos de pedido. |
+| `admin_reporte_actividad` | PK `id`; FKs a administrador, usuario reportado y factura opcional | Reporte administrativo vinculado a usuario/actividad. |
+
+### Soporte de idempotencia
+
+`api_idempotency` usa `idempotency_key` como PK y almacena hash de solicitud, estado, código/cuerpo de respuesta y marcas de tiempo. No tiene una FK de negocio. El middleware consulta esta tabla para resolver reintentos HTTP con la misma clave.
+
+## Relaciones principales
 
 ```text
-happykids
+usuario ──< usuario_rol >── rol
+usuario ── recuperacion_contrasena
+usuario ── cliente ──< carrito ──< detalle_carrito >── producto
+usuario ── empleado
+producto ── inventario
+producto ──< inventario_movimiento
+producto ──< favorito >── usuario
+proveedor ──< compra ──< detalle_compra >── producto
+compra ──< compra_recepcion ──< compra_recepcion_detalle >── detalle_compra
+cliente ──< factura ──< detalle_pedido >── producto
+factura ── pago
+factura ── entrega
+factura ── pedido_flujo (asignaciones/responsables)
+factura ──< pedido_preparacion_detalle >── producto
+factura o compra ──< pedido_novedad
+factura ──< pedido_historial
+usuario ──< pedido_historial
 ```
 
-El esquema principal está en:
-
-- `documentacion/sql/DataBaseHappyKids_CORREGIDA.sql`
-
-## Fuente de verdad
-
-Este archivo contiene el esquema corregido y actual. El proyecto indica explícitamente que es la fuente real y que el esquema histórico está en carpetas de referencia o legado.
-
-## Tabla central de usuarios
-
-### `usuario`
-
-Campos relevantes:
-
-- `id`
-- `nombre_usuario`
-- `contrasena`
-- `correo`
-- `telefono`
-- `foto_perfil`
-- `activo`
-- `idioma`
-
-Relaciones:
-
-- `usuario` tiene varios roles en `usuario_rol`
-- `usuario` puede ser cliente o empleado
-
-### `rol`
-
-```sql
-CREATE TABLE IF NOT EXISTS rol (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    nombre_rol VARCHAR(50) NOT NULL UNIQUE
-)
-```
-
-### `usuario_rol`
-
-Relaciona usuarios con roles.
-
-```sql
-PRIMARY KEY (id_usuario, id_rol)
-```
-
-## Productos e inventario
-
-### `categoria`
-
-- `id`
-- `nombre_categoria`
-- `descripcion`
-- `estado`
-
-### `talla`
-
-- `id`
-- `nombre_talla`
-- `estado`
-
-### `color`
-
-- `id`
-- `nombre_color`
-- `estado`
-
-### `producto`
-
-Campos clave:
-
-- `nombre_producto`
-- `descripcion`
-- `precio_compra`
-- `precio_venta`
-- `marca`
-- `imagen_producto`
-- `id_categoria`
-- `id_talla`
-- `id_color`
-- `estado`
-
-### `inventario`
-
-```sql
-CREATE TABLE IF NOT EXISTS inventario (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    cantidad_disponible INT NOT NULL DEFAULT 0,
-    cantidad_minima INT NOT NULL DEFAULT 0,
-    fecha_actualizacion DATE NOT NULL DEFAULT (CURRENT_DATE),
-    id_producto INT NOT NULL UNIQUE,
-    CONSTRAINT fk_inventario_producto
-        FOREIGN KEY (id_producto) REFERENCES producto(id)
-)
-```
-
-## Ventas y pedidos
-
-### `cliente`
-
-- `id`
-- `primer_nombre`
-- `primer_apellido`
-- `numero_documento`
-- `telefono`
-- `direccion`
-- `ciudad`
-- `id_usuario`
-- `id_tipo_documento`
-
-### `factura`
-
-Es la cabecera del pedido o factura. Los pedidos se obtienen con joins a:
-
-- `factura`
-- `cliente`
-- `usuario`
-- `entrega`
-- `pago`
-
-### `detalle_pedido`
-
-Guarda los productos de la factura:
-
-- `id_factura`
-- `id_producto`
-- `cantidad`
-- `precio_unitario`
-- `subtotal`
-
-### `pago`
-
-Guarda el método de pago asociado a la factura.
-
-### `entrega`
-
-Guarda el estado de la entrega asociada a la factura. El DDL conserva el estado heredado `Por recoger` además de `Entrega fallida`.
-
-### Flujo persistente de pedidos
-
-El esquema vigente incluye `pedido_flujo`, `pedido_preparacion_detalle`, `pedido_novedad` y `pedido_historial` para guardar responsables, preparación, novedades y trazabilidad de las entregas. Estas tablas evitan depender solo del estado volátil de las vistas.
-
-## Carrito y favoritos
-
-### `carrito`
-
-Gestión de carrito activo por cliente.
-
-### `detalle_carrito`
-
-Productos dentro del carrito con:
-
-- `cantidad`
-- `precio`
-- `subtotal`
-- `id_carrito`
-- `id_producto`
-
-### `favorito`
-
-```sql
-UNIQUE (id_usuario, id_producto)
-```
-
-Esto evita registros duplicados del mismo producto para un usuario.
-
-## Compras de proveedor
-
-El esquema también incluye:
-
-- `proveedor`
-- `compra`
-- `detalle_compra`
-
-Esto es funcional para el módulo de abastecimiento e inventario, aunque la documentación de flujo principal de compra del cliente está centrada en `factura`, `detalle_pedido`, `pago` y `entrega`.
-
-## Tabla de idempotencia
-
-La comprobación real de idempotencia se implementa en la base de datos con:
-
-```sql
-CREATE TABLE IF NOT EXISTS api_idempotency (
-  idempotency_key VARCHAR(128) PRIMARY KEY,
-  request_hash CHAR(64) NOT NULL,
-  status ENUM('processing', 'completed') NOT NULL DEFAULT 'processing',
-  response_status SMALLINT NULL,
-  response_body LONGTEXT NULL,
-  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-)
-```
-
-## Integridad y validaciones
-
-El esquema incluye constraints como:
-
-- `UNIQUE` para emails, usuarios, productos y roles,
-- `FOREIGN KEY` para relaciones de negocio,
-- checks de cantidad positiva,
-- checks de precio no negativo,
-- y exclusividad de claves para evitar duplicados.
-
-## Consultas del sistema relevantes
-
-El proyecto usa queries de lectura para:
-
-- dashboard,
-- historial de stock,
-- pedidos por cliente,
-- productos por categoría,
-- carrito por usuario,
-- favoritos por usuario,
-- y resúmenes de logística.
-
-## Importante
-
-Los datos ficticios viven por separado en `documentacion/sql/dml.sql`. No ejecutes ese archivo en producción. Para una base existente, consulta las migraciones incrementales de `documentacion/sql/` y crea una copia de seguridad antes de aplicarlas.
-
-La base de datos no es opcional ni redundante: es el almacenamiento real del sistema y ambas instancias de servicio apuntan a la misma base de datos. La documentación debe describirla como fuente de verdad del negocio.
+La cardinalidad y acciones de borrado exactas se determinan por los `FOREIGN KEY`, `UNIQUE` y restricciones del DDL; el diagrama es una vista funcional resumida.
+
+## Uso desde el backend
+
+- Los modelos de usuario consultan `usuario`, roles y perfiles de cliente/empleado.
+- La recuperación relaciona un token SHA-256 almacenado con `usuario`; la actualización de contraseña y el marcado de uso ocurren en una transacción. La tabla adicional requiere aplicar su migración de forma manual.
+- Catálogo, productos e inventario usan `producto`, sus catálogos, `inventario` y movimientos.
+- El carrito y favoritos usan sus tablas de cabecera/detalle.
+- El checkout escribe factura, detalle, inventario, pago y entrega en el flujo definido por el backend.
+- Bodega y mensajería usan recepción, asignación, preparación, novedad e historial.
+- Idempotencia HTTP y recepción de compra conservan claves para evitar duplicados según su implementación.
+
+El backend también llama `CREATE TABLE IF NOT EXISTS api_idempotency` durante su inicialización. No crea ni migra automáticamente las otras tablas del esquema.

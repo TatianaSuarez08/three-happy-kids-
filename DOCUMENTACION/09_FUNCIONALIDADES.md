@@ -1,230 +1,53 @@
-# 09. Funcionalidades reales del sistema
+# 9. Módulos funcionales
 
-## 1. Autenticación y registro
+Los permisos descritos aquí son los configurados en `App.jsx` y los routers Express. La autorización del backend prevalece; el guard de React solo controla navegación.
 
-### Registro
+## Administrador
 
-Endpoint real:
+**Objetivo y funciones.** Consultar métricas; crear/editar productos y usuarios; revisar pedidos; crear compras a proveedores; consultar actividad y resolver novedades/reclamos. La pantalla `/bodega` conserva una vista de inventario administrada con rol administrador.
 
-- `POST /registro`
+**Permiso.** Rol `administrador` para el panel. Las rutas administrativas del API exigen token y rol o permiso configurado en cada endpoint.
 
-Validaciones:
+**Frontend principal.** `pages/administracion/page-Dashboard.jsx`, `page-producto.jsx`, `page-AgregarProducto.jsx`, `page-EditarProducto.jsx`, `page-Compras.jsx`, `page-PedidosBD.jsx`, `page-NovedadesPedidos.jsx`, `page-UsuariosBD.jsx`, `page-CrearUsuario.jsx` y `page-EditarUsuario.jsx`. La consulta de actividad se comparte con `pages/bodeguero/BodegueroMovimientos.jsx`.
 
-- nombre de usuario obligatorio y mínimo 3 caracteres,
-- email válido,
-- password y confirmar_password requeridos,
-- contraseñas iguales,
-- longitud mínima 6,
-- email no repetido.
+**API y datos.** `/dashboard`, `/productos`, `/usuarios`, `/pedidos`, `/admin/compras`, `/admin/compras/opciones`, `/inventario/actividad` y `/admin/novedades/pedidos` junto con sus operaciones de escritura. Interactúa principalmente con `usuario`, `usuario_rol`, `empleado`, `cargo`, `producto`, `inventario`, `factura`, `compra`, `pedido_novedad` y `admin_reporte_actividad`.
 
-Al registrarse, el backend:
+## Cliente
 
-- crea el usuario en `usuario`,
-- lo asigna al rol `cliente` por defecto,
-- genera JWT,
-- devuelve `user` y `token`.
+**Objetivo y funciones.** Explorar el catálogo y detalles públicos; iniciar sesión/registrarse; mantener carrito y favoritos; confirmar compra; consultar historial y perfil.
 
-### Login
+**Permiso.** Catálogo, categorías y detalle son públicos. Compra, favoritos, pedidos propios y perfil usan sesión; los permisos de servidor se definen en los routers correspondientes. La UI también permite algunas rutas de compra a otros roles, como figura en `App.jsx`.
 
-Endpoint real:
+**Frontend principal.** `pages/publicas/Index.jsx`, `InicioSesion.jsx`, `Registro.jsx`; páginas de `pages/cliente/` para catálogo, producto, carrito, compra, favoritos, pedidos, contraseña y perfil; `context/CarritoContext.jsx` y `FavoritosContext.jsx`; servicios `authService`, `catalogoService`, `carritoService`, `favoritoService` y `pedidoService`.
 
-- `POST /login`
+**API y datos.** `/registro`, `/login`, `/tipos-documento`, `/me`, `/productos-publicos`, `/categorias`, `/carrito`, `/favoritos`, `/pedidos` y `/mis-pedidos`. El esquema usa `usuario`, `cliente`, `tipo_documento`, `producto`, `inventario`, `carrito`, `detalle_carrito`, `favorito`, `factura`, `detalle_pedido`, `pago` y `entrega`.
 
-Devuelve:
+**Flujo de compra.** El frontend envía dirección, ciudad, teléfono, método de pago y productos al endpoint de creación de pedido. El backend valida stock y registra la factura y sus detalles, actualiza inventario y crea pago/entrega. No hay integración de pago externo descrita en este flujo.
 
-- `success`,
-- `message`,
-- `user`,
-- `token`.
+## Bodega
 
-## 2. Usuarios
+**Objetivo y funciones.** Revisar disponibilidad e historial de inventario, recibir compras de proveedor, tomar un pedido disponible, verificar sus productos y registrar preparación/novedades.
 
-Los usuarios tienen roles reales y pueden verse en la base de datos:
+**Permiso.** Las rutas `/bodeguero/*` requieren rol `bodeguero`; el inventario heredado bajo `/bodega` corresponde al administrador. Algunas consultas de pedidos disponibles permiten también al administrador, según el router.
 
-- `usuario`
-- `usuario_rol`
-- `rol`
+**Frontend principal.** `pages/bodeguero/BodegueroLayout.jsx`, `BodegueroDashboard.jsx`, `BodegueroInventario.jsx`, `BodegueroPedidos.jsx`, `BodegueroMovimientos.jsx` y `BodegueroCompras.jsx`.
 
-Además existen usuarios administrativos con su perfil de empleado:
+**API y datos.** `/inventario/:id/historial`, `/inventario/movimiento`, `/inventario/actividad`, `/bodega/compras`, `/bodega/compras/:id/recepcion` y `/bodega/pedidos/...`. Usa productos/inventario/movimientos, compras y recepción, y las tablas `pedido_flujo`, `pedido_preparacion_detalle`, `pedido_novedad` y `pedido_historial`.
 
-- `empleado`
-- `cargo`
+**Flujo de preparación.** El bodeguero consulta pedidos sin asignar, se asigna uno, registra el resultado por producto y envía la preparación. El historial y las novedades quedan persistidos para que administración pueda resolverlas y mensajería consulte pedidos listos.
 
-Los administradores pueden:
+## Mensajería
 
-- consultar usuarios,
-- crear usuarios administrativos,
-- editar datos,
-- cambiar estado activo/inactivo,
-- eliminar usuarios lógicamente (desactivar).
+**Objetivo y funciones.** Consultar pedidos preparados sin mensajero, asignar una entrega, actualizar su estado, registrar una novedad, adjuntar evidencia y consultar historial/ruta/perfil.
 
-## 3. Productos
+**Permiso.** Las páginas operativas y las rutas de mensajero requieren el rol `mensajero`; la consulta de evidencia permite también al administrador, según el endpoint.
 
-### Catálogo
+**Frontend principal.** `pages/mensajeria/` contiene inicio, entregas, ruta, evidencia, novedades, historial y perfil; `components/mensajeria/` contiene UI y datos compartidos.
 
-Se expone:
+**API y datos.** `/mensajeria/pedidos/disponibles`, `/mensajeria/mis-entregas`, `/mensajeria/historial`, rutas de asignación/liberación/estado y `/mensajeria/pedidos/:id/evidencia`. Las entidades centrales son `factura`, `entrega`, `pedido_flujo`, `pedido_historial`, `pedido_novedad` y usuario responsable.
 
-- `GET /productos-publicos`
-- `GET /productos-publicos/:id`
-- `GET /categorias`
+**Flujo de entrega.** El servicio de pedido valida transiciones permitidas; para marcar entrega completada se requiere evidencia y para registrar entrega fallida se exige observación. La evidencia se carga como archivo y su resultado se asocia al flujo del pedido.
 
-### Administración
+## Cobertura de `API/`
 
-- `POST /productos`
-- `PUT /productos/:id`
-- `DELETE /productos/:id`
-
-Se valida:
-
-- nombre mínimo 3 caracteres,
-- precio de venta válido,
-- estado activo/inactivo,
-- categoría, talla y color obligatorios,
-- stock y stock mínimo no negativos,
-- imagen requerida en creación.
-
-## 4. Favoritos
-
-Endpoints:
-
-- `GET /favoritos`
-- `POST /favoritos`
-- `DELETE /favoritos/:productId`
-
-La lógica usa la tabla `favorito` con restricción `UNIQUE (id_usuario, id_producto)` para evitar duplicados.
-
-## 5. Carrito
-
-Endpoints:
-
-- `GET /carrito`
-- `POST /carrito`
-- `PUT /carrito/:productId`
-- `DELETE /carrito/:productId`
-- `DELETE /carrito`
-
-La lógica:
-
-- crea o reutiliza carrito activo por cliente,
-- utiliza `detalle_carrito`,
-- acumula la cantidad si el mismo producto ya existe,
-- valida que el productId y la cantidad sean válidos,
-- y calcula subtotal por producto.
-
-## 6. Pedidos
-
-### Creación
-
-Endpoint real:
-
-- `POST /pedidos`
-
-El backend:
-
-- valida que el usuario tenga perfil de cliente,
-- valida stock disponible por producto usando `FOR UPDATE`,
-- calcula total,
-- crea la `factura`,
-- inserta `detalle_pedido`,
-- descuenta stock en `inventario`,
-- crea el registro de `pago`,
-- crea la fila de entrega en estado `Pendiente`.
-
-### Consulta
-
-- `GET /pedidos` para administradores/bodeguero/mensajero
-- `GET /mis-pedidos` para el usuario autenticado
-
-### Estado de pedido
-
-- `PUT /pedidos/:id/estado`
-
-Los estados válidos del código son:
-
-- `Pendiente`
-- `En camino`
-- `Entregado`
-- `Cancelado`
-
-## 7. Inventario
-
-### Historial
-
-- `GET /inventario/:id/historial`
-
-### Movimiento
-
-- `POST /inventario/movimiento`
-
-Tipos permitidos:
-
-- `entrada`
-- `salida`
-- `ajuste`
-
-La lógica actual:
-
-- guarda el tipo de movimiento,
-- actualiza el inventario disponible,
-- y calcula diferencia con `delta` del movimiento.
-
-## 8. Dashboard
-
-Endpoint:
-
-- `GET /dashboard`
-
-Muestra:
-
-- total ventas,
-- total pedidos,
-- total clientes,
-- total productos,
-- pedidos pendientes,
-- pedidos en camino,
-- pedidos entregados,
-- stock bajo,
-- pedidos recientes,
-- productos con stock bajo.
-
-## 9. Logística
-
-Endpoint:
-
-- `GET /logistica`
-
-Se usa para obtener un resumen relacionado con pedidos y entregas por rol/logística.
-
-## 10. Administración
-
-### Usuarios administrativos
-
-- Gestionan usuarios con roles `administrador`, `bodeguero`, `mensajero`.
-- Se crean con `createAdminUser()` y se relacionan también con `empleado` y `cargo`.
-
-### Productos y inventario
-
-- El usuario administrador puede actualizar productos, administrar inventario y visualizar dashboard.
-
-## 11. Seguridad funcional
-
-Además de la autenticación, el sistema incluye mecanismos para:
-
-- impedir registros duplicados,
-- impedir favoritos duplicados,
-- controlar stock insuficiente,
-- proteger rutas por permisos,
-- y evitar reejecuciones con `Idempotency-Key`.
-
-## 12. Funcionalidades no documentadas como “inventadas”
-
-La documentación debe evitar describir módulos que no estén respaldados por código real. No se documentan, por ejemplo:
-
-- pagos en línea de terceros,
-- notificaciones push,
-- api pública externa,
-- multi-tenancy,
-- microservicios ajenos,
-- replicación de base de datos active-active.
-
-Lo real del proyecto es lo que el código implementa y lo que la base de datos soporta.
+La instancia secundaria no contiene todas las rutas del backend principal, especialmente tipos de documento y operaciones de actividad/reportes/compra de inventario. Los endpoints y permisos completos se describen en [Referencia de endpoints](10_API_ENDPOINTS.md); las diferencias del cliente de respaldo están en [API](06_API.md).

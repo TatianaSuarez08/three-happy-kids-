@@ -3,8 +3,9 @@ import { buildRolePermissions } from '../middleware/role.js';
 import { env } from '../config/env.js';
 import { hashPassword, verifyPassword } from '../utils/password.js';
 import { findUserByEmail, findUserProfile, updatePassword, updateUserProfilePhoto, createUser, listActiveDocumentTypes } from '../models/UsuarioModel.js'; // Funciones del modelo de usuario
+import { sendWelcomeEmail } from '../services/emailService.js';
 
-// Genera un token JWT con información pública del usuario y expiración
+// Firma el JWT de ocho horas con identidad y roles; los permisos derivados los consumen los middleware de acceso.
 const generateToken = (user) => {
   const permissions = buildRolePermissions(user.roles || []);
 
@@ -115,10 +116,22 @@ export const registerUser = async (req, res) => {
     // Generar token
     const token = generateToken(nuevoUsuario);
 
+    let emailSent = false;
+    try {
+      await sendWelcomeEmail({
+        to: nuevoUsuario.email,
+        name: `${primerNombre} ${primerApellido}`
+      });
+      emailSent = true;
+    } catch (error) {
+      console.error('No se pudo enviar el correo de bienvenida:', error.message);
+    }
+
     // Responder con éxito
     res.status(201).json({
       success: true,
       message: 'Usuario registrado correctamente',
+      emailSent,
       user: {
         id: nuevoUsuario.id,
         nombre: nuevoUsuario.nombre,
@@ -146,6 +159,7 @@ export const registerUser = async (req, res) => {
   }
 };
 
+// Expone solo los tipos activos que el formulario público de registro ofrece al usuario.
 export const getDocumentTypes = async (_req, res) => {
   try {
     const documentTypes = await listActiveDocumentTypes();
@@ -178,6 +192,7 @@ export const loginUser = async (req, res) => {
       return res.status(401).json({ error: 'Credenciales inválidas' });
     }
 
+    // verifyPassword acepta bcrypt y el formato heredado; este último se actualiza tras validar el login.
     const passwordResult = await verifyPassword(password, user.password);
     if (!passwordResult.valid) {
       return res.status(401).json({ error: 'Credenciales inválidas' });

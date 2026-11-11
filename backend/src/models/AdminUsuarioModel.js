@@ -104,7 +104,7 @@ export const updateAdminUser = async ({ id, nombre, apellido, correo, telefono, 
   const connection = await pool.getConnection();
   try {
     await connection.beginTransaction();
-    const [existingUsers] = await connection.execute('SELECT id FROM usuario WHERE id = ?', [id]);
+    const [existingUsers] = await connection.execute('SELECT id, correo FROM usuario WHERE id = ?', [id]);
     if (existingUsers.length === 0) {
       await connection.rollback();
       return false;
@@ -151,6 +151,14 @@ export const updateAdminUser = async ({ id, nombre, apellido, correo, telefono, 
       await connection.execute(
         'INSERT INTO empleado (nombre, apellido, id_usuario, id_cargo) VALUES (?, ?, ?, ?)',
         [nombre, apellido, id, cargoRows[0].id]
+      );
+    }
+    if (password || existingUsers[0].correo.toLowerCase() !== correo.toLowerCase()) {
+      await connection.execute(
+        `UPDATE recuperacion_contrasena
+         SET usado_en = UTC_TIMESTAMP()
+         WHERE id_usuario = ? AND usado_en IS NULL`,
+        [id]
       );
     }
     await connection.commit();

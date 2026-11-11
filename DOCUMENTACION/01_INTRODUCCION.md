@@ -1,80 +1,44 @@
-# 01. Introducción
+# 1. Descripción general
 
-## Propósito del sistema
+## Qué es HappyKids
 
-Three Happy Kids es una solución de comercio electrónico para la venta de productos infantiles. El sistema permite a los clientes explorar catálogo, añadir productos al carrito, guardar favoritos, registrar una compra y consultar el historial de pedidos; además contempla un panel administrativo para gestionar usuarios, productos, inventario y pedidos.
+HappyKids es una aplicación web de comercio electrónico para productos infantiles. El repositorio es un monorepo con una aplicación de navegador, un servicio Express principal, una instancia Express adicional y scripts SQL para el esquema y datos de demostración.
 
-La implementación real se organiza como un monorepo con tres capas principales:
+## Objetivo y alcance funcional
 
-- Frontend: aplicación React + Vite en `frontend/`
-- Backend principal: instancia de Express en `backend/`
-- API redundante: instancia de Express en `api/` usada como respaldo
-- Base de datos: MySQL en la base `happykids`
+El sistema reúne los procesos que efectivamente aparecen en el código:
 
-## Problema que resuelve
+- **Cliente:** consulta el catálogo y el detalle público de productos; con sesión puede administrar carrito y favoritos, confirmar compras, consultar pedidos y actualizar su perfil.
+- **Administrador:** consulta el dashboard y administra productos, usuarios, pedidos, compras y novedades.
+- **Bodega:** consulta inventario y movimientos, recibe compras, toma pedidos disponibles y registra la preparación y sus novedades.
+- **Mensajería:** consulta entregas disponibles o asignadas, actualiza estados, reporta novedades y adjunta evidencia fotográfica de entrega.
 
-El proyecto resuelve la necesidad de gestionar una tienda digital con:
+El proyecto no implementa un proveedor de pago en línea externo. El checkout y el registro de pago se documentan según el flujo interno y las tablas existentes, no como una transacción con una pasarela.
 
-- catálogo público y detalle de producto,
-- autenticación con sesión JWT,
-- gestión de usuarios por roles,
-- stock e inventario,
-- flujo de compra y pedidos,
-- control administrativo,
-- manejo de imágenes de productos y perfil,
-- y una capa de redundancia para continuidad del servicio.
+## Tecnologías
 
-## Alcance funcional
+- Frontend: React 19, React Router, Vite, Bootstrap y Bootstrap Icons.
+- Backend principal y servicio adicional: Node.js y Express.
+- Persistencia: MySQL mediante `mysql2/promise`.
+- Autenticación: JWT; `bcryptjs` para contraseñas nuevas y verificación/migración de hashes heredados.
+- Verificación: Jest en `backend/`, Node.js `node:test` en `API/` y Cypress en `frontend/`.
 
-El alcance actual documentado por el código incluye:
+Las versiones instaladas/declaradas dependen de los `package.json` de cada paquete. La configuración de ejecución se documenta en [Instalación](03_INSTALACION.md).
 
-- registro e inicio de sesión,
-- perfiles, foto de perfil, roles de usuario,
-- catálogo y categorías,
-- productos con imagen, talla, color, estado e precio,
-- favoritos,
-- carrito de compras,
-- creación de pedidos con validación de stock,
-- actualización de estado de pedidos,
-- administración de usuarios y productos,
-- manejo de inventario y movimientos,
-- dashboard administrativo,
-- salud de la base de datos,
-- y estrategia de failover entre backend y API.
+## Componentes y relación
 
-## Público objetivo
+El navegador usa `frontend/src/services/apiClient.js` para enviar solicitudes HTTP a `/api/v1`. La URL principal predeterminada es `http://localhost:3000`; se puede configurar una segunda URL, predeterminada a `http://localhost:3001`, como alternativa. `backend/` expone las rutas versionadas y las antiguas rutas sin prefijo. `API/` es otro proceso Express, pero sus rutas no cubren todos los casos del backend principal.
 
-- clientes para comprar en línea,
-- administradores para operar catálogo y usuarios,
-- bodegueros para manejar stock e inventario,
-- mensajeros para consultar y actualizar entregas,
-- y operadores del sistema para mantener la aplicación en producción.
+El backend principal organiza las solicitudes entre routers, controladores, modelos y servicios; los modelos consultan la base `happykids` mediante un pool MySQL. La definición de esquema del repositorio es `DOCUMENTACION/sql/DataBaseHappyKids_CORREGIDA.sql`.
 
-## Estado real del proyecto
+## Límites de esta descripción
 
-La documentación de este repositorio debe basarse en el código actual, no en una versión histórica. En la práctica, el proyecto cuenta con:
+La documentación describe el código y SQL versionados en el repositorio. No se inspeccionó el `.env` local, no se consultó una base MySQL activa y no se verificó un entorno de producción.
 
-- rutas protegidas por JWT,
-- validación de permisos por rol,
-- control de stock en la creación de pedidos,
-- uso de MySQL con pool de conexiones,
-- y un cliente frontend que intenta el backend primario y la API de respaldo de forma automática.
+## Lecturas relacionadas
 
-## Requisitos para entender el proyecto
-
-Para comprender la aplicación es necesario revisar, al menos:
-
-- `backend/index.js`
-- `api/index.js`
-- `backend/src/routes/`
-- `backend/src/controllers/`
-- `backend/src/models/`
-- `backend/src/middleware/`
-- `frontend/src/services/apiClient.js`
-- `frontend/src/App.jsx`
-- `documentacion/sql/DataBaseHappyKids_CORREGIDA.sql`
-- `.env` raíz
-
-## Convención de documentación
-
-La documentación activa de producción está en esta carpeta. Los archivos antiguos y específicos del proceso de desarrollo se conservan como referencia histórica y no deben considerarse la fuente de verdad si contradicen el código actual.
+- [Arquitectura](02_ARQUITECTURA.md)
+- [Frontend](04_FRONTEND.md)
+- [Backend](05_BACKEND.md)
+- [Módulos funcionales](09_FUNCIONALIDADES.md)
+- [Base de datos](07_BASE_DE_DATOS.md)

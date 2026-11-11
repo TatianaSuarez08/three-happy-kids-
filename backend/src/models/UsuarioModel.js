@@ -60,6 +60,139 @@ export const updatePassword = async (id, passwordHash) => {
   await pool.execute('UPDATE usuario SET contrasena = ? WHERE id = ?', [passwordHash, id]);
 };
 
+export const findActiveUserForPasswordReset = async (email) => {
+  const [rows] = await pool.execute(
+    `SELECT id, nombre_usuario AS nombre, correo AS email
+     FROM usuario
+     WHERE correo = ? AND activo = 1`,
+    [email]
+  );
+  return rows[0];
+};
+
+export const savePasswordResetToken = async (userId, tokenHash) => {
+  const connection = await pool.getConnection();
+  let transactionStarted = false;
+
+  try {
+    await connection.beginTransaction();
+    transactionStarted = true;
+
+    const [users] = await connection.execute(
+      'SELECT id FROM usuario WHERE id = ? AND activo = 1 FOR UPDATE',
+      [userId]
+    );
+    if (users.length === 0) {
+      await connection.rollback();
+      transactionStarted = false;
+      return false;
+    }
+
+    const [tokens] = await connection.execute(
+      `SELECT creado_en > DATE_SUB(UTC_TIMESTAMP(), INTERVAL 1 MINUTE) AS en_espera
+       FROM recuperacion_contrasena
+       WHERE id_usuario = ?
+       FOR UPDATE`,
+      [userId]
+    );
+    if (tokens[0]?.en_espera) {
+      await connection.commit();
+      transactionStarted = false;
+      return false;
+    }
+
+    await connection.execute(
+      `INSERT INTO recuperacion_contrasena
+         (id_usuario, token_hash, creado_en, expira_en, usado_en)
+       VALUES (?, ?, UTC_TIMESTAMP(), DATE_ADD(UTC_TIMESTAMP(), INTERVAL 20 MINUTE), NULL)
+       ON DUPLICATE KEY UPDATE
+         token_hash = VALUES(token_hash),
+         creado_en = VALUES(creado_en),
+         expira_en = VALUES(expira_en),
+         usado_en = NULL`,
+      [userId, tokenHash]
+    );
+    await connection.commit();
+    transactionStarted = false;
+    return true;
+  } catch (error) {
+    if (transactionStarted) await connection.rollback();
+    throw error;
+  } finally {
+    connection.release();
+  }
+};
+
+export const consumePasswordResetToken = async (tokenHash, passwordHash) => {
+  const connection = await pool.getConnection();
+  let transactionStarted = false;
+
+  try {
+    await connection.beginTransaction();
+    transactionStarted = true;
+
+    const [tokenOwners] = await connection.execute(
+      'SELECT id_usuario FROM recuperacion_contrasena WHERE token_hash = ?',
+      [tokenHash]
+    );
+    const userId = tokenOwners[0]?.id_usuario;
+    if (!userId) {
+      await connection.rollback();
+      transactionStarted = false;
+      return null;
+    }
+
+    const [users] = await connection.execute(
+      `SELECT id, nombre_usuario AS nombre, correo AS email
+       FROM usuario
+       WHERE id = ? AND activo = 1
+       FOR UPDATE`,
+      [userId]
+    );
+    const user = users[0];
+    if (!user) {
+      await connection.rollback();
+      transactionStarted = false;
+      return null;
+    }
+
+    const [tokens] = await connection.execute(
+      `SELECT id_usuario
+       FROM recuperacion_contrasena
+       WHERE id_usuario = ?
+         AND token_hash = ?
+         AND usado_en IS NULL
+         AND expira_en > UTC_TIMESTAMP()
+       FOR UPDATE`,
+      [userId, tokenHash]
+    );
+    if (tokens.length === 0) {
+      await connection.rollback();
+      transactionStarted = false;
+      return null;
+    }
+
+    await connection.execute(
+      'UPDATE usuario SET contrasena = ? WHERE id = ?',
+      [passwordHash, userId]
+    );
+    await connection.execute(
+      `UPDATE recuperacion_contrasena
+       SET usado_en = UTC_TIMESTAMP()
+       WHERE id_usuario = ? AND token_hash = ? AND usado_en IS NULL`,
+      [userId, tokenHash]
+    );
+    await connection.commit();
+    transactionStarted = false;
+    return { id: userId, nombre: user.nombre, email: user.email };
+  } catch (error) {
+    if (transactionStarted) await connection.rollback();
+    throw error;
+  } finally {
+    connection.release();
+  }
+};
+
 export const listActiveDocumentTypes = async () => {
   const [rows] = await pool.execute(
     `SELECT id, sigla, nombre_documento AS nombre

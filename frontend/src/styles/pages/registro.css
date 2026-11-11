@@ -313,6 +313,12 @@
   width: min(100%, 600px);
 }
 
+.auth-recovery-status {
+  border-color: #b9dfc2;
+  background: #effaf1;
+  color: #286b36;
+}
+
 .auth-login-shell .login-field label {
   color: var(--color-ink-soft);
   font-size: 0.84rem;

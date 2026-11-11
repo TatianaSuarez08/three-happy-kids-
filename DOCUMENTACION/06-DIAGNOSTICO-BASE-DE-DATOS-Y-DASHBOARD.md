@@ -1,5 +1,7 @@
 # Diagnóstico de la base de datos y viabilidad del dashboard
 
+> **Diagnóstico histórico; no ejecutar sus comandos como instrucciones actuales.** Este documento describe una versión previa del dashboard y de la API. Consulta [Base de datos](07_BASE_DE_DATOS.md), [Backend](05_BACKEND.md) y [Endpoints](10_API_ENDPOINTS.md).
+
 ## 1. Conclusión
 
 Sí, la base de datos permite construir un dashboard administrativo real. Tiene las tablas necesarias para consultar:

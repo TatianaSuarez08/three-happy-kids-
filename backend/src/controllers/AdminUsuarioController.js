@@ -1,4 +1,5 @@
 import { createAdminUser, deactivateUser, findUsers, updateAdminUser, updateUserStatus } from '../models/AdminUsuarioModel.js';
+import { sendEmployeeAccountEmail } from '../services/emailService.js';
 
 const rolesAdministrativos = ['Administrador', 'Bodeguero', 'Mensajero'];
 
@@ -23,7 +24,14 @@ export const createUser = async (req, res) => {
       password,
       rol
     });
-    res.status(201).json({ success: true, message: 'Usuario creado correctamente', user });
+    let emailSent = false;
+    try {
+      await sendEmployeeAccountEmail({ to: user.correo, name: `${user.nombre} ${user.apellido}` });
+      emailSent = true;
+    } catch (error) {
+      console.error('No se pudo enviar la notificación de cuenta:', error.message);
+    }
+    res.status(201).json({ success: true, message: 'Usuario creado correctamente', emailSent, user });
   } catch (error) {
     console.error('Error al crear usuario:', error);
     if (error.code === 'ER_DUP_ENTRY') return res.status(409).json({ error: 'El nombre de usuario o correo ya existe' });

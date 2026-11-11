@@ -1,5 +1,7 @@
 # Base de datos MySQL
 
+> **Documento histórico:** contiene un esquema parcial y formatos de credenciales anteriores. Consulta [Base de datos](07_BASE_DE_DATOS.md) y [Autenticación y permisos](08_AUTENTICACION_Y_SEGURIDAD.md) para el estado actual.
+
 ## Tablas usadas
 
 - `usuario`: `id`, `nombre_usuario`, `contrasena`, `correo`, `activo`, `idioma`.

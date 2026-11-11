@@ -24,6 +24,7 @@ function Registro() {
   const [showConfirm, setShowConfirm] = useState(false);
   const [error, setError] = useState("");
   const [modal, setModal] = useState(false);
+  const [emailSent, setEmailSent] = useState(false);
   const [loading, setLoading] = useState(false);
   const [loadingDocumentTypes, setLoadingDocumentTypes] = useState(true);
   const navigate = useNavigate();
@@ -63,6 +64,7 @@ function Registro() {
   const handleSubmit = async (event) => {
     event.preventDefault();
     setError("");
+    setEmailSent(false);
 
     const nombreUsuario = form.nombre_usuario.trim();
     const email = form.email.trim().toLowerCase();
@@ -131,6 +133,7 @@ function Registro() {
         ciudad: form.ciudad.trim(),
         direccion: form.direccion.trim(),
       });
+      setEmailSent(Boolean(data.emailSent));
 
       if (!data.token || !data.user) {
         throw new Error("El servidor no devolvió los datos esperados para iniciar sesión.");
@@ -411,7 +414,11 @@ function Registro() {
           <div className="login-modal">
             <div className="login-modal-icon">✓</div>
             <h2 id="registro-exitoso-titulo">¡Registro exitoso!</h2>
-            <p>Tu cuenta está lista. Ya puedes descubrir todo lo que tenemos para ti.</p>
+            <p>
+              {emailSent
+                ? "Tu cuenta está lista. Te enviamos un correo de bienvenida con información para acceder a HappyKids."
+                : "Tu cuenta está lista, pero no pudimos enviar el correo de bienvenida. Ya puedes acceder a HappyKids."}
+            </p>
             <button type="button" onClick={handleSuccess} className="btn-ingresar">
               Ir al catálogo
             </button>

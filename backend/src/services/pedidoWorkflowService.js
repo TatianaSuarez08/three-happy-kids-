@@ -1,5 +1,6 @@
 const workflowError = (code, message) => Object.assign(new Error(message), { code });
 
+// Valida estados de mensajería antes de persistirlos; completar exige evidencia y un fallo requiere observación.
 export const validateCourierTransition = ({
   currentStatus,
   nextStatus,

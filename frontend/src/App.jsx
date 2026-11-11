@@ -47,6 +47,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import NoAutorizado from './components/NoAutorizado';
 
 function EntradaPrincipal() {
+  // Si el perfil guardado es de bodega o mensajería, dirige al panel correspondiente; el resto ve la portada.
   const storage = localStorage.getItem('token') ? localStorage : sessionStorage;
   const userJson = storage.getItem('user') || storage.getItem('usuario');
   let redirectPath = '';
@@ -70,6 +71,7 @@ function EntradaPrincipal() {
 }
 
 function App() {
+  // Este router es el mapa de navegación; ProtectedRoute añade la restricción de rol a cada ruta privada.
   return (
     <BrowserRouter>
       <Nav />

@@ -10,6 +10,7 @@ const haySesion = () => {
 
 export function CarritoProvider({ children }) {
   const [carrito, setCarrito] = useState([]);
+  // La cola ordena las mutaciones y la versión descarta una carga inicial que llegue tarde.
   const operacionesCarrito = useRef(Promise.resolve());
   const versionCarrito = useRef(0);
 

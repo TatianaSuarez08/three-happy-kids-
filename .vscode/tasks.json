@@ -44,6 +44,27 @@
 			"problemMatcher": []
 		},
 		{
+			"label": "Happy Kids: API",
+			"type": "shell",
+			"command": "npm.cmd run dev",
+			"options": {
+				"cwd": "${workspaceFolder}/API"
+			},
+			"isBackground": true,
+			"runOptions": {
+				"runOn": "folderOpen"
+			},
+			"presentation": {
+				"reveal": "always",
+				"focus": false,
+				"panel": "dedicated",
+				"group": "happy-kids-api",
+				"showReuseMessage": false,
+				"clear": false
+			},
+			"problemMatcher": []
+		},
+		{
 			"label": "Build Frontend",
 			"type": "shell",
 			"command": "npm.cmd run build; npm.cmd run lint",

@@ -2,7 +2,7 @@
   "info": {
     "name": "Three Happy Kids - API",
     "_postman_id": "3d6b1a2e-8f2d-4c7a-9f1a-thk-api-collection",
-    "description": "Colección para la API de Three Happy Kids (carpeta `api/`). Base montada en Express, rutas de negocio bajo `/api/v1`. Autenticación por JWT (header `Authorization: Bearer <token>`). Las peticiones de login/registro guardan el token automáticamente en la variable de colección `token` mediante un test script.\n\nRoles y permisos (ver `src/middleware/role.js`): administrador, bodeguero, mensajero, cliente. Cada ruta protegida indica en su descripción los roles/permisos aceptados.\n\nEndpoints que suben archivos usan `multipart/form-data` (campo `imagen` para productos, `foto` para usuarios/perfil).",
+    "description": "Colección para probar HappyKids a través de API/ (puerto 3001), que reenvía las solicitudes al backend principal (puerto 3000) bajo `/api/v1`. Autenticación JWT emitida por el backend mediante `Authorization: Bearer <token>`. Login y registro guardan el token automáticamente en la variable de colección `token`.\n\nLos roles/permisos se validan en `backend/src/middleware/role.js`. Las solicitudes con archivos usan `multipart/form-data` (campos `imagen`, `foto` o `evidencia`).",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "auth": {
@@ -10,7 +10,7 @@
     "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }]
   },
   "variable": [
-    { "key": "baseUrl", "value": "http://localhost:3000", "type": "string" },
+    { "key": "baseUrl", "value": "http://localhost:3001", "type": "string" },
     { "key": "apiBase", "value": "{{baseUrl}}/api/v1", "type": "string" },
     { "key": "token", "value": "", "type": "string" },
     { "key": "productId", "value": "1", "type": "string" },
@@ -18,7 +18,19 @@
     { "key": "userId", "value": "1", "type": "string" },
     { "key": "categoriaId", "value": "1", "type": "string" },
     { "key": "tallaId", "value": "1", "type": "string" },
-    { "key": "colorId", "value": "1", "type": "string" }
+    { "key": "colorId", "value": "1", "type": "string" },
+    { "key": "documentTypeId", "value": "", "type": "string" },
+    { "key": "registeredEmail", "value": "juan.perez@example.com", "type": "string" },
+    { "key": "registeredDocument", "value": "1000000000", "type": "string" },
+    { "key": "resetToken", "value": "", "type": "string" },
+    { "key": "activityUserId", "value": "1", "type": "string" },
+    { "key": "activityId", "value": "", "type": "string" },
+    { "key": "activityUserId", "value": "1", "type": "string" },
+    { "key": "activityId", "value": "", "type": "string" },
+    { "key": "providerId", "value": "1", "type": "string" },
+    { "key": "purchaseId", "value": "1", "type": "string" },
+    { "key": "purchaseDetailId", "value": "1", "type": "string" },
+    { "key": "noveltyId", "value": "1", "type": "string" }
   ],
   "item": [
     {
@@ -50,8 +62,42 @@
       "name": "Usuarios (Auth)",
       "item": [
         {
+          "name": "Listar tipos de documento",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (pm.response.code === 200 && body.documentTypes && body.documentTypes[0]) {",
+                  "  pm.collectionVariables.set('documentTypeId', String(body.documentTypes[0].id));",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{apiBase}}/tipos-documento", "host": ["{{apiBase}}"], "path": ["tipos-documento"] },
+            "description": "Público. Devuelve los tipos de documento activos que requiere el registro."
+          }
+        },
+        {
           "name": "Registro",
           "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('registeredEmail', `juan.perez.${Date.now()}@example.com`);",
+                  "pm.collectionVariables.set('registeredDocument', String(Date.now()));"
+                ]
+              }
+            },
             {
               "listen": "test",
               "script": {
@@ -72,10 +118,10 @@
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"nombre_usuario\": \"Juan Perez\",\n  \"email\": \"juan.perez@example.com\",\n  \"password\": \"secreto123\",\n  \"confirmar_password\": \"secreto123\"\n}"
+              "raw": "{\n  \"nombre_usuario\": \"Juan Perez\",\n  \"email\": \"{{registeredEmail}}\",\n  \"primer_nombre\": \"Juan\",\n  \"primer_apellido\": \"Perez\",\n  \"numero_documento\": \"{{registeredDocument}}\",\n  \"id_tipo_documento\": {{documentTypeId}},\n  \"password\": \"secreto123\",\n  \"confirmar_password\": \"secreto123\"\n}"
             },
             "url": { "raw": "{{apiBase}}/registro", "host": ["{{apiBase}}"], "path": ["registro"] },
-            "description": "Crea un usuario cliente. Valida email, longitud de password (>=6) y nombre (>=3), y que `password === confirmar_password`. 201 devuelve `user` + `token`. 409 si el email ya existe."
+            "description": "Crea un cliente. Ejecuta antes `Listar tipos de documento`, que guarda automáticamente `documentTypeId`. El registro requiere nombre de usuario, email, nombre/apellido, número y tipo de documento, y contraseña confirmada. 201 devuelve `user` + `token`."
           }
         },
         {
@@ -101,10 +147,38 @@
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"juan.perez@example.com\",\n  \"password\": \"secreto123\"\n}"
+              "raw": "{\n  \"email\": \"{{registeredEmail}}\",\n  \"password\": \"secreto123\"\n}"
             },
             "url": { "raw": "{{apiBase}}/login", "host": ["{{apiBase}}"], "path": ["login"] },
             "description": "Autentica y devuelve `{ user, token }`. El token JWT expira en 8h e incluye `roles` y `permissions`. Guarda el token en la variable de colección `token` para las demás peticiones. 401 si credenciales inválidas, 403 si el usuario está inactivo."
+          }
+        },
+        {
+          "name": "Solicitar recuperación de contraseña",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{registeredEmail}}\"\n}"
+            },
+            "url": { "raw": "{{apiBase}}/recuperar-contrasena", "host": ["{{apiBase}}"], "path": ["recuperar-contrasena"] },
+            "description": "Público, con límite de solicitudes por IP. Responde 202 con un mensaje genérico; el backend envía el enlace por correo si la cuenta existe."
+          }
+        },
+        {
+          "name": "Restablecer contraseña",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{resetToken}}\",\n  \"password\": \"nuevaClave123\",\n  \"confirmar_password\": \"nuevaClave123\"\n}"
+            },
+            "url": { "raw": "{{apiBase}}/restablecer-contrasena", "host": ["{{apiBase}}"], "path": ["restablecer-contrasena"] },
+            "description": "Público, con límite de intentos por IP. Pega en `resetToken` el token recibido por correo; el enlace expira y solo puede usarse una vez."
           }
         },
         {
@@ -268,7 +342,7 @@
           "request": {
             "method": "GET",
             "url": { "raw": "{{apiBase}}/pedidos", "host": ["{{apiBase}}"], "path": ["pedidos"] },
-            "description": "Requiere JWT + rol administrador/bodeguero/mensajero o permiso `pedidos:read`."
+            "description": "Requiere JWT y rol administrador."
           }
         },
         {
@@ -278,10 +352,10 @@
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"direccion\": \"Calle 123 #45-67\",\n  \"ciudad\": \"Bogotá\",\n  \"telefono\": \"3001234567\",\n  \"pago\": \"Contraentrega\",\n  \"productos\": [\n    { \"id\": {{productId}}, \"cantidad\": 2 }\n  ]\n}"
+              "raw": "{\n  \"direccion\": \"Calle 123 #45-67\",\n  \"ciudad\": \"Bogotá\",\n  \"telefono\": \"3001234567\",\n                \"pago\": \"efectivo\",\n  \"productos\": [\n    { \"id\": {{productId}}, \"cantidad\": 2 }\n  ]\n}"
             },
             "url": { "raw": "{{apiBase}}/pedidos", "host": ["{{apiBase}}"], "path": ["pedidos"] },
-            "description": "Requiere JWT + rol administrador/bodeguero/mensajero/cliente o permiso `comprar`. `productos` es un arreglo no vacío. Puede enviar `Idempotency-Key` como header para evitar duplicados. 409 si no hay stock suficiente."
+            "description": "Requiere JWT y permiso `comprar`. `pago` acepta `efectivo`, `transferencia`, `nequi` o `daviplata`; el teléfono debe tener 10 dígitos. `productos` es un arreglo no vacío. 409 si no hay stock suficiente."
           }
         },
         {
@@ -291,7 +365,7 @@
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"estado\": \"En camino\"\n}"
+              "raw": "{\n                \"estado\": \"Cancelado\"\n}"
             },
             "url": {
               "raw": "{{apiBase}}/pedidos/:id/estado",
@@ -299,7 +373,7 @@
               "path": ["pedidos", ":id", "estado"],
               "variable": [{ "key": "id", "value": "{{orderId}}" }]
             },
-            "description": "Requiere JWT + rol administrador/mensajero o permiso `pedidos:write`. `estado` debe ser uno de: `Pendiente`, `En camino`, `Entregado`, `Cancelado`."
+            "description": "Requiere JWT y rol administrador. El backend principal actualmente permite cancelar con `estado: \"Cancelado\"`."
           }
         },
         {
@@ -450,6 +524,441 @@
             "url": { "raw": "{{apiBase}}/inventario/movimiento", "host": ["{{apiBase}}"], "path": ["inventario", "movimiento"] },
             "description": "Requiere JWT + rol administrador/bodeguero. `tipo` en `entrada|salida|ajuste`. `cantidad` > 0. `referencia` y `motivo` opcionales. 400 si no hay stock suficiente para una `salida`."
           }
+        },
+        {
+          "name": "Consultar actividad de inventario",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{apiBase}}/inventario/actividad", "host": ["{{apiBase}}"], "path": ["inventario", "actividad"] },
+            "description": "Requiere JWT + rol administrador/bodeguero. Admite filtros opcionales `usuarioId`, `rol`, `categoria`, `evento`, `desde` y `hasta` (fechas `YYYY-MM-DD`)."
+          }
+        },
+        {
+          "name": "Crear reporte de actividad",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"usuarioId\": {{activityUserId}},\n  \"rol\": \"bodeguero\",\n  \"actividadId\": \"{{activityId}}\",\n  \"motivo\": \"Revisión de actividad\",\n  \"descripcion\": \"Describe el motivo del reporte\"\n}"
+            },
+            "url": { "raw": "{{apiBase}}/inventario/actividad/reportes", "host": ["{{apiBase}}"], "path": ["inventario", "actividad", "reportes"] },
+            "description": "Requiere JWT de administrador. Copia un `usuarioId`, `rol` y `actividadId` válidos desde `Consultar actividad de inventario`; `actividadId` usa los formatos `inventario-N`, `pedido-N` o `novedad-compra-N`."
+          }
+        },
+        {
+          "name": "Obtener opciones para compras",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (pm.response.code === 200) {",
+                  "  if (body.proveedores && body.proveedores[0]) pm.collectionVariables.set('providerId', String(body.proveedores[0].id));",
+                  "  if (body.productos && body.productos[0]) pm.collectionVariables.set('productId', String(body.productos[0].id));",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{apiBase}}/admin/compras/opciones", "host": ["{{apiBase}}"], "path": ["admin", "compras", "opciones"] },
+            "description": "Requiere JWT de administrador. Devuelve proveedores activos y productos con precio de compra."
+          }
+        },
+        {
+          "name": "Crear compra",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  const body = pm.response.json();",
+                  "  if (body.purchase && body.purchase.id) pm.collectionVariables.set('purchaseId', String(body.purchase.id));",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"proveedorId\": {{providerId}},\n  \"productos\": [\n    { \"productoId\": {{productId}}, \"cantidad\": 10 }\n  ]\n}"
+            },
+            "url": { "raw": "{{apiBase}}/admin/compras", "host": ["{{apiBase}}"], "path": ["admin", "compras"] },
+            "description": "Requiere JWT de administrador. Ejecuta antes `Obtener opciones para compras`; el ID generado se guarda en `purchaseId`."
+          }
+        },
+        {
+          "name": "Listar compras para recepción",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "const purchase = (body.purchases || []).find((item) => String(item.id) === pm.collectionVariables.get('purchaseId'));",
+                  "if (purchase && purchase.productos && purchase.productos[0]) {",
+                  "  pm.collectionVariables.set('purchaseDetailId', String(purchase.productos[0].idDetalle));",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{apiBase}}/bodega/compras", "host": ["{{apiBase}}"], "path": ["bodega", "compras"] },
+            "description": "Requiere JWT de administrador o bodeguero. Devuelve compras, detalles, cantidades pendientes, recepciones y novedades."
+          }
+        },
+        {
+          "name": "Registrar recepción de compra",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Idempotency-Key", "value": "{{$guid}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productos\": [\n    { \"idDetalle\": {{purchaseDetailId}}, \"cantidad\": 10 }\n  ],\n  \"novedades\": []\n}"
+            },
+            "url": {
+              "raw": "{{apiBase}}/bodega/compras/:id/recepcion",
+              "host": ["{{apiBase}}"],
+              "path": ["bodega", "compras", ":id", "recepcion"],
+              "variable": [{ "key": "id", "value": "{{purchaseId}}" }]
+            },
+            "description": "Requiere JWT de bodeguero. Ejecuta antes `Listar compras para recepción` para guardar `purchaseDetailId`. Requiere `Idempotency-Key`; la cantidad no puede superar lo pendiente."
+          }
+        },
+        {
+          "name": "Consultar actividad de inventario",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{apiBase}}/inventario/actividad", "host": ["{{apiBase}}"], "path": ["inventario", "actividad"] },
+            "description": "Requiere JWT + rol administrador/bodeguero. Admite filtros opcionales `usuarioId`, `rol`, `categoria`, `evento`, `desde` y `hasta` (fechas `YYYY-MM-DD`)."
+          }
+        },
+        {
+          "name": "Crear reporte de actividad",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"usuarioId\": {{activityUserId}},\n  \"rol\": \"bodeguero\",\n  \"actividadId\": \"{{activityId}}\",\n  \"motivo\": \"Revisión de actividad\",\n  \"descripcion\": \"Describe el motivo del reporte\"\n}"
+            },
+            "url": { "raw": "{{apiBase}}/inventario/actividad/reportes", "host": ["{{apiBase}}"], "path": ["inventario", "actividad", "reportes"] },
+            "description": "Requiere JWT de administrador. Copia un `usuarioId`, `rol` y `actividadId` válidos desde `Consultar actividad de inventario`; `actividadId` usa los formatos `inventario-N`, `pedido-N` o `novedad-compra-N`."
+          }
+        },
+        {
+          "name": "Obtener opciones para compras",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (pm.response.code === 200) {",
+                  "  if (body.proveedores && body.proveedores[0]) pm.collectionVariables.set('providerId', String(body.proveedores[0].id));",
+                  "  if (body.productos && body.productos[0]) pm.collectionVariables.set('productId', String(body.productos[0].id));",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{apiBase}}/admin/compras/opciones", "host": ["{{apiBase}}"], "path": ["admin", "compras", "opciones"] },
+            "description": "Requiere JWT de administrador. Devuelve proveedores activos y productos con precio de compra."
+          }
+        },
+        {
+          "name": "Crear compra",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  const body = pm.response.json();",
+                  "  if (body.purchase && body.purchase.id) pm.collectionVariables.set('purchaseId', String(body.purchase.id));",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"proveedorId\": {{providerId}},\n  \"productos\": [\n    { \"productoId\": {{productId}}, \"cantidad\": 10 }\n  ]\n}"
+            },
+            "url": { "raw": "{{apiBase}}/admin/compras", "host": ["{{apiBase}}"], "path": ["admin", "compras"] },
+            "description": "Requiere JWT de administrador. Ejecuta antes `Obtener opciones para compras`; el ID generado se guarda en `purchaseId`."
+          }
+        },
+        {
+          "name": "Listar compras para recepción",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "const purchase = (body.purchases || []).find((item) => String(item.id) === pm.collectionVariables.get('purchaseId'));",
+                  "if (purchase && purchase.productos && purchase.productos[0]) {",
+                  "  pm.collectionVariables.set('purchaseDetailId', String(purchase.productos[0].idDetalle));",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{apiBase}}/bodega/compras", "host": ["{{apiBase}}"], "path": ["bodega", "compras"] },
+            "description": "Requiere JWT de administrador o bodeguero. Devuelve compras, detalles, cantidades pendientes, recepciones y novedades."
+          }
+        },
+        {
+          "name": "Registrar recepción de compra",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Idempotency-Key", "value": "{{$guid}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productos\": [\n    { \"idDetalle\": {{purchaseDetailId}}, \"cantidad\": 10 }\n  ],\n  \"novedades\": []\n}"
+            },
+            "url": {
+              "raw": "{{apiBase}}/bodega/compras/:id/recepcion",
+              "host": ["{{apiBase}}"],
+              "path": ["bodega", "compras", ":id", "recepcion"],
+              "variable": [{ "key": "id", "value": "{{purchaseId}}" }]
+            },
+            "description": "Requiere JWT de bodeguero. Ejecuta antes `Listar compras para recepción` para guardar `purchaseDetailId`. Requiere `Idempotency-Key`; la cantidad no puede superar lo pendiente."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Bodega",
+      "item": [
+        {
+          "name": "Pedidos disponibles",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{apiBase}}/bodega/pedidos/disponibles", "host": ["{{apiBase}}"], "path": ["bodega", "pedidos", "disponibles"] },
+            "description": "Requiere JWT + rol bodeguero o administrador."
+          }
+        },
+        {
+          "name": "Mis pedidos asignados",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{apiBase}}/bodega/pedidos/mios", "host": ["{{apiBase}}"], "path": ["bodega", "pedidos", "mios"] },
+            "description": "Requiere JWT + rol bodeguero."
+          }
+        },
+        {
+          "name": "Asignarme pedido",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{apiBase}}/bodega/pedidos/:id/asignar",
+              "host": ["{{apiBase}}"],
+              "path": ["bodega", "pedidos", ":id", "asignar"],
+              "variable": [{ "key": "id", "value": "{{orderId}}" }]
+            },
+            "description": "Requiere JWT + rol bodeguero. Usa un pedido devuelto por `Pedidos disponibles`."
+          }
+        },
+        {
+          "name": "Liberar pedido",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{apiBase}}/bodega/pedidos/:id/liberar",
+              "host": ["{{apiBase}}"],
+              "path": ["bodega", "pedidos", ":id", "liberar"],
+              "variable": [{ "key": "id", "value": "{{orderId}}" }]
+            },
+            "description": "Requiere JWT + rol bodeguero; solo se puede liberar antes de iniciar la preparación."
+          }
+        },
+        {
+          "name": "Registrar verificación del pedido",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productos\": [\n    {\n      \"idProducto\": {{productId}},\n      \"encontrado\": true,\n      \"tipoNovedad\": \"\",\n      \"descripcion\": \"\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{apiBase}}/bodega/pedidos/:id/preparacion",
+              "host": ["{{apiBase}}"],
+              "path": ["bodega", "pedidos", ":id", "preparacion"],
+              "variable": [{ "key": "id", "value": "{{orderId}}" }]
+            },
+            "description": "Requiere JWT + rol bodeguero y pedido asignado. Incluye cada `idProducto` del pedido. Si `encontrado` es false, envía `tipoNovedad` y `descripcion`."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Mensajería",
+      "item": [
+        {
+          "name": "Pedidos disponibles para entrega",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{apiBase}}/mensajeria/pedidos/disponibles", "host": ["{{apiBase}}"], "path": ["mensajeria", "pedidos", "disponibles"] },
+            "description": "Requiere JWT + rol mensajero."
+          }
+        },
+        {
+          "name": "Mis entregas",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{apiBase}}/mensajeria/mis-entregas", "host": ["{{apiBase}}"], "path": ["mensajeria", "mis-entregas"] },
+            "description": "Requiere JWT + rol mensajero."
+          }
+        },
+        {
+          "name": "Historial de mensajería",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{apiBase}}/mensajeria/historial", "host": ["{{apiBase}}"], "path": ["mensajeria", "historial"] },
+            "description": "Requiere JWT + rol mensajero."
+          }
+        },
+        {
+          "name": "Asignarme entrega",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{apiBase}}/mensajeria/pedidos/:id/asignar",
+              "host": ["{{apiBase}}"],
+              "path": ["mensajeria", "pedidos", ":id", "asignar"],
+              "variable": [{ "key": "id", "value": "{{orderId}}" }]
+            },
+            "description": "Requiere JWT + rol mensajero. Usa un pedido devuelto por `Pedidos disponibles para entrega`."
+          }
+        },
+        {
+          "name": "Liberar entrega",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{apiBase}}/mensajeria/pedidos/:id/liberar",
+              "host": ["{{apiBase}}"],
+              "path": ["mensajeria", "pedidos", ":id", "liberar"],
+              "variable": [{ "key": "id", "value": "{{orderId}}" }]
+            },
+            "description": "Requiere JWT + rol mensajero y una asignación que todavía se pueda liberar."
+          }
+        },
+        {
+          "name": "Actualizar estado de entrega",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"estado\": \"En camino\",\n  \"observacion\": \"\"\n}"
+            },
+            "url": {
+              "raw": "{{apiBase}}/mensajeria/pedidos/:id/estado",
+              "host": ["{{apiBase}}"],
+              "path": ["mensajeria", "pedidos", ":id", "estado"],
+              "variable": [{ "key": "id", "value": "{{orderId}}" }]
+            },
+            "description": "Requiere JWT + rol mensajero. Estados admitidos: `En camino`, `Entrega fallida` y `Entregado`; completar una entrega requiere evidencia."
+          }
+        },
+        {
+          "name": "Subir evidencia de entrega",
+          "request": {
+            "method": "POST",
+            "body": {
+              "mode": "formdata",
+              "formdata": [{ "key": "evidencia", "type": "file", "src": [] }]
+            },
+            "url": {
+              "raw": "{{apiBase}}/mensajeria/pedidos/:id/evidencia",
+              "host": ["{{apiBase}}"],
+              "path": ["mensajeria", "pedidos", ":id", "evidencia"],
+              "variable": [{ "key": "id", "value": "{{orderId}}" }]
+            },
+            "description": "Requiere JWT + rol mensajero. Sube una imagen JPG, PNG o WEBP (máximo 5 MB) como `evidencia`."
+          }
+        },
+        {
+          "name": "Ver evidencia de entrega",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{apiBase}}/mensajeria/pedidos/:id/evidencia",
+              "host": ["{{apiBase}}"],
+              "path": ["mensajeria", "pedidos", ":id", "evidencia"],
+              "variable": [{ "key": "id", "value": "{{orderId}}" }]
+            },
+            "description": "Requiere JWT + rol mensajero o administrador. Devuelve el archivo de evidencia."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Novedades",
+      "item": [
+        {
+          "name": "Listar novedades de pedidos",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{apiBase}}/admin/novedades/pedidos", "host": ["{{apiBase}}"], "path": ["admin", "novedades", "pedidos"] },
+            "description": "Requiere JWT + rol administrador."
+          }
+        },
+        {
+          "name": "Resolver novedad",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"decision\": \"Describe la decisión tomada\"\n}"
+            },
+            "url": {
+              "raw": "{{apiBase}}/admin/novedades/pedidos/:id/resolver",
+              "host": ["{{apiBase}}"],
+              "path": ["admin", "novedades", "pedidos", ":id", "resolver"],
+              "variable": [{ "key": "id", "value": "{{noveltyId}}" }]
+            },
+            "description": "Requiere JWT + rol administrador y una novedad pendiente."
+          }
         }
       ]
     },
@@ -461,7 +970,7 @@
           "request": {
             "method": "GET",
             "url": { "raw": "{{apiBase}}/logistica", "host": ["{{apiBase}}"], "path": ["logistica"] },
-            "description": "Requiere JWT + rol administrador/bodeguero/mensajero o permiso `pedidos:read`."
+            "description": "Requiere JWT y rol administrador."
           }
         }
       ]

@@ -1,64 +1,30 @@
-# 11. API Backend
+# 11. Backend, API y Postman
 
-## Rutas principales
+## Arquitectura
 
-La API nueva se consume bajo `/api/v1`. Las rutas sin prefijo se mantienen temporalmente como compatibilidad con clientes existentes.
+- `backend/` es la única fuente de rutas de negocio, validación, JWT, permisos y acceso a MySQL.
+- `API/` escucha en `API_PORT` (3001) y reenvía todas las solicitudes al backend configurado por `API_BACKEND_URL` (por defecto `http://localhost:3000`). No mantiene una copia activa de la lógica de negocio.
+- El frontend usa `VITE_BACKEND_URL` (3000) y puede intentar `VITE_API_BACKUP_URL` (3001) ante fallos de red o 502/503/504. El proxy debe apuntar al mismo backend y no es una segunda instancia de alta disponibilidad.
 
-### Autenticación
+## Configuración y ejecución
 
-- GET `/api/v1/health` — público; verifica conexión con MySQL.
-- POST `/api/v1/registro` — público.
-- POST `/api/v1/login` — público.
-- GET `/api/v1/me` — usuario autenticado.
-- PUT `/api/v1/me/foto` — usuario autenticado; recibe `multipart/form-data` con `foto`.
+Configura en el `.env` raíz (tiene prioridad sobre `API/.env`):
 
-### Productos
+```env
+PORT=3000
+API_PORT=3001
+API_BACKEND_URL=http://localhost:3000
+JWT_SECRET=<secreto local del backend>
+DB_HOST=localhost
+DB_USER=<usuario local>
+DB_PASSWORD=<contraseña local>
+DB_DATABASE=happykids
+```
 
-- GET `/api/v1/productos-publicos`, `/api/v1/productos-publicos/:id` — público.
-- GET `/api/v1/colores` — administrador/bodeguero.
-- GET `/api/v1/productos`, `/api/v1/productos/:id` — administrador/bodeguero.
-- POST `/api/v1/productos`, PUT `/api/v1/productos/:id`, DELETE `/api/v1/productos/:id` — administrador/bodeguero según permisos.
+Inicia `npm --prefix backend run dev` y `npm --prefix API run dev` en terminales separadas. El proxy no requiere secreto JWT ni credenciales de MySQL; el backend conserva la validación del token y la conexión a datos. Consulta [`10_API_ENDPOINTS.md`](10_API_ENDPOINTS.md) para métodos, rutas y permisos.
 
-### Pedidos
+## Postman
 
-- GET `/api/v1/pedidos` — administración, bodega y mensajería con `pedidos:read`.
-- POST `/api/v1/pedidos` — roles con permiso `comprar`.
-- PUT `/api/v1/pedidos/:id/estado` — administrador/mensajero con `pedidos:write`.
-- GET `/api/v1/mis-pedidos` — usuario autenticado con `pedidos:own:read`; filtra por el usuario del JWT.
+Importa `API/postman/ThreeHappyKids.postman_collection.json` y `API/postman/ThreeHappyKids.postman_environment.json`. El entorno usa el proxy (`baseUrl=http://localhost:3001`) y construye `apiBase` con `/api/v1`. Ejecuta `Listar tipos de documento` antes de `Registro`; `Login` o `Registro` guarda el JWT de respuesta en la variable de colección `token`. Los endpoints protegidos usan Bearer automáticamente.
 
-### Usuarios administrativos
-
-- GET `/api/v1/usuarios` — administrador con `usuarios:read`.
-- POST `/api/v1/usuarios`, PUT `/api/v1/usuarios/:id`, PUT `/api/v1/usuarios/:id/estado`, DELETE `/api/v1/usuarios/:id` — administrador con `usuarios:write`.
-
-### Dashboard
-
-- GET `/api/v1/dashboard` — administrador con `dashboard:read`.
-
-### Inventario
-
-- GET `/api/v1/inventario/:id/historial` — roles autorizados de inventario.
-- POST `/api/v1/inventario/movimiento` — roles autorizados de inventario.
-
-### Logística
-
-- GET `/api/v1/logistica` — roles autorizados de logística.
-
-## Archivos de implementación
-
-- [backend/index.js](../backend/index.js)
-- [backend/src/routes/UsuarioRoute.js](../backend/src/routes/UsuarioRoute.js)
-- [backend/src/routes/ProductoRoute.js](../backend/src/routes/ProductoRoute.js)
-- [backend/src/routes/PedidoRoute.js](../backend/src/routes/PedidoRoute.js)
-- [backend/src/routes/AdminUsuarioRoute.js](../backend/src/routes/AdminUsuarioRoute.js)
-- [backend/src/routes/DashboardRoute.js](../backend/src/routes/DashboardRoute.js)
-
-## Separación frontend/backend
-
-El frontend utiliza `src/services/httpClient.js` como único punto de acceso HTTP. Las páginas no construyen headers ni llaman `fetch` directamente. Los formularios con archivos usan `FormData` y dejan que el cliente HTTP gestione el token sin fijar manualmente el boundary multipart.
-
-## Observación importante
-
-La API está funcionando, pero no está documentada con permisos ni con control granular por módulo y acción. La autorización está parcialmente en la ruta, aunque no es una matriz de permisos completa.
-
-`GET /productos-publicos` y `GET /productos-publicos/:id` se utilizan para el catálogo y el detalle del cliente. El frontend consume estos endpoints mediante `productoService.js`; los datos de nombre, descripción, precio, imagen, talla, color y stock proceden del modelo `ProductoModel.js`.
+La colección incluye ejemplos de formatos reales; algunas operaciones administrativas o de flujo requieren IDs existentes, roles adecuados, datos preparados o archivos seleccionados. No representa credenciales reales ni crea entidades de referencia automáticamente.

@@ -2,7 +2,7 @@
 
 ## Convenciones
 
-La tabla describe las rutas del backend principal (`backend/src/routes/`). En el backend se pueden invocar con prefijo `/api/v1` o sin él; el frontend usa `/api/v1`. La instancia `API/` solo monta el prefijo y tiene excepciones de cobertura listadas al final.
+La tabla describe las rutas del backend principal (`backend/src/routes/`). En el backend se pueden invocar con prefijo `/api/v1` o sin él; el frontend usa `/api/v1`. `API/` reenvía al backend las solicitudes bajo `/api/v1`, por lo que utiliza los mismos endpoints, autenticación y respuestas.
 
 - `Público`: no requiere token.
 - `JWT`: requiere `Authorization: Bearer <token>`.
@@ -113,6 +113,8 @@ En el backend principal, `GET /health` está disponible también como `/api/v1/h
 - Carrito: agregar producto acepta alias de identificador `productId`, `id_producto` o `id`; la cantidad puede recibirse como `quantity` o `cantidad`.
 - Errores de autenticación/autorización: `401` si falta o falla el JWT; `403` si no coincide el acceso requerido. Los controladores también pueden responder validación, conflicto y no encontrado; revisa el controlador para los errores de cada recurso.
 
-## Diferencias de la instancia `API/`
+## Proxy `API/`
 
-`API/` registra las rutas bajo `/api/v1`, pero `UsuarioRoute.js` no incluye `GET /tipos-documento`. Su `InventarioRoute.js` no registra las rutas de actividad/reportes ni las de compra/recepción que aparecen arriba. `PedidoFlujoRoute.js` reutiliza rutas del backend principal. Por esas diferencias, esta tabla no debe interpretarse como contrato completo de la instancia `API/`.
+El proxy escucha en `API_PORT` (3001 por defecto) y reenvía a `API_BACKEND_URL` (`http://localhost:3000` por defecto), conservando el método, el path y query string, el body, `Authorization`, `Idempotency-Key` y los contenidos multipart. Las rutas `/` y `/assets/...` también se reenvían al backend. El servicio no accede a MySQL ni sustituye al backend.
+
+La colección de Postman se dirige al proxy por `baseUrl` y `apiBase`; importa también `API/postman/ThreeHappyKids.postman_environment.json`. Para iniciar el flujo de registro, ejecuta primero `GET /tipos-documento`. Login/registro guarda el JWT en `token`; las rutas protegidas heredan el Bearer token de la colección.

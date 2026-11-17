@@ -117,7 +117,7 @@ export const addProduct = async (req, res) => {
       precioCompra: parsedPrecioCompra,
       precioVenta: parsedPrecioVenta,
       marca: marca?.trim(),
-      imagen: `/assets/productos/${req.file.filename}`,
+      imagen: `/media/productos/${req.file.filename}`,
       idCategoria: parsedCategoria,
       idTalla: parsedTalla,
       idColor: parsedColor,
@@ -237,10 +237,13 @@ export const editProduct = async (req, res) => {
 
     const updatedProduct = await updateProduct(id, {
       ...parsed.value,
-      imagen: req.file ? `/assets/productos/${req.file.filename}` : null
+      imagen: req.file ? `/media/productos/${req.file.filename}` : null
     });
 
-    if (req.file && currentProduct.imagen?.startsWith('/assets/productos/')) {
+    if (req.file && (
+      currentProduct.imagen?.startsWith('/assets/productos/')
+      || currentProduct.imagen?.startsWith('/media/productos/')
+    )) {
       const oldImagePath = path.join(productImagesDirectory, path.basename(currentProduct.imagen));
       await unlink(oldImagePath).catch(() => {});
     }

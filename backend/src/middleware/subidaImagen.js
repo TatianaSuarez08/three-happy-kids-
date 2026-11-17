@@ -2,23 +2,25 @@ import crypto from 'node:crypto';
 import fs from 'fs';
 import multer from 'multer';
 import path from 'path';
-import { fileURLToPath } from 'url';
+import { productImagesDirectory, profileImagesDirectory } from '../config/storage.js';
 
-const currentFile = fileURLToPath(import.meta.url);
-const currentDirectory = path.dirname(currentFile);
-export const productImagesDirectory = path.resolve(
-  currentDirectory,
-  '../../storage/assets/productos'
-);
-export const profileImagesDirectory = path.resolve(
-  currentDirectory,
-  '../../storage/assets/foto_de_perfil'
-);
+export { productImagesDirectory, profileImagesDirectory };
 
 fs.mkdirSync(productImagesDirectory, { recursive: true });
 fs.mkdirSync(profileImagesDirectory, { recursive: true });
 
-const allowedMimeTypes = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif']);
+const allowedExtensionsByMimeType = new Map([
+  ['image/jpeg', new Set(['.jpg', '.jpeg'])],
+  ['image/png', new Set(['.png'])],
+  ['image/webp', new Set(['.webp'])],
+  ['image/gif', new Set(['.gif'])]
+]);
+
+export const isSupportedImageUpload = (file) => (
+  allowedExtensionsByMimeType
+    .get(file.mimetype)
+    ?.has(path.extname(file.originalname).toLowerCase()) || false
+);
 
 const storage = multer.diskStorage({
   destination: (_req, _file, callback) => {
@@ -31,7 +33,7 @@ const storage = multer.diskStorage({
 });
 
 const fileFilter = (_req, file, callback) => {
-  if (!allowedMimeTypes.has(file.mimetype)) {
+  if (!isSupportedImageUpload(file)) {
     callback(new Error('La imagen debe ser JPG, PNG, WEBP o GIF'));
     return;
   }

@@ -19,6 +19,7 @@ export const env = {
   DB_USER: process.env.DB_USER,
   DB_PASSWORD: process.env.DB_PASSWORD || '',
   DB_DATABASE: process.env.DB_DATABASE,
+  MEDIA_STORAGE_DIR: process.env.MEDIA_STORAGE_DIR || '',
   CORS_ORIGIN: parseCorsOrigins(process.env.CORS_ORIGIN),
   MAIL_HOST: process.env.MAIL_HOST || '',
   MAIL_PORT: process.env.MAIL_PORT || '',

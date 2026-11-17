@@ -69,9 +69,9 @@ export const getProductImage = (product, sourceOverride) => {
   if (savedImage) {
     const url = /^https?:\/\//i.test(savedImage)
       ? savedImage
-      : `${API_BASE_URL}${savedImage.startsWith("/assets/")
+      : `${API_BASE_URL}${savedImage.startsWith("/assets/") || savedImage.startsWith("/media/")
         ? savedImage
-        : `/assets/productos/${savedImage}`}`;
+        : `/media/productos/${savedImage}`}`;
     return { url, isReference: false };
   }
 
@@ -80,7 +80,7 @@ export const getProductImage = (product, sourceOverride) => {
     ? (rawId - 1) % imagenesReferenciales.length
     : 0;
   return {
-    url: `${API_BASE_URL}/assets/productos/${imagenesReferenciales[index]}`,
+    url: `${API_BASE_URL}/media/productos/${imagenesReferenciales[index]}`,
     isReference: true,
   };
 };

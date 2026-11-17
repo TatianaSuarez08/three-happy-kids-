@@ -1,13 +1,9 @@
 import crypto from 'crypto';
 import fs from 'fs/promises';
 import path from 'path';
+import { deliveryImagesDirectory } from '../config/storage.js';
 
-const workingDirectory = path.resolve(process.cwd());
-const projectDirectory = ['backend', 'api'].includes(path.basename(workingDirectory).toLowerCase())
-  ? path.dirname(workingDirectory)
-  : workingDirectory;
-const backendDirectory = path.resolve(projectDirectory, 'backend');
-export const defaultDeliveryImagesDirectory = path.resolve(backendDirectory, 'storage/assets/entregas');
+export const defaultDeliveryImagesDirectory = deliveryImagesDirectory;
 
 const imageTypes = [
   {

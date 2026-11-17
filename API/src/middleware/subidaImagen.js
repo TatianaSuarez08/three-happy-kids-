@@ -6,14 +6,15 @@ import { fileURLToPath } from 'url';
 
 const currentFile = fileURLToPath(import.meta.url);
 const currentDirectory = path.dirname(currentFile);
-export const productImagesDirectory = path.resolve(
-  currentDirectory,
-  '../../storage/assets/productos'
-);
-export const profileImagesDirectory = path.resolve(
-  currentDirectory,
-  '../../storage/assets/foto_de_perfil'
-);
+const projectDirectory = path.resolve(currentDirectory, '../../..');
+const defaultAssetsDirectory = path.resolve(projectDirectory, 'backend/storage/assets');
+const assetsDirectory = process.env.MEDIA_STORAGE_DIR
+  ? (path.isAbsolute(process.env.MEDIA_STORAGE_DIR)
+    ? path.resolve(process.env.MEDIA_STORAGE_DIR)
+    : path.resolve(projectDirectory, process.env.MEDIA_STORAGE_DIR))
+  : defaultAssetsDirectory;
+export const productImagesDirectory = path.resolve(assetsDirectory, 'productos');
+export const profileImagesDirectory = path.resolve(assetsDirectory, 'foto_de_perfil');
 
 fs.mkdirSync(productImagesDirectory, { recursive: true });
 fs.mkdirSync(profileImagesDirectory, { recursive: true });

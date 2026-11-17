@@ -85,12 +85,12 @@ describe('actualización de foto de perfil', () => {
 
     expect(updateUserProfilePhoto).toHaveBeenCalledWith(
       7,
-      '/assets/foto_de_perfil/perfil-123abc.png'
+      '/media/usuarios/perfil-123abc.png'
     );
     expect(response.json).toHaveBeenCalledWith({
       success: true,
       message: 'Foto de perfil actualizada correctamente',
-      fotoPerfil: '/assets/foto_de_perfil/perfil-123abc.png'
+      fotoPerfil: '/media/usuarios/perfil-123abc.png'
     });
   });
 

@@ -168,7 +168,7 @@ export const updateMyProfilePhoto = async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'Selecciona una imagen de perfil' });
 
   try {
-    const photoPath = `/assets/foto_de_perfil/${req.file.filename}`;
+    const photoPath = `/media/usuarios/${req.file.filename}`;
     const updated = await updateUserProfilePhoto(req.user.id, photoPath);
     if (!updated) return res.status(404).json({ error: 'Usuario no encontrado' });
     res.json({ success: true, message: 'Foto de perfil actualizada correctamente', fotoPerfil: photoPath });

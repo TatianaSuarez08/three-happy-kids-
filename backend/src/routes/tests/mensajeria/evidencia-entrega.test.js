@@ -2,6 +2,10 @@ import fs from 'node:fs/promises';
 import crypto from 'node:crypto';
 import os from 'node:os';
 import path from 'node:path';
+
+jest.mock('../../../config/storage.js', () => ({
+  deliveryImagesDirectory: require('node:path').resolve(__dirname, '../../../../storage/assets/entregas')
+}));
 import {
   defaultDeliveryImagesDirectory,
   getImageMetadata,

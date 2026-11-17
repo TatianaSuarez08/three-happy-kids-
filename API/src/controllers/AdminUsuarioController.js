@@ -19,7 +19,7 @@ export const createUser = async (req, res) => {
       apellido: apellido.trim(),
       correo: correo.trim().toLowerCase(),
       telefono: telefono?.trim() || null,
-      fotoPerfil: req.file ? `/assets/foto_de_perfil/${req.file.filename}` : null,
+      fotoPerfil: req.file ? `/media/usuarios/${req.file.filename}` : null,
       password,
       rol
     });

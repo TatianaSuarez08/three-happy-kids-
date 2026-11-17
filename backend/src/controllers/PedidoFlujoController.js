@@ -206,6 +206,7 @@ export const getCourierEvidence = async (req, res) => {
     if (!/^[0-9a-f-]{36}\.(jpg|png|webp)$/.test(filename)) {
       return res.status(500).json({ error: 'La referencia de evidencia almacenada no es válida' });
     }
+    res.set('Cache-Control', 'private, no-store');
     return res.sendFile(path.join(defaultDeliveryImagesDirectory, filename), (error) => {
       if (error && !res.headersSent) res.status(404).json({ error: 'No se encontró el archivo de evidencia' });
     });

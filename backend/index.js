@@ -16,7 +16,7 @@ import healthRoutes from './src/routes/HealthRoute.js';
 import favoriteRoutes from './src/routes/FavoritoRoute.js';
 import cartRoutes from './src/routes/CarritoRoute.js';
 import rootRoutes from './src/routes/RootRoute.js';
-import { productImagesDirectory, profileImagesDirectory } from './src/middleware/subidaImagen.js';
+import { mountPublicImageRoutes } from './src/middleware/mediaStatic.js';
 import { env } from './src/config/env.js';
 import idempotencia from './src/middleware/idempotencia.js';
 
@@ -37,8 +37,7 @@ app.use(express.json()); // Middleware para parsear bodies en formato JSON
 app.use(express.urlencoded({ extended: true })); // Middleware para parsear bodies URL-encoded (formularios)
 app.use(morgan('dev')); // Activa el logger en modo 'dev' para ver peticiones en consola
 app.use(idempotencia);
-app.use('/assets/productos', express.static(productImagesDirectory));
-app.use('/assets/foto_de_perfil', express.static(profileImagesDirectory));
+mountPublicImageRoutes(app);
 
 // Ruta raíz: responde con un JSON indicando que la API está lista
 app.use(rootRoutes);
